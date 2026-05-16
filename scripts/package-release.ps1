@@ -52,7 +52,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $stageDir "Tools") | Out-Nu
 Copy-Item -LiteralPath (Join-Path $publishDir "AudioQualityEnhancer.exe") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination $stageDir
-Copy-Item -LiteralPath (Join-Path $root "RELEASE_NOTES.md") -Destination $stageDir
+Copy-Item -LiteralPath (Join-Path $root "CHANGELOG.md") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "Tools\README.md") -Destination (Join-Path $stageDir "Tools\README.md")
 
 if ($IncludeFFmpeg) {
