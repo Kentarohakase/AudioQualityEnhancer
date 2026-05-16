@@ -1,0 +1,362 @@
+<Window x:Class="AudioQualityEnhancer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Audio Quality Enhancer"
+        Width="1180"
+        Height="820"
+        MinWidth="980"
+        MinHeight="680"
+        Background="#F4F6F5"
+        FontFamily="Segoe UI"
+        AllowDrop="True"
+        DragEnter="MainWindow_OnDragEnter"
+        Drop="MainWindow_OnDrop"
+        Loaded="MainWindow_OnLoaded">
+    <Window.Resources>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#D8DFDA" />
+        <SolidColorBrush x:Key="TextBrush" Color="#18211B" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#5F6D66" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#0F766E" />
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#0B5D56" />
+        <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#FFF8E6" />
+        <SolidColorBrush x:Key="WarningBorderBrush" Color="#E4B653" />
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
+        <Style x:Key="SectionBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#BBC8C1" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#EEF4F1" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="BorderBrush" Value="#BBC8C1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="6,4" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,18">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="Audio Quality Enhancer" FontSize="28" FontWeight="SemiBold" />
+                <TextBlock Text="Analyse, schonende Bearbeitung und Export mit FFmpeg" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding StatusText}"
+                       Foreground="{StaticResource MutedTextBrush}"
+                       VerticalAlignment="Center"
+                       TextAlignment="Right" />
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.08*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="0.92*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Style="{StaticResource SectionBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Quelle" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <Border BorderBrush="#AFC2BA"
+                                    BorderThickness="1.5"
+                                    CornerRadius="8"
+                                    Background="#F9FBFA"
+                                    Padding="18"
+                                    Margin="0,0,0,12"
+                                    AllowDrop="True"
+                                    DragEnter="MainWindow_OnDragEnter"
+                                    Drop="MainWindow_OnDrop">
+                                <StackPanel>
+                                    <TextBlock Text="Datei hier ablegen" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                    <TextBlock Text="oder über den Button auswählen"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               Margin="0,4,0,0"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="2"
+                                        Content="Datei auswählen"
+                                        Command="{Binding SelectFileCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Analyse" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="130" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Codec" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AudioInfo.CodecDisplay, TargetNullValue='-'}" TextWrapping="Wrap" Margin="0,0,18,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Container" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding AudioInfo.Container, TargetNullValue='-'}" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Bitrate" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AudioInfo.BitRateDisplay, TargetNullValue='-'}" Margin="0,0,18,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Sample Rate" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding AudioInfo.SampleRateDisplay, TargetNullValue='-'}" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Kanäle" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AudioInfo.ChannelsDisplay, TargetNullValue='-'}" Margin="0,0,18,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Dauer" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding AudioInfo.DurationDisplay, TargetNullValue='-'}" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Dateigröße" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AudioInfo.FileSizeDisplay, TargetNullValue='-'}" Margin="0,0,18,0" />
+                                <TextBlock Grid.Row="3" Grid.Column="2" Text="Quelle" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Row="3" Grid.Column="3" Text="{Binding AudioInfo.LossyDisplay, TargetNullValue='-'}" TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionBorderStyle}"
+                            Background="{StaticResource WarningBackgroundBrush}"
+                            BorderBrush="{StaticResource WarningBorderBrush}">
+                        <StackPanel>
+                            <TextBlock Text="Qualitätsgrenzen" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding QualityNotice}" TextWrapping="Wrap" LineHeight="20" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Style="{StaticResource SectionBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Verarbeitung" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                            <TextBlock Text="Preset" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Presets}"
+                                      SelectedItem="{Binding SelectedPreset}"
+                                      DisplayMemberPath="Name"
+                                      Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding SelectedPreset.Description}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,14" />
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0"
+                                          Content="Leichte Sprachkompression"
+                                          IsChecked="{Binding EnableSpeechCompression}"
+                                          IsEnabled="{Binding IsSpeechPreset}"
+                                          Margin="0,0,0,8" />
+                                <CheckBox Grid.Row="1"
+                                          Content="Leichte Verständlichkeitsanhebung"
+                                          IsChecked="{Binding EnableSpeechPresenceBoost}"
+                                          IsEnabled="{Binding IsSpeechPreset}"
+                                          Margin="0,0,0,8" />
+                                <StackPanel Grid.Row="2">
+                                    <DockPanel>
+                                        <TextBlock Text="Rauschfilter" Foreground="{StaticResource MutedTextBrush}" />
+                                        <TextBlock DockPanel.Dock="Right"
+                                                   Text="{Binding NoiseReductionFloor, StringFormat={}{0} dB}"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                    </DockPanel>
+                                    <Slider Minimum="-35"
+                                            Maximum="-20"
+                                            TickFrequency="1"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding NoiseReductionFloor}"
+                                            IsEnabled="{Binding IsNoisePreset}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Ausgabeformat" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding ExportFormats}"
+                                      SelectedItem="{Binding SelectedExportFormat}"
+                                      DisplayMemberPath="DisplayName"
+                                      Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding SelectedExportFormat.Description}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Ausgabe" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                            <TextBlock Text="Ordner" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Column="2"
+                                        Content="Ordner wählen"
+                                        Command="{Binding SelectOutputFolderCommand}" />
+                            </Grid>
+
+                            <CheckBox Content="Logdatei zusätzlich speichern"
+                                      IsChecked="{Binding SaveLogFile}"
+                                      Margin="0,0,0,16" />
+
+                            <ProgressBar Minimum="0"
+                                         Maximum="100"
+                                         Value="{Binding ProgressValue}"
+                                         Height="14"
+                                         Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding ProgressValue, StringFormat={}{0:0}%}"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,0,0,16" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"
+                                        Content="Verarbeitung starten"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding StartCommand}" />
+                                <Button Grid.Column="2"
+                                        Content="Abbrechen"
+                                        Command="{Binding CancelCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionBorderStyle}" Margin="0">
+                        <StackPanel>
+                            <TextBlock Text="Log" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBox Text="{Binding LogText}"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     MinHeight="210"
+                                     VerticalContentAlignment="Top" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <TextBlock Grid.Row="2"
+                   Text="Originaldateien werden nie überschrieben. Für Stream-Copy wird ein kompatibles Containerformat gewählt, sonst wird mit den gewählten Parametern exportiert."
+                   Foreground="{StaticResource MutedTextBrush}"
+                   Margin="0,14,0,0"
+                   TextWrapping="Wrap" />
+    </Grid>
+</Window>
