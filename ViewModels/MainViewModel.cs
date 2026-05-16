@@ -314,6 +314,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             StatusText = result.ErrorMessage ?? "Analyse fehlgeschlagen.";
             _logService.Error(StatusText);
+
+            if (result.Exception is not null)
+            {
+                _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
+            }
         }
 
         RaiseCommandStates();
@@ -369,6 +374,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 StatusText = result.ErrorMessage ?? "Verarbeitung fehlgeschlagen.";
                 _logService.Error(StatusText);
+
+                if (result.Exception is not null)
+                {
+                    _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
+                }
             }
         }
         finally

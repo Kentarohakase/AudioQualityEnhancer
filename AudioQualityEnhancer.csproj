@@ -9,4 +9,11 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Temp\**\*" />
+    <EmbeddedResource Remove="Temp\**\*" />
+    <None Remove="Temp\**\*" />
+    <Page Remove="Temp\**\*" />
+  </ItemGroup>
+
 </Project>

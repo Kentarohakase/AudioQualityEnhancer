@@ -216,7 +216,14 @@ public sealed class FFprobeService
             element.TryGetProperty(propertyName, out var property) &&
             property.ValueKind != JsonValueKind.Null)
         {
-            return property.GetString();
+            return property.ValueKind switch
+            {
+                JsonValueKind.String => property.GetString(),
+                JsonValueKind.Number => property.GetRawText(),
+                JsonValueKind.True => bool.TrueString,
+                JsonValueKind.False => bool.FalseString,
+                _ => null
+            };
         }
 
         return null;
@@ -224,6 +231,14 @@ public sealed class FFprobeService
 
     private static long? TryGetLong(JsonElement element, string propertyName)
     {
+        if (element.ValueKind == JsonValueKind.Object &&
+            element.TryGetProperty(propertyName, out var property) &&
+            property.ValueKind == JsonValueKind.Number &&
+            property.TryGetInt64(out var numericValue))
+        {
+            return numericValue;
+        }
+
         var value = TryGetString(element, propertyName);
         return long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)
             ? result
@@ -232,6 +247,14 @@ public sealed class FFprobeService
 
     private static int? TryGetInt(JsonElement element, string propertyName)
     {
+        if (element.ValueKind == JsonValueKind.Object &&
+            element.TryGetProperty(propertyName, out var property) &&
+            property.ValueKind == JsonValueKind.Number &&
+            property.TryGetInt32(out var numericValue))
+        {
+            return numericValue;
+        }
+
         var value = TryGetString(element, propertyName);
         return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)
             ? result
@@ -240,6 +263,14 @@ public sealed class FFprobeService
 
     private static TimeSpan? TryGetDuration(JsonElement element, string propertyName)
     {
+        if (element.ValueKind == JsonValueKind.Object &&
+            element.TryGetProperty(propertyName, out var property) &&
+            property.ValueKind == JsonValueKind.Number &&
+            property.TryGetDouble(out var numericValue))
+        {
+            return TimeSpan.FromSeconds(numericValue);
+        }
+
         var value = TryGetString(element, propertyName);
         return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
             ? TimeSpan.FromSeconds(seconds)
