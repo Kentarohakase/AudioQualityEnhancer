@@ -10,6 +10,9 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
+    private AudioInfo? _outputInfo;
+    private AudioDiagnostics? _outputDiagnostics;
+    private AudioComparisonReport? _comparisonReport;
     private AudioStreamInfo? _selectedAudioStream;
     private string _outputPath = string.Empty;
     private string _errorMessage = string.Empty;
@@ -67,6 +70,38 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
     }
 
     public string ScoreDisplay => AnalysisReport?.ScoreDisplay ?? "-";
+
+    public AudioInfo? OutputInfo
+    {
+        get => _outputInfo;
+        private set => SetProperty(ref _outputInfo, value);
+    }
+
+    public AudioDiagnostics? OutputDiagnostics
+    {
+        get => _outputDiagnostics;
+        private set => SetProperty(ref _outputDiagnostics, value);
+    }
+
+    public AudioComparisonReport? ComparisonReport
+    {
+        get => _comparisonReport;
+        private set
+        {
+            if (SetProperty(ref _comparisonReport, value))
+            {
+                OnPropertyChanged(nameof(HasComparisonReport));
+                OnPropertyChanged(nameof(ValidationStatusDisplay));
+                OnPropertyChanged(nameof(HasComparisonWarnings));
+            }
+        }
+    }
+
+    public bool HasComparisonReport => ComparisonReport is not null;
+
+    public bool HasComparisonWarnings => ComparisonReport?.HasWarningsOrErrors == true;
+
+    public string ValidationStatusDisplay => ComparisonReport?.StatusText ?? "-";
 
     public AudioStreamInfo? SelectedAudioStream
     {
@@ -141,6 +176,33 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
         AnalysisReport = value;
     }
 
+    public void SetOutputInfo(AudioInfo? value)
+    {
+        if (ReferenceEquals(_outputInfo, value))
+        {
+            return;
+        }
+
+        _outputInfo?.Dispose();
+        OutputInfo = value;
+    }
+
+    public void SetOutputDiagnostics(AudioDiagnostics? value)
+    {
+        if (ReferenceEquals(_outputDiagnostics, value))
+        {
+            return;
+        }
+
+        _outputDiagnostics?.Dispose();
+        OutputDiagnostics = value;
+    }
+
+    public void SetComparisonReport(AudioComparisonReport? value)
+    {
+        ComparisonReport = value;
+    }
+
     public bool HasMultipleAudioStreams => AudioInfo?.HasMultipleAudioStreams == true;
 
     public void SelectAudioStream(AudioStreamInfo? audioStream)
@@ -154,17 +216,23 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
         SetAudioInfo(selectedInfo);
         SetAudioDiagnostics(null);
         SetAnalysisReport(null);
+        SetOutputInfo(null);
+        SetOutputDiagnostics(null);
+        SetComparisonReport(null);
     }
 
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(StatusDisplay));
+        OnPropertyChanged(nameof(ValidationStatusDisplay));
     }
 
     public void Dispose()
     {
         _audioInfo?.Dispose();
         _audioDiagnostics?.Dispose();
+        _outputInfo?.Dispose();
+        _outputDiagnostics?.Dispose();
     }
 
     private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

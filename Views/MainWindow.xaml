@@ -238,6 +238,7 @@
                                     <DataGridTextColumn Header="{Binding [Field_File], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding FileName}" Width="*" />
                                     <DataGridTextColumn Header="{Binding [Field_Status], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding StatusDisplay}" Width="105" />
                                     <DataGridTextColumn Header="{Binding [Field_ScoreShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ScoreDisplay}" Width="72" />
+                                    <DataGridTextColumn Header="{Binding [Field_ResultCheckShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ValidationStatusDisplay}" Width="92" />
                                     <DataGridTextColumn Header="{Binding [Field_Progress], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ProgressDisplay}" Width="78" />
                                     <DataGridTextColumn Header="{Binding [Field_Message], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ErrorMessage}" Width="1.2*" />
                                 </DataGrid.Columns>
@@ -534,10 +535,16 @@
 
                             <CheckBox Content="{Binding [Checkbox_SaveLog], Source={x:Static loc:LocalizationService.Instance}}"
                                       IsChecked="{Binding SaveLogFile}"
+                                      Margin="0,0,0,8" />
+
+                            <CheckBox Content="{Binding [Checkbox_SaveReport], Source={x:Static loc:LocalizationService.Instance}}"
+                                      IsChecked="{Binding SaveReportFile}"
                                       Margin="0,0,0,12" />
 
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="12" />
                                     <ColumnDefinition Width="*" />
@@ -548,6 +555,9 @@
                                 <Button Grid.Column="2"
                                         Content="{Binding [Button_OpenLastOutput], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding OpenLastOutputCommand}" />
+                                <Button Grid.Column="4"
+                                        Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenLastReportCommand}" />
                             </Grid>
 
                             <TextBlock Text="{Binding [Field_CurrentFileProgress], Source={x:Static loc:LocalizationService.Instance}}"
@@ -593,6 +603,72 @@
                                         Content="{Binding [Button_Cancel], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding CancelCommand}" />
                             </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionBorderStyle}"
+                            Visibility="{Binding HasComparisonReport, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [Section_ResultValidation], Source={x:Static loc:LocalizationService.Instance}}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12" />
+
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Text="{Binding ComparisonReport.StatusText}"
+                                           FontSize="15"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ComparisonReport.Summary}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ComparisonReport.OutputPathDisplay}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Margin="0,6,0,0" />
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding [Section_ResultFindings], Source={x:Static loc:LocalizationService.Instance}}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding ComparisonReport.Findings}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,0,0,8">
+                                            <TextBlock DockPanel.Dock="Left"
+                                                       Text="{Binding SeverityDisplay}"
+                                                       Style="{StaticResource InsightSeverityBadgeStyle}" />
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Message}"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="{Binding [Section_ResultMetrics], Source={x:Static loc:LocalizationService.Instance}}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,4,0,6" />
+                            <DataGrid ItemsSource="{Binding ComparisonReport.Metrics}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      IsReadOnly="True"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      MinHeight="160"
+                                      MaxHeight="240">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{Binding [Field_Metric], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding Label}" Width="*" />
+                                    <DataGridTextColumn Header="{Binding [Field_Source], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding SourceValue}" Width="*" />
+                                    <DataGridTextColumn Header="{Binding [Field_Output], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding OutputValue}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
                         </StackPanel>
                     </Border>
 

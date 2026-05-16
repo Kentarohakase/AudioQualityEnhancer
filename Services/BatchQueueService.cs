@@ -64,6 +64,7 @@ public sealed class BatchQueueService
             Count(snapshot, BatchProcessingStatus.Ready),
             Count(snapshot, BatchProcessingStatus.Processing),
             Count(snapshot, BatchProcessingStatus.Done),
+            snapshot.Count(item => item.Status == BatchProcessingStatus.Done && item.ComparisonReport?.HasWarningsOrErrors == true),
             Count(snapshot, BatchProcessingStatus.Failed),
             Count(snapshot, BatchProcessingStatus.Cancelled));
     }

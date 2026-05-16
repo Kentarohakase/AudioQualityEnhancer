@@ -12,6 +12,8 @@ public sealed record AppSettings
 
     public bool SaveLogFile { get; init; } = true;
 
+    public bool SaveReportFile { get; init; } = true;
+
     public bool EnableSpeechCompression { get; init; } = false;
 
     public bool EnableSpeechPresenceBoost { get; init; } = true;

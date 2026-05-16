@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added post-export result validation with before/after technical measurements, queue warnings and optional Markdown reports.
+
 ## 0.8.8 - 2026-05-17
 
 ### Added

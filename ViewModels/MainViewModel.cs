@@ -23,6 +23,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioDiagnosticsService _audioDiagnosticsService;
     private readonly AudioAnalysisInsightService _audioAnalysisInsightService;
     private readonly AudioProcessingService _audioProcessingService;
+    private readonly AudioValidationService _audioValidationService;
+    private readonly QualityReportService _qualityReportService;
     private readonly BatchQueueService _batchQueueService;
     private readonly SettingsService _settingsService;
     private readonly AsyncRelayCommand _selectFileCommand;
@@ -37,6 +39,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _stopPreviewCommand;
     private readonly RelayCommand _openOutputFolderCommand;
     private readonly RelayCommand _openLastOutputCommand;
+    private readonly RelayCommand _openLastReportCommand;
     private readonly RelayCommand _copyLogCommand;
     private readonly RelayCommand _clearLogCommand;
 
@@ -47,6 +50,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
+    private AudioComparisonReport? _comparisonReport;
     private BatchProcessingItem? _selectedBatchItem;
     private AudioStreamInfo? _selectedAudioStream;
     private AudioPreset? _selectedPreset;
@@ -61,10 +65,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _batchSummaryText;
     private LanguageOption _selectedLanguage = LanguageOption.German;
     private string _lastOutputPath = string.Empty;
+    private string _lastReportPath = string.Empty;
     private double _progressValue;
     private double _overallProgressValue;
     private bool _isBusy;
     private bool _saveLogFile = true;
+    private bool _saveReportFile = true;
     private bool _enableSpeechCompression;
     private bool _enableSpeechPresenceBoost = true;
     private bool _useTwoPassLoudness = true;
@@ -97,6 +103,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
         _audioAnalysisInsightService = new AudioAnalysisInsightService();
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
+        _audioValidationService = new AudioValidationService(_ffprobeService, _audioDiagnosticsService, _logService);
+        _qualityReportService = new QualityReportService();
         _batchQueueService = new BatchQueueService(_fileNameService);
         _settingsService = App.SettingsService;
 
@@ -128,6 +136,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _stopPreviewCommand = new RelayCommand(StopPreview);
         _openOutputFolderCommand = new RelayCommand(OpenOutputFolder, () => Directory.Exists(OutputDirectory));
         _openLastOutputCommand = new RelayCommand(OpenLastOutput, () => File.Exists(LastOutputPath));
+        _openLastReportCommand = new RelayCommand(OpenLastReport, () => File.Exists(LastReportPath));
         _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
         _clearLogCommand = new RelayCommand(ClearLog, () => !IsBusy && !string.IsNullOrWhiteSpace(LogText));
 
@@ -145,6 +154,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             ? settings.OutputDirectory
             : GetDefaultOutputDirectory();
         SaveLogFile = settings.SaveLogFile;
+        SaveReportFile = settings.SaveReportFile;
         EnableSpeechCompression = settings.EnableSpeechCompression;
         EnableSpeechPresenceBoost = settings.EnableSpeechPresenceBoost;
         UseTwoPassLoudness = settings.UseTwoPassLoudness;
@@ -160,6 +170,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             ExportFormatId = SelectedExportFormat?.Id ?? ExportFormat.Flac.Id,
             OutputDirectory = OutputDirectory,
             SaveLogFile = SaveLogFile,
+            SaveReportFile = SaveReportFile,
             EnableSpeechCompression = EnableSpeechCompression,
             EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
             UseTwoPassLoudness = UseTwoPassLoudness,
@@ -218,6 +229,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand OpenOutputFolderCommand => _openOutputFolderCommand;
 
     public ICommand OpenLastOutputCommand => _openLastOutputCommand;
+
+    public ICommand OpenLastReportCommand => _openLastReportCommand;
 
     public ICommand CopyLogCommand => _copyLogCommand;
 
@@ -291,6 +304,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasAnalysisReport => AnalysisReport is not null;
+
+    public AudioComparisonReport? ComparisonReport
+    {
+        get => _comparisonReport;
+        private set
+        {
+            if (SetProperty(ref _comparisonReport, value))
+            {
+                OnPropertyChanged(nameof(HasComparisonReport));
+            }
+        }
+    }
+
+    public bool HasComparisonReport => ComparisonReport is not null;
 
     public BatchProcessingItem? SelectedBatchItem
     {
@@ -434,6 +461,19 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public string LastReportPath
+    {
+        get => _lastReportPath;
+        private set
+        {
+            if (SetProperty(ref _lastReportPath, value))
+            {
+                OnPropertyChanged(nameof(HasReportFile));
+                RaiseCommandStates();
+            }
+        }
+    }
+
     public double ProgressValue
     {
         get => _progressValue;
@@ -462,6 +502,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _saveLogFile;
         set => SetProperty(ref _saveLogFile, value);
+    }
+
+    public bool SaveReportFile
+    {
+        get => _saveReportFile;
+        set => SetProperty(ref _saveReportFile, value);
     }
 
     public bool EnableSpeechCompression
@@ -560,6 +606,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasOutputPreview => File.Exists(LastOutputPath);
 
+    public bool HasReportFile => File.Exists(LastReportPath);
+
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -612,6 +660,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             _logService.Clear();
             LastOutputPath = string.Empty;
+            LastReportPath = string.Empty;
             OverallProgressValue = 0;
         }
 
@@ -753,6 +802,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             AudioInfo = null;
             AudioDiagnostics = null;
+            ComparisonReport = null;
             ProgressValue = 0;
         }
 
@@ -773,6 +823,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 AudioInfo = item.AudioInfo;
                 AudioDiagnostics = item.AudioDiagnostics;
                 AnalysisReport = item.AnalysisReport;
+                ComparisonReport = item.ComparisonReport;
                 SelectedAudioStream = item.SelectedAudioStream;
             }
 
@@ -797,6 +848,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 AudioInfo = item.AudioInfo;
                 AudioDiagnostics = item.AudioDiagnostics;
                 AnalysisReport = item.AnalysisReport;
+                ComparisonReport = item.ComparisonReport;
                 SelectedAudioStream = item.SelectedAudioStream;
             }
 
@@ -863,10 +915,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
                 if (result.IsSuccess && result.Value is not null)
                 {
-                    item.Progress = 100;
-                    item.Status = BatchProcessingStatus.Done;
                     item.OutputPath = result.Value.OutputPath ?? string.Empty;
                     LastOutputPath = item.OutputPath;
+                    await ValidateProcessedItemAsync(item, _processingCancellation.Token);
+
+                    if (_processingCancellation.IsCancellationRequested)
+                    {
+                        item.Status = BatchProcessingStatus.Cancelled;
+                        item.ErrorMessage = LocalizationService.Instance["Error_ProcessingCancelled"];
+                        SetProcessingPhase("Phase_Cancel");
+                        SetStatus("Status_Cancelling");
+                        _logService.Warning(item.ErrorMessage);
+                        break;
+                    }
+
+                    item.Progress = 100;
+                    item.Status = BatchProcessingStatus.Done;
+                    ComparisonReport = item.ComparisonReport;
                     _logService.Info(LocalizationService.Instance.Format("Log_BatchItemDoneFormat", item.FileName));
                     continue;
                 }
@@ -904,6 +969,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 var logPath = await _logService.SaveAsync(OutputDirectory, "audio-quality-enhancer-batch", CancellationToken.None);
                 _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
             }
+
+            if (SaveReportFile)
+            {
+                await SaveQualityReportAsync(CancellationToken.None);
+            }
         }
         finally
         {
@@ -920,6 +990,73 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SetProcessingPhase("Phase_Cancel");
         _processingCancellation?.Cancel();
         _diagnosticsCancellation?.Cancel();
+    }
+
+    private async Task ValidateProcessedItemAsync(BatchProcessingItem item, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(item.OutputPath))
+        {
+            return;
+        }
+
+        SetProcessingPhase("Phase_ResultValidation");
+        SetStatus("Status_ResultValidationRunning");
+        _logService.Info(LocalizationService.Instance.Format("Log_ValidationQueueItemFormat", item.FileName));
+
+        var result = await _audioValidationService.ValidateAsync(
+            BuildOptionsForItem(item),
+            item.OutputPath,
+            item.AudioDiagnostics,
+            cancellationToken);
+
+        var report = result.Value;
+        if (report is not null)
+        {
+            item.SetOutputInfo(report.OutputInfo);
+            item.SetOutputDiagnostics(report.OutputDiagnostics);
+            item.SetComparisonReport(report);
+
+            if (ReferenceEquals(item, SelectedBatchItem))
+            {
+                ComparisonReport = item.ComparisonReport;
+            }
+
+            if (report.HasWarningsOrErrors)
+            {
+                item.ErrorMessage = report.StatusText;
+                _logService.Warning(LocalizationService.Instance.Format("Log_ValidationWarningsFormat", item.FileName, report.StatusText));
+            }
+        }
+
+        if (result.IsFailure && !cancellationToken.IsCancellationRequested)
+        {
+            item.ErrorMessage = result.ErrorMessage ?? LocalizationService.Instance["Status_ResultValidationFailed"];
+            _logService.Warning(LocalizationService.Instance.Format("Log_ValidationFailedFormat", item.FileName, item.ErrorMessage));
+        }
+    }
+
+    private async Task SaveQualityReportAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedPreset is null || SelectedExportFormat is null)
+        {
+            return;
+        }
+
+        var result = await _qualityReportService.SaveBatchReportAsync(
+            OutputDirectory,
+            BatchItems,
+            SelectedPreset,
+            SelectedExportFormat,
+            cancellationToken);
+
+        if (result.IsSuccess && result.Value is not null)
+        {
+            LastReportPath = result.Value;
+            _logService.Info(LocalizationService.Instance.Format("Log_ReportSavedFormat", result.Value));
+            return;
+        }
+
+        _logService.Warning(result.ErrorMessage ?? LocalizationService.Instance["Error_ReportSaveFailed"]);
     }
 
     private void RemoveSelectedFile()
@@ -1029,6 +1166,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         OpenPath(LastOutputPath, "Status_OutputFileOpened");
+    }
+
+    private void OpenLastReport()
+    {
+        if (!File.Exists(LastReportPath))
+        {
+            SetStatus("Status_ReportFileMissing");
+            return;
+        }
+
+        OpenPath(LastReportPath, "Status_ReportFileOpened");
     }
 
     private void CopyLog()
@@ -1274,6 +1422,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         AudioInfo = item.AudioInfo;
         AudioDiagnostics = item.AudioDiagnostics;
         AnalysisReport = item.AnalysisReport;
+        ComparisonReport = item.ComparisonReport;
         UpdateFilterDetails();
         SetStatus("Status_AudioStreamSelectedFormat", audioStream.DisplayName);
     }
@@ -1324,6 +1473,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             AudioInfo = item?.AudioInfo;
             AudioDiagnostics = item?.AudioDiagnostics;
             AnalysisReport = item?.AnalysisReport;
+            ComparisonReport = item?.ComparisonReport;
             SelectedAudioStream = item?.SelectedAudioStream;
             ProgressValue = item?.Progress ?? 0;
         }
@@ -1348,6 +1498,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 summary.Ready,
                 summary.Processing,
                 summary.Done,
+                summary.DoneWithWarnings,
                 summary.Failed,
                 summary.Cancelled)
             : LocalizationService.Instance["BatchSummary_Empty"];
@@ -1418,6 +1569,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         UpdateBatchSummary();
         OnPropertyChanged(nameof(AvailableAudioStreams));
         OnPropertyChanged(nameof(SelectedAudioStream));
+        OnPropertyChanged(nameof(ComparisonReport));
     }
 
     private void RefreshLocalizedState()
@@ -1495,6 +1647,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _stopPreviewCommand.RaiseCanExecuteChanged();
         _openOutputFolderCommand.RaiseCanExecuteChanged();
         _openLastOutputCommand.RaiseCanExecuteChanged();
+        _openLastReportCommand.RaiseCanExecuteChanged();
         _copyLogCommand.RaiseCanExecuteChanged();
         _clearLogCommand.RaiseCanExecuteChanged();
     }

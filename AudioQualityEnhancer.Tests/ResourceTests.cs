@@ -72,8 +72,43 @@ public sealed partial class ResourceTests
         values.AddRange(report.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
         values.AddRange(report.Recommendations.Select(r => r.Text));
 
+        using var outputInfo = new AudioInfo
+        {
+            Codec = "flac",
+            BitRate = 900_000,
+            SampleRate = 48_000,
+            Channels = 2,
+            Duration = TimeSpan.FromSeconds(30),
+            Container = "flac",
+            FileSizeBytes = 2048
+        };
+        using var outputDiagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -14,
+            TruePeakDb = -1.5,
+            MaxVolumeDb = -1.6
+        };
+        var comparisonReport = AudioValidationService.BuildReport(
+            new ProcessingOptions
+            {
+                SourceInfo = reportInfo,
+                Preset = AudioPreset.Music,
+                ExportFormat = ExportFormat.Flac
+            },
+            reportInfo,
+            outputInfo,
+            sourceDiagnostics: null,
+            outputDiagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: "output.flac");
+        values.Add(comparisonReport.StatusText);
+        values.Add(comparisonReport.Summary);
+        values.AddRange(comparisonReport.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
+        values.AddRange(comparisonReport.Metrics.SelectMany(m => new[] { m.Label, m.SourceValue, m.OutputValue }));
+
         using var batchItem = new BatchProcessingItem("track.mp3");
         values.Add(batchItem.StatusDisplay);
+        values.Add(batchItem.ValidationStatusDisplay);
         batchItem.Status = BatchProcessingStatus.Ready;
         values.Add(batchItem.StatusDisplay);
         batchItem.Status = BatchProcessingStatus.Failed;

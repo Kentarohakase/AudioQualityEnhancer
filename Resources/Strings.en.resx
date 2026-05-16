@@ -14,6 +14,9 @@
   <data name="Section_QualityLimits" xml:space="preserve"><value>Quality limits</value></data>
   <data name="Section_Processing" xml:space="preserve"><value>Processing</value></data>
   <data name="Section_Output" xml:space="preserve"><value>Output</value></data>
+  <data name="Section_ResultValidation" xml:space="preserve"><value>Result check</value></data>
+  <data name="Section_ResultFindings" xml:space="preserve"><value>Result notes</value></data>
+  <data name="Section_ResultMetrics" xml:space="preserve"><value>Before/after values</value></data>
   <data name="Section_Log" xml:space="preserve"><value>Log</value></data>
 
   <data name="Hint_DropFile" xml:space="preserve"><value>Drop file here</value></data>
@@ -35,6 +38,7 @@
   <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Advanced analysis</value></data>
   <data name="Button_OpenOutputFolder" xml:space="preserve"><value>Open folder</value></data>
   <data name="Button_OpenLastOutput" xml:space="preserve"><value>Open last file</value></data>
+  <data name="Button_OpenLastReport" xml:space="preserve"><value>Open report</value></data>
   <data name="Button_CopyLog" xml:space="preserve"><value>Copy log</value></data>
   <data name="Button_ClearLog" xml:space="preserve"><value>Clear log</value></data>
 
@@ -61,8 +65,13 @@
   <data name="Field_File" xml:space="preserve"><value>File</value></data>
   <data name="Field_Status" xml:space="preserve"><value>Status</value></data>
   <data name="Field_ScoreShort" xml:space="preserve"><value>Score</value></data>
+  <data name="Field_ResultCheckShort" xml:space="preserve"><value>Check</value></data>
   <data name="Field_Progress" xml:space="preserve"><value>Progress</value></data>
   <data name="Field_Message" xml:space="preserve"><value>Message</value></data>
+  <data name="Field_Output" xml:space="preserve"><value>Output</value></data>
+  <data name="Field_OutputFile" xml:space="preserve"><value>Output file</value></data>
+  <data name="Field_ResultStatus" xml:space="preserve"><value>Result status</value></data>
+  <data name="Field_Metric" xml:space="preserve"><value>Metric</value></data>
   <data name="Field_SelectedFile" xml:space="preserve"><value>Selected file</value></data>
   <data name="Field_CurrentFileProgress" xml:space="preserve"><value>Current file</value></data>
   <data name="Field_OverallProgress" xml:space="preserve"><value>Overall progress</value></data>
@@ -76,6 +85,7 @@
   <data name="Checkbox_SpeechCompression" xml:space="preserve"><value>Light speech compression</value></data>
   <data name="Checkbox_SpeechPresenceBoost" xml:space="preserve"><value>Light intelligibility boost</value></data>
   <data name="Checkbox_SaveLog" xml:space="preserve"><value>Also save log file</value></data>
+  <data name="Checkbox_SaveReport" xml:space="preserve"><value>Save result report</value></data>
 
   <data name="Footer_Disclaimer" xml:space="preserve"><value>Original files are never overwritten. Stream copy picks a compatible container; otherwise the chosen parameters are used for export.</value></data>
 
@@ -99,6 +109,10 @@
   <data name="Status_OutputFolderMissing" xml:space="preserve"><value>The output folder does not exist.</value></data>
   <data name="Status_OutputFileOpened" xml:space="preserve"><value>Last output file opened.</value></data>
   <data name="Status_OutputFileMissing" xml:space="preserve"><value>There is no output file to open yet.</value></data>
+  <data name="Status_ReportFileOpened" xml:space="preserve"><value>Result report opened.</value></data>
+  <data name="Status_ReportFileMissing" xml:space="preserve"><value>There is no result report to open yet.</value></data>
+  <data name="Status_ResultValidationRunning" xml:space="preserve"><value>Checking result...</value></data>
+  <data name="Status_ResultValidationFailed" xml:space="preserve"><value>Result check failed.</value></data>
   <data name="Status_LogCopied" xml:space="preserve"><value>Log copied to clipboard.</value></data>
   <data name="Status_LogCleared" xml:space="preserve"><value>Log cleared.</value></data>
   <data name="Status_LogEmpty" xml:space="preserve"><value>The log is empty.</value></data>
@@ -119,11 +133,12 @@
   <data name="BatchStatus_Failed" xml:space="preserve"><value>Failed</value></data>
   <data name="BatchStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
   <data name="BatchSummary_Empty" xml:space="preserve"><value>No files in the queue yet.</value></data>
-  <data name="BatchSummary_Format" xml:space="preserve"><value>{0} file(s) | ready: {1} | running: {2} | done: {3} | failed: {4} | cancelled: {5}</value></data>
+  <data name="BatchSummary_Format" xml:space="preserve"><value>{0} file(s) | ready: {1} | running: {2} | done: {3} | with warnings: {4} | failed: {5} | cancelled: {6}</value></data>
 
   <data name="Phase_Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="Phase_Analysis" xml:space="preserve"><value>Analysis</value></data>
   <data name="Phase_AdvancedAnalysis" xml:space="preserve"><value>Advanced analysis</value></data>
+  <data name="Phase_ResultValidation" xml:space="preserve"><value>Result check</value></data>
   <data name="Phase_Error" xml:space="preserve"><value>Error</value></data>
   <data name="Phase_Start" xml:space="preserve"><value>Start</value></data>
   <data name="Phase_Done" xml:space="preserve"><value>Done</value></data>
@@ -169,6 +184,12 @@
   <data name="Log_AnalyzingSourceFFprobe" xml:space="preserve"><value>Analyzing source with FFprobe...</value></data>
   <data name="Log_AdvancedAnalysisStarting" xml:space="preserve"><value>Starting advanced analysis with FFmpeg...</value></data>
   <data name="Log_AdvancedAnalysisCompleteFormat" xml:space="preserve"><value>Advanced analysis: loudness {0}, true peak {1}.</value></data>
+  <data name="Log_ValidationStartingFormat" xml:space="preserve"><value>Checking result file: {0}</value></data>
+  <data name="Log_ValidationCompleteFormat" xml:space="preserve"><value>Result check complete: {0}</value></data>
+  <data name="Log_ValidationQueueItemFormat" xml:space="preserve"><value>Result check for {0}</value></data>
+  <data name="Log_ValidationWarningsFormat" xml:space="preserve"><value>Result check note for {0}: {1}</value></data>
+  <data name="Log_ValidationFailedFormat" xml:space="preserve"><value>Result check failed for {0}: {1}</value></data>
+  <data name="Log_ReportSavedFormat" xml:space="preserve"><value>Result report saved: {0}</value></data>
 
   <data name="Error_FFmpegUnavailable" xml:space="preserve"><value>FFmpeg is not available.</value></data>
   <data name="Error_FFprobeUnavailable" xml:space="preserve"><value>FFprobe is not available.</value></data>
@@ -190,6 +211,10 @@
   <data name="Error_FFprobeDataUnreadable" xml:space="preserve"><value>FFprobe data could not be read.</value></data>
   <data name="Error_AnalysisFailed" xml:space="preserve"><value>An unexpected error occurred during analysis.</value></data>
   <data name="Error_SourceAnalysisFailed" xml:space="preserve"><value>The source could not be analyzed.</value></data>
+  <data name="Error_OutputAnalysisFailed" xml:space="preserve"><value>The output file could not be analyzed.</value></data>
+  <data name="Error_OutputFileMissingValidation" xml:space="preserve"><value>The output file was not found.</value></data>
+  <data name="Error_OutputFileEmptyValidation" xml:space="preserve"><value>The output file is empty.</value></data>
+  <data name="Error_ReportSaveFailed" xml:space="preserve"><value>The result report could not be saved.</value></data>
   <data name="Error_PreparationFailed" xml:space="preserve"><value>Processing could not be prepared.</value></data>
   <data name="Error_LoudnessMeasurementFailed" xml:space="preserve"><value>The loudness measurement pass failed.</value></data>
   <data name="Error_TargetExists" xml:space="preserve"><value>The target file already exists. Please start processing again.</value></data>
@@ -263,6 +288,44 @@
   <data name="AnalysisRecommendation_VeryQuiet" xml:space="preserve"><value>Normalize carefully and listen back to check whether noise became distractingly louder.</value></data>
   <data name="AnalysisRecommendation_AlreadyLoud" xml:space="preserve"><value>Avoid extra compression. A lossless export preserves the result but does not repair existing overprocessing.</value></data>
   <data name="AnalysisRecommendation_AdvancedAnalysisRecommended" xml:space="preserve"><value>Run advanced analysis before deciding on stronger processing for critical material.</value></data>
+
+  <data name="ValidationStatus_Passed" xml:space="preserve"><value>Passed</value></data>
+  <data name="ValidationStatus_Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="ValidationStatus_Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="ValidationSummary_Passed" xml:space="preserve"><value>The generated file looks technically plausible. The check still does not replace listening.</value></data>
+  <data name="ValidationSummary_Warning" xml:space="preserve"><value>The file was generated, but there are technical notes worth checking before sharing it.</value></data>
+  <data name="ValidationSummary_Critical" xml:space="preserve"><value>The result check found a clear problem. Please check the file and settings.</value></data>
+  <data name="ValidationFinding_NoIssues_Title" xml:space="preserve"><value>No notable result values</value></data>
+  <data name="ValidationFinding_NoIssues_Message" xml:space="preserve"><value>The available measurements do not show clear export problems.</value></data>
+  <data name="ValidationFinding_OutputMissing_Title" xml:space="preserve"><value>Output file missing</value></data>
+  <data name="ValidationFinding_OutputMissing_Message" xml:space="preserve"><value>The export was reported, but the output file is not present.</value></data>
+  <data name="ValidationFinding_OutputEmpty_Title" xml:space="preserve"><value>Output file is empty</value></data>
+  <data name="ValidationFinding_OutputEmpty_Message" xml:space="preserve"><value>The file was created, but it does not contain usable data.</value></data>
+  <data name="ValidationFinding_OutputUnreadable_Title" xml:space="preserve"><value>Output file unreadable</value></data>
+  <data name="ValidationFinding_OutputUnreadable_Message" xml:space="preserve"><value>FFprobe could not reliably read the generated file.</value></data>
+  <data name="ValidationFinding_DurationMismatch_Title" xml:space="preserve"><value>Duration differs</value></data>
+  <data name="ValidationFinding_DurationMismatch_Message" xml:space="preserve"><value>The output duration does not match the source cleanly. Check whether the beginning or end is missing.</value></data>
+  <data name="ValidationFinding_PotentialClipping_Title" xml:space="preserve"><value>Possible clipping in result</value></data>
+  <data name="ValidationFinding_PotentialClipping_Message" xml:space="preserve"><value>The output peak is very close to 0 dBFS. The result may be clipped or too heavily limited.</value></data>
+  <data name="ValidationFinding_LowHeadroom_Title" xml:space="preserve"><value>Low headroom in result</value></data>
+  <data name="ValidationFinding_LowHeadroom_Message" xml:space="preserve"><value>The output is close to the digital ceiling. There is little room for further processing.</value></data>
+  <data name="ValidationFinding_LoudnessOffTarget_Title" xml:space="preserve"><value>Target loudness missed</value></data>
+  <data name="ValidationFinding_LoudnessOffTarget_Message" xml:space="preserve"><value>The measured loudness is clearly outside the selected preset target.</value></data>
+  <data name="ValidationFinding_LossyToLossless_Title" xml:space="preserve"><value>Lossy source in lossless format</value></data>
+  <data name="ValidationFinding_LossyToLossless_Message" xml:space="preserve"><value>WAV or FLAC preserve the processed result losslessly, but they do not restore details already lost.</value></data>
+  <data name="ValidationFinding_StreamCopyMetadataOnly_Title" xml:space="preserve"><value>Stream copy checked technically</value></data>
+  <data name="ValidationFinding_StreamCopyMetadataOnly_Message" xml:space="preserve"><value>Lossless extraction does not alter the sound; only container and metadata were checked.</value></data>
+  <data name="ValidationFinding_OutputDiagnosticsMissing_Title" xml:space="preserve"><value>Post-analysis incomplete</value></data>
+  <data name="ValidationFinding_OutputDiagnosticsMissing_Message" xml:space="preserve"><value>The output file was generated, but loudness and peak values could not be measured completely.</value></data>
+
+  <data name="Report_Title" xml:space="preserve"><value>Audio Quality Enhancer result report</value></data>
+  <data name="Report_GeneratedAt" xml:space="preserve"><value>Generated at</value></data>
+  <data name="Report_Disclaimer" xml:space="preserve"><value>This report describes technical measurements. It does not promise restoration of lost audio information and does not replace listening.</value></data>
+  <data name="Report_Summary" xml:space="preserve"><value>Summary</value></data>
+  <data name="Report_DoneWithWarnings" xml:space="preserve"><value>Done with warnings</value></data>
+  <data name="Report_NoValidation" xml:space="preserve"><value>No result check is available for this file.</value></data>
+  <data name="Report_SourceValue" xml:space="preserve"><value>Source</value></data>
+  <data name="Report_OutputValue" xml:space="preserve"><value>Output</value></data>
 
   <data name="Preset_Music_Name" xml:space="preserve"><value>Enhance music</value></data>
   <data name="Preset_Music_Description" xml:space="preserve"><value>Loudness normalization around -14 LUFS with a -1.5 dB true peak limit.</value></data>

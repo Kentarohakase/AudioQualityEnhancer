@@ -15,6 +15,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
 - Original und Ergebnis direkt anhören
+- Ergebnis nach dem Export technisch prüfen und als Bericht speichern
 - Ausgabeordner, letzte Ausgabedatei und Log direkt aus der App öffnen oder kopieren
 - Als WAV, FLAC, MP3, AAC, Opus oder Premiere-Pro-Profil exportieren
 - Mehrere Dateien in einer Warteschlange nacheinander verarbeiten
@@ -53,6 +54,12 @@ Die App bewertet diese Daten zusätzlich mit einem einfachen Score, technischen 
 Du kannst mehrere Dateien per Button oder Drag and Drop hinzufügen. Die App analysiert jede Datei und zeigt sie in einer Warteschlange an. Beim Start werden die bereiten Dateien nacheinander mit demselben Preset, Ausgabeformat und Ausgabeordner verarbeitet.
 
 Wenn eine Datei fehlschlägt, läuft die Warteschlange weiter. Abbrechen stoppt nur die laufende Verarbeitung; noch offene Dateien bleiben in der Liste.
+
+## Ergebnisprüfung
+
+Nach einem Export prüft die App die erzeugte Datei noch einmal. Sie vergleicht technische Werte wie Dauer, Codec, Sample Rate, Lautheit und Peaks mit der Quelle. Dadurch sieht man schneller, ob der Export plausibel ist oder ob zum Beispiel Clipping, wenig Headroom oder eine auffällige Dauerabweichung entstanden ist.
+
+Diese Prüfung bewertet Messwerte, nicht den subjektiven Klang. Sie kann helfen, Fehler zu finden, macht aus schlechtem Ausgangsmaterial aber keine verlorenen Details wieder hörbar.
 
 ## Profile
 
@@ -127,7 +134,7 @@ dotnet test
 dotnet run
 ```
 
-Die Tests prüfen Parser, Dateilogik, Batch-Logik, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
+Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
 
 ## Release bauen
 
