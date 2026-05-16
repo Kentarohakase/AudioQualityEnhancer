@@ -73,6 +73,14 @@ dotnet build
 dotnet run
 ```
 
+## Release EXE erstellen
+
+```powershell
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish/win-x64
+```
+
+Die erzeugte EXE liegt danach in `publish/win-x64`. FFmpeg und FFprobe müssen weiterhin installiert sein oder bewusst neben die EXE gelegt werden.
+
 ## Nutzung
 
 1. Audio- oder Videodatei auswählen oder per Drag and Drop ablegen.
@@ -193,6 +201,10 @@ git branch -M main
 git remote add origin https://github.com/Kentarohakase/AudioQualityEnhancer.git
 git push -u origin main
 ```
+
+## Lizenz
+
+Dieses Projekt steht unter der MIT-Lizenz. Details stehen in `LICENSE`.
 
 ## Bekannte Grenzen
 
