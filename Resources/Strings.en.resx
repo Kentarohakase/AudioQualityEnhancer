@@ -18,13 +18,19 @@
 
   <data name="Hint_DropFile" xml:space="preserve"><value>Drop file here</value></data>
   <data name="Hint_DropFileOrSelect" xml:space="preserve"><value>or use the button to select one</value></data>
+  <data name="Hint_DropFiles" xml:space="preserve"><value>Drop files here</value></data>
+  <data name="Hint_DropFilesOrSelect" xml:space="preserve"><value>or use the button to select multiple files</value></data>
 
   <data name="Button_SelectFile" xml:space="preserve"><value>Select file</value></data>
+  <data name="Button_SelectFiles" xml:space="preserve"><value>Add files</value></data>
+  <data name="Button_RemoveSelectedFile" xml:space="preserve"><value>Remove selected</value></data>
+  <data name="Button_ClearFinishedFiles" xml:space="preserve"><value>Clear finished</value></data>
   <data name="Button_PlaySource" xml:space="preserve"><value>Play original</value></data>
   <data name="Button_PlayOutput" xml:space="preserve"><value>Play result</value></data>
   <data name="Button_StopPreview" xml:space="preserve"><value>Stop</value></data>
   <data name="Button_SelectFolder" xml:space="preserve"><value>Choose folder</value></data>
   <data name="Button_Start" xml:space="preserve"><value>Start processing</value></data>
+  <data name="Button_StartQueue" xml:space="preserve"><value>Start queue</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Advanced analysis</value></data>
   <data name="Button_OpenOutputFolder" xml:space="preserve"><value>Open folder</value></data>
@@ -52,6 +58,14 @@
   <data name="Field_MeanVolume" xml:space="preserve"><value>Average</value></data>
   <data name="Field_LoudnessRange" xml:space="preserve"><value>Dynamics</value></data>
   <data name="Field_AnalysisScore" xml:space="preserve"><value>Score</value></data>
+  <data name="Field_File" xml:space="preserve"><value>File</value></data>
+  <data name="Field_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Field_ScoreShort" xml:space="preserve"><value>Score</value></data>
+  <data name="Field_Progress" xml:space="preserve"><value>Progress</value></data>
+  <data name="Field_Message" xml:space="preserve"><value>Message</value></data>
+  <data name="Field_SelectedFile" xml:space="preserve"><value>Selected file</value></data>
+  <data name="Field_CurrentFileProgress" xml:space="preserve"><value>Current file</value></data>
+  <data name="Field_OverallProgress" xml:space="preserve"><value>Overall progress</value></data>
   <data name="Section_AnalysisFindings" xml:space="preserve"><value>Findings</value></data>
   <data name="Section_AnalysisRecommendations" xml:space="preserve"><value>Recommendations</value></data>
   <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Measures loudness and peaks with FFmpeg. Long files may take a while.</value></data>
@@ -86,6 +100,23 @@
   <data name="Status_LogCopied" xml:space="preserve"><value>Log copied to clipboard.</value></data>
   <data name="Status_LogCleared" xml:space="preserve"><value>Log cleared.</value></data>
   <data name="Status_LogEmpty" xml:space="preserve"><value>The log is empty.</value></data>
+  <data name="Status_NoValidFilesAdded" xml:space="preserve"><value>No valid files were added.</value></data>
+  <data name="Status_BatchReadyFormat" xml:space="preserve"><value>{0} file(s) are ready for processing.</value></data>
+  <data name="Status_NoReadyFiles" xml:space="preserve"><value>There are no analyzed files ready to process.</value></data>
+  <data name="Status_BatchProcessingFormat" xml:space="preserve"><value>Processing {0} of {1}: {2}</value></data>
+  <data name="Status_BatchDoneFormat" xml:space="preserve"><value>Queue complete. Done: {0}, failed: {1}, cancelled: {2}.</value></data>
+  <data name="Status_BatchItemRemoved" xml:space="preserve"><value>File removed from the queue.</value></data>
+  <data name="Status_BatchFinishedCleared" xml:space="preserve"><value>Finished entries removed.</value></data>
+
+  <data name="BatchStatus_Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="BatchStatus_Analyzing" xml:space="preserve"><value>Analyzing</value></data>
+  <data name="BatchStatus_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="BatchStatus_Processing" xml:space="preserve"><value>Processing</value></data>
+  <data name="BatchStatus_Done" xml:space="preserve"><value>Done</value></data>
+  <data name="BatchStatus_Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="BatchStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="BatchSummary_Empty" xml:space="preserve"><value>No files in the queue yet.</value></data>
+  <data name="BatchSummary_Format" xml:space="preserve"><value>{0} file(s) | ready: {1} | running: {2} | done: {3} | failed: {4} | cancelled: {5}</value></data>
 
   <data name="Phase_Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="Phase_Analysis" xml:space="preserve"><value>Analysis</value></data>
@@ -106,6 +137,11 @@
 
   <data name="Log_PreviewStartedFormat" xml:space="preserve"><value>Preview started: {0}</value></data>
   <data name="Log_StartingProcessing" xml:space="preserve"><value>Starting processing.</value></data>
+  <data name="Log_BatchAddedFilesFormat" xml:space="preserve"><value>{0} file(s) added to the queue.</value></data>
+  <data name="Log_BatchSkippedFormat" xml:space="preserve"><value>Skipped file: {0}</value></data>
+  <data name="Log_BatchStartingFormat" xml:space="preserve"><value>Starting queue with {0} file(s).</value></data>
+  <data name="Log_BatchItemDoneFormat" xml:space="preserve"><value>Batch file complete: {0}</value></data>
+  <data name="Log_BatchItemFailedFormat" xml:space="preserve"><value>Batch file failed: {0} - {1}</value></data>
   <data name="Log_CheckingTools" xml:space="preserve"><value>Checking FFmpeg and FFprobe...</value></data>
   <data name="Log_FFmpegFound" xml:space="preserve"><value>FFmpeg was found.</value></data>
   <data name="Log_FFprobeFound" xml:space="preserve"><value>FFprobe was found.</value></data>

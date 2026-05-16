@@ -16,6 +16,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Original und Ergebnis direkt anhören
 - Ausgabeordner, letzte Ausgabedatei und Log direkt aus der App öffnen oder kopieren
 - Als WAV, FLAC, MP3, AAC, Opus oder Premiere-Pro-Profil exportieren
+- Mehrere Dateien in einer Warteschlange nacheinander verarbeiten
 - FFmpeg/FFprobe automatisch im App-Ordner, im `Tools`-Ordner oder im Windows `PATH` finden
 
 ## Was kann die App nicht?
@@ -45,6 +46,12 @@ Bei Videodateien wird aktuell die erste Audiospur verwendet.
 Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, wenig Headroom oder sehr leises Material.
 
 Die App bewertet diese Daten zusätzlich mit einem einfachen Score, technischen Hinweisen und Empfehlungen. Das hilft bei der Wahl eines sinnvollen Presets. Der Score bewertet technische Auffälligkeiten, nicht subjektive Klangqualität, und verspricht keine Wiederherstellung verlorener Details.
+
+## Batch-Verarbeitung
+
+Du kannst mehrere Dateien per Button oder Drag and Drop hinzufügen. Die App analysiert jede Datei und zeigt sie in einer Warteschlange an. Beim Start werden die bereiten Dateien nacheinander mit demselben Preset, Ausgabeformat und Ausgabeordner verarbeitet.
+
+Wenn eine Datei fehlschlägt, läuft die Warteschlange weiter. Abbrechen stoppt nur die laufende Verarbeitung; noch offene Dateien bleiben in der Liste.
 
 ## Profile
 
@@ -119,7 +126,7 @@ dotnet test
 dotnet run
 ```
 
-Die Tests prüfen Parser, Dateilogik, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
+Die Tests prüfen Parser, Dateilogik, Batch-Logik, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
 
 ## Release bauen
 

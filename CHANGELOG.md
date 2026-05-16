@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a batch queue for adding multiple files, reviewing their analysis and processing them sequentially with shared export settings.
+
 ## 0.7.0 - 2026-05-16
 
 ### Added

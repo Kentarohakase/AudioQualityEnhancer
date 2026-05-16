@@ -29,26 +29,35 @@ public partial class MainWindow : Window
 
     private async void MainWindow_OnDrop(object sender, System.Windows.DragEventArgs e)
     {
-        if (!IsSupportedFileDrop(e))
+        if (!HasFileDrop(e))
         {
             e.Handled = true;
             return;
         }
 
         var files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-        await _viewModel.LoadInputFileAsync(files[0]);
+        await _viewModel.LoadInputFilesAsync(files);
         e.Handled = true;
     }
 
     private bool IsSupportedFileDrop(System.Windows.DragEventArgs e)
     {
+        return GetDroppedFiles(e).Any(path => File.Exists(path) && _fileNameService.IsSupportedInputFile(path));
+    }
+
+    private static bool HasFileDrop(System.Windows.DragEventArgs e)
+    {
+        return GetDroppedFiles(e).Any(File.Exists);
+    }
+
+    private static IReadOnlyList<string> GetDroppedFiles(System.Windows.DragEventArgs e)
+    {
         if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
         {
-            return false;
+            return Array.Empty<string>();
         }
 
-        var files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-        return files.Length > 0 && File.Exists(files[0]) && _fileNameService.IsSupportedInputFile(files[0]);
+        return (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
     }
 
     protected override void OnClosed(EventArgs e)

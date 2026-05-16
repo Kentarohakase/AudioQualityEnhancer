@@ -17,15 +17,21 @@
   <data name="Section_Log" xml:space="preserve"><value>Log</value></data>
 
   <data name="Hint_DropFile" xml:space="preserve"><value>Datei hier ablegen</value></data>
+  <data name="Hint_DropFiles" xml:space="preserve"><value>Dateien hier ablegen</value></data>
+  <data name="Hint_DropFilesOrSelect" xml:space="preserve"><value>oder mehrere Dateien über den Button auswählen</value></data>
   <data name="Hint_DropFileOrSelect" xml:space="preserve"><value>oder über den Button auswählen</value></data>
 
   <data name="Button_SelectFile" xml:space="preserve"><value>Datei auswählen</value></data>
   <data name="Button_PlaySource" xml:space="preserve"><value>Original anhören</value></data>
   <data name="Button_PlayOutput" xml:space="preserve"><value>Ergebnis anhören</value></data>
+  <data name="Button_SelectFiles" xml:space="preserve"><value>Dateien hinzufügen</value></data>
+  <data name="Button_RemoveSelectedFile" xml:space="preserve"><value>Ausgewählte entfernen</value></data>
+  <data name="Button_ClearFinishedFiles" xml:space="preserve"><value>Fertige entfernen</value></data>
   <data name="Button_StopPreview" xml:space="preserve"><value>Stop</value></data>
   <data name="Button_SelectFolder" xml:space="preserve"><value>Ordner wählen</value></data>
   <data name="Button_Start" xml:space="preserve"><value>Verarbeitung starten</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="Button_StartQueue" xml:space="preserve"><value>Warteschlange starten</value></data>
   <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Erweiterte Analyse</value></data>
   <data name="Button_OpenOutputFolder" xml:space="preserve"><value>Ordner öffnen</value></data>
   <data name="Button_OpenLastOutput" xml:space="preserve"><value>Letzte Datei öffnen</value></data>
@@ -52,6 +58,14 @@
   <data name="Field_MeanVolume" xml:space="preserve"><value>Durchschnitt</value></data>
   <data name="Field_LoudnessRange" xml:space="preserve"><value>Dynamik</value></data>
   <data name="Field_AnalysisScore" xml:space="preserve"><value>Score</value></data>
+  <data name="Field_File" xml:space="preserve"><value>Datei</value></data>
+  <data name="Field_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Field_ScoreShort" xml:space="preserve"><value>Score</value></data>
+  <data name="Field_Progress" xml:space="preserve"><value>Fortschritt</value></data>
+  <data name="Field_Message" xml:space="preserve"><value>Meldung</value></data>
+  <data name="Field_SelectedFile" xml:space="preserve"><value>Ausgewählte Datei</value></data>
+  <data name="Field_CurrentFileProgress" xml:space="preserve"><value>Aktuelle Datei</value></data>
+  <data name="Field_OverallProgress" xml:space="preserve"><value>Gesamtfortschritt</value></data>
   <data name="Section_AnalysisFindings" xml:space="preserve"><value>Auffälligkeiten</value></data>
   <data name="Section_AnalysisRecommendations" xml:space="preserve"><value>Empfehlungen</value></data>
   <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Misst Lautheit und Peaks mit FFmpeg. Das kann bei langen Dateien etwas dauern.</value></data>
@@ -86,6 +100,23 @@
   <data name="Status_LogCopied" xml:space="preserve"><value>Log wurde in die Zwischenablage kopiert.</value></data>
   <data name="Status_LogCleared" xml:space="preserve"><value>Log wurde geleert.</value></data>
   <data name="Status_LogEmpty" xml:space="preserve"><value>Das Log ist leer.</value></data>
+  <data name="Status_NoValidFilesAdded" xml:space="preserve"><value>Es wurden keine gültigen Dateien hinzugefügt.</value></data>
+  <data name="Status_BatchReadyFormat" xml:space="preserve"><value>{0} Datei(en) sind bereit für die Verarbeitung.</value></data>
+  <data name="Status_NoReadyFiles" xml:space="preserve"><value>Es gibt keine analysierten Dateien, die verarbeitet werden können.</value></data>
+  <data name="Status_BatchProcessingFormat" xml:space="preserve"><value>Verarbeite {0} von {1}: {2}</value></data>
+  <data name="Status_BatchDoneFormat" xml:space="preserve"><value>Warteschlange abgeschlossen. Fertig: {0}, Fehler: {1}, abgebrochen: {2}.</value></data>
+  <data name="Status_BatchItemRemoved" xml:space="preserve"><value>Datei aus der Warteschlange entfernt.</value></data>
+  <data name="Status_BatchFinishedCleared" xml:space="preserve"><value>Abgeschlossene Einträge entfernt.</value></data>
+
+  <data name="BatchStatus_Pending" xml:space="preserve"><value>Wartet</value></data>
+  <data name="BatchStatus_Analyzing" xml:space="preserve"><value>Analyse</value></data>
+  <data name="BatchStatus_Ready" xml:space="preserve"><value>Bereit</value></data>
+  <data name="BatchStatus_Processing" xml:space="preserve"><value>Läuft</value></data>
+  <data name="BatchStatus_Done" xml:space="preserve"><value>Fertig</value></data>
+  <data name="BatchStatus_Failed" xml:space="preserve"><value>Fehler</value></data>
+  <data name="BatchStatus_Cancelled" xml:space="preserve"><value>Abgebrochen</value></data>
+  <data name="BatchSummary_Empty" xml:space="preserve"><value>Noch keine Dateien in der Warteschlange.</value></data>
+  <data name="BatchSummary_Format" xml:space="preserve"><value>{0} Datei(en) | bereit: {1} | läuft: {2} | fertig: {3} | Fehler: {4} | abgebrochen: {5}</value></data>
 
   <data name="Phase_Ready" xml:space="preserve"><value>Bereit</value></data>
   <data name="Phase_Analysis" xml:space="preserve"><value>Analyse</value></data>
@@ -106,6 +137,11 @@
 
   <data name="Log_PreviewStartedFormat" xml:space="preserve"><value>Vorschau gestartet: {0}</value></data>
   <data name="Log_StartingProcessing" xml:space="preserve"><value>Starte Verarbeitung.</value></data>
+  <data name="Log_BatchAddedFilesFormat" xml:space="preserve"><value>{0} Datei(en) zur Warteschlange hinzugefügt.</value></data>
+  <data name="Log_BatchSkippedFormat" xml:space="preserve"><value>Datei übersprungen: {0}</value></data>
+  <data name="Log_BatchStartingFormat" xml:space="preserve"><value>Starte Warteschlange mit {0} Datei(en).</value></data>
+  <data name="Log_BatchItemDoneFormat" xml:space="preserve"><value>Batch-Datei fertig: {0}</value></data>
+  <data name="Log_BatchItemFailedFormat" xml:space="preserve"><value>Batch-Datei fehlgeschlagen: {0} - {1}</value></data>
   <data name="Log_CheckingTools" xml:space="preserve"><value>Prüfe FFmpeg und FFprobe...</value></data>
   <data name="Log_FFmpegFound" xml:space="preserve"><value>FFmpeg wurde gefunden.</value></data>
   <data name="Log_FFprobeFound" xml:space="preserve"><value>FFprobe wurde gefunden.</value></data>

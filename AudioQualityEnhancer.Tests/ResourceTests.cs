@@ -65,6 +65,13 @@ public sealed partial class ResourceTests
         values.AddRange(report.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
         values.AddRange(report.Recommendations.Select(r => r.Text));
 
+        using var batchItem = new BatchProcessingItem("track.mp3");
+        values.Add(batchItem.StatusDisplay);
+        batchItem.Status = BatchProcessingStatus.Ready;
+        values.Add(batchItem.StatusDisplay);
+        batchItem.Status = BatchProcessingStatus.Failed;
+        values.Add(batchItem.StatusDisplay);
+
         foreach (var value in values)
         {
             Assert.DoesNotMatch(MissingResourceRegex(), value);

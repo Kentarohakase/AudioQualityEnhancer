@@ -190,27 +190,64 @@
                                     DragEnter="MainWindow_OnDragEnter"
                                     Drop="MainWindow_OnDrop">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding [Hint_DropFile], Source={x:Static loc:LocalizationService.Instance}}" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding [Hint_DropFileOrSelect], Source={x:Static loc:LocalizationService.Instance}}"
+                                    <TextBlock Text="{Binding [Hint_DropFiles], Source={x:Static loc:LocalizationService.Instance}}" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding [Hint_DropFilesOrSelect], Source={x:Static loc:LocalizationService.Instance}}"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                Margin="0,4,0,0"
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Border>
 
-                            <Grid>
+                            <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="12" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0"
-                                         Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
-                                         IsReadOnly="True" />
-                                <Button Grid.Column="2"
-                                        Content="{Binding [Button_SelectFile], Source={x:Static loc:LocalizationService.Instance}}"
+                                <Button Grid.Column="0"
+                                        Content="{Binding [Button_SelectFiles], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding SelectFileCommand}" />
+                                <Button Grid.Column="2"
+                                        Content="{Binding [Button_RemoveSelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding RemoveSelectedFileCommand}" />
+                                <Button Grid.Column="4"
+                                        Content="{Binding [Button_ClearFinishedFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding ClearFinishedFilesCommand}" />
                             </Grid>
+
+                            <TextBlock Text="{Binding BatchSummaryText}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,0,0,8" />
+
+                            <DataGrid ItemsSource="{Binding BatchItems}"
+                                      SelectedItem="{Binding SelectedBatchItem, Mode=TwoWay}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      IsReadOnly="True"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      SelectionMode="Single"
+                                      MinHeight="150"
+                                      MaxHeight="220"
+                                      Margin="0,0,0,10">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{Binding [Field_File], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding FileName}" Width="*" />
+                                    <DataGridTextColumn Header="{Binding [Field_Status], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding StatusDisplay}" Width="105" />
+                                    <DataGridTextColumn Header="{Binding [Field_ScoreShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ScoreDisplay}" Width="72" />
+                                    <DataGridTextColumn Header="{Binding [Field_Progress], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ProgressDisplay}" Width="78" />
+                                    <DataGridTextColumn Header="{Binding [Field_Message], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ErrorMessage}" Width="1.2*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="{Binding [Field_SelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
+                                     IsReadOnly="True" />
 
                             <Grid Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
@@ -498,18 +535,34 @@
                                         Command="{Binding OpenLastOutputCommand}" />
                             </Grid>
 
+                            <TextBlock Text="{Binding [Field_CurrentFileProgress], Source={x:Static loc:LocalizationService.Instance}}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,0,0,4" />
                             <ProgressBar Minimum="0"
                                          Maximum="100"
                                          Value="{Binding ProgressValue, Mode=OneWay}"
                                          Height="14"
                                          Margin="0,0,0,8" />
-                            <DockPanel Margin="0,0,0,16">
+                            <DockPanel Margin="0,0,0,10">
                                 <TextBlock Text="{Binding ProcessingPhaseText}"
                                            Foreground="{StaticResource MutedTextBrush}" />
                                 <TextBlock DockPanel.Dock="Right"
                                            Text="{Binding ProgressValue, StringFormat={}{0:0}%}"
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </DockPanel>
+
+                            <TextBlock Text="{Binding [Field_OverallProgress], Source={x:Static loc:LocalizationService.Instance}}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,0,0,4" />
+                            <ProgressBar Minimum="0"
+                                         Maximum="100"
+                                         Value="{Binding OverallProgressValue, Mode=OneWay}"
+                                         Height="14"
+                                         Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding OverallProgressValue, StringFormat={}{0:0}%}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       HorizontalAlignment="Right"
+                                       Margin="0,0,0,16" />
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -518,7 +571,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
-                                        Content="{Binding [Button_Start], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Content="{Binding [Button_StartQueue], Source={x:Static loc:LocalizationService.Instance}}"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         Command="{Binding StartCommand}" />
                                 <Button Grid.Column="2"

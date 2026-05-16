@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -22,12 +23,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioDiagnosticsService _audioDiagnosticsService;
     private readonly AudioAnalysisInsightService _audioAnalysisInsightService;
     private readonly AudioProcessingService _audioProcessingService;
+    private readonly BatchQueueService _batchQueueService;
     private readonly SettingsService _settingsService;
     private readonly AsyncRelayCommand _selectFileCommand;
     private readonly AsyncRelayCommand _analyzeDiagnosticsCommand;
     private readonly RelayCommand _selectOutputFolderCommand;
     private readonly AsyncRelayCommand _startCommand;
     private readonly RelayCommand _cancelCommand;
+    private readonly RelayCommand _removeSelectedFileCommand;
+    private readonly RelayCommand _clearFinishedFilesCommand;
     private readonly RelayCommand _playSourceCommand;
     private readonly RelayCommand _playOutputCommand;
     private readonly RelayCommand _stopPreviewCommand;
@@ -43,6 +47,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
+    private BatchProcessingItem? _selectedBatchItem;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
     private string _statusText;
@@ -52,9 +57,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _toolStatusText;
     private string _processingPhaseText;
     private string _filterDetailsText = string.Empty;
+    private string _batchSummaryText;
     private LanguageOption _selectedLanguage = LanguageOption.German;
     private string _lastOutputPath = string.Empty;
     private double _progressValue;
+    private double _overallProgressValue;
     private bool _isBusy;
     private bool _saveLogFile = true;
     private bool _enableSpeechCompression;
@@ -88,11 +95,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
         _audioAnalysisInsightService = new AudioAnalysisInsightService();
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
+        _batchQueueService = new BatchQueueService(_fileNameService);
         _settingsService = App.SettingsService;
 
         _statusText = LocalizationService.Instance["Status_Ready"];
         _toolStatusText = LocalizationService.Instance["Tools_Checking"];
         _processingPhaseText = LocalizationService.Instance["Phase_Ready"];
+        _batchSummaryText = LocalizationService.Instance["BatchSummary_Empty"];
 
         _logService.LogAdded += OnLogAdded;
         _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
@@ -102,12 +111,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
         Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
+        BatchItems = new ObservableCollection<BatchProcessingItem>();
+        BatchItems.CollectionChanged += OnBatchItemsChanged;
 
         _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
         _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics);
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
         _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
+        _removeSelectedFileCommand = new RelayCommand(RemoveSelectedFile, () => !IsBusy && SelectedBatchItem is not null);
+        _clearFinishedFilesCommand = new RelayCommand(ClearFinishedFiles, () => !IsBusy && _batchQueueService.GetFinishedItems(BatchItems).Count > 0);
         _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
         _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
         _stopPreviewCommand = new RelayCommand(StopPreview);
@@ -161,6 +174,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ObservableCollection<LanguageOption> Languages { get; }
 
+    public ObservableCollection<BatchProcessingItem> BatchItems { get; }
+
     public LanguageOption SelectedLanguage
     {
         get => _selectedLanguage;
@@ -187,6 +202,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand StartCommand => _startCommand;
 
     public ICommand CancelCommand => _cancelCommand;
+
+    public ICommand RemoveSelectedFileCommand => _removeSelectedFileCommand;
+
+    public ICommand ClearFinishedFilesCommand => _clearFinishedFilesCommand;
 
     public ICommand PlaySourceCommand => _playSourceCommand;
 
@@ -231,10 +250,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         get => _audioInfo;
         private set
         {
-            var old = _audioInfo;
             if (SetProperty(ref _audioInfo, value))
             {
-                old?.Dispose();
                 UpdateAnalysisWarnings();
                 UpdateAnalysisReport();
                 UpdateQualityNotice();
@@ -248,10 +265,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         get => _audioDiagnostics;
         private set
         {
-            var old = _audioDiagnostics;
             if (SetProperty(ref _audioDiagnostics, value))
             {
-                old?.Dispose();
                 UpdateAnalysisWarnings();
                 UpdateAnalysisReport();
                 UpdateQualityNotice();
@@ -272,6 +287,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasAnalysisReport => AnalysisReport is not null;
+
+    public BatchProcessingItem? SelectedBatchItem
+    {
+        get => _selectedBatchItem;
+        set
+        {
+            if (SetProperty(ref _selectedBatchItem, value))
+            {
+                SyncSelectedBatchItem();
+                RaiseCommandStates();
+            }
+        }
+    }
+
+    public bool HasBatchItems => BatchItems.Count > 0;
 
     public AudioPreset? SelectedPreset
     {
@@ -365,6 +395,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         private set => SetProperty(ref _filterDetailsText, value);
     }
 
+    public string BatchSummaryText
+    {
+        get => _batchSummaryText;
+        private set => SetProperty(ref _batchSummaryText, value);
+    }
+
     public string LastOutputPath
     {
         get => _lastOutputPath;
@@ -382,6 +418,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _progressValue;
         private set => SetProperty(ref _progressValue, value);
+    }
+
+    public double OverallProgressValue
+    {
+        get => _overallProgressValue;
+        private set => SetProperty(ref _overallProgressValue, value);
     }
 
     public bool IsBusy
@@ -534,23 +576,63 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task LoadInputFileAsync(string path)
     {
+        await LoadInputFilesAsync(new[] { path });
+    }
+
+    public async Task LoadInputFilesAsync(IEnumerable<string> paths)
+    {
         if (IsBusy)
         {
             return;
         }
 
         StopPreview();
-        InputPath = path;
-        LastOutputPath = string.Empty;
-        AudioDiagnostics = null;
-
-        var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrWhiteSpace(directory))
+        var wasEmpty = BatchItems.Count == 0;
+        if (wasEmpty)
         {
-            OutputDirectory = directory;
+            _logService.Clear();
+            LastOutputPath = string.Empty;
+            OverallProgressValue = 0;
         }
 
-        await AnalyzeSelectedFileAsync();
+        var addResult = _batchQueueService.CreateItems(paths, BatchItems);
+        foreach (var item in addResult.AddedItems)
+        {
+            AddBatchItem(item);
+        }
+
+        foreach (var rejectedPath in addResult.RejectedPaths)
+        {
+            _logService.Warning(LocalizationService.Instance.Format("Log_BatchSkippedFormat", rejectedPath));
+        }
+
+        if (addResult.AddedItems.Count == 0)
+        {
+            SetStatus("Status_NoValidFilesAdded");
+            return;
+        }
+
+        if (SelectedBatchItem is null)
+        {
+            SelectedBatchItem = addResult.AddedItems[0];
+        }
+
+        if (wasEmpty)
+        {
+            var directory = Path.GetDirectoryName(addResult.AddedItems[0].SourcePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                OutputDirectory = directory;
+            }
+        }
+
+        _logService.Info(LocalizationService.Instance.Format("Log_BatchAddedFilesFormat", addResult.AddedItems.Count));
+        foreach (var item in addResult.AddedItems)
+        {
+            await AnalyzeBatchItemAsync(item, CancellationToken.None);
+        }
+
+        SetStatus("Status_BatchReadyFormat", _batchQueueService.GetProcessableItems(BatchItems).Count);
     }
 
     private async Task SelectFileAsync()
@@ -560,12 +642,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             Title = LocalizationService.Instance["Dialog_SelectFile_Title"],
             Filter = _fileNameService.BuildOpenDialogFilter(),
             CheckFileExists = true,
-            Multiselect = false
+            Multiselect = true
         };
 
         if (dialog.ShowDialog() == true)
         {
-            await LoadInputFileAsync(dialog.FileName);
+            await LoadInputFilesAsync(dialog.FileNames);
         }
     }
 
@@ -586,7 +668,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task AnalyzeDiagnosticsAsync()
     {
-        if (AudioInfo is null || string.IsNullOrWhiteSpace(InputPath) || !File.Exists(InputPath))
+        var item = SelectedBatchItem;
+        if (item?.AudioInfo is null || string.IsNullOrWhiteSpace(item.SourcePath) || !File.Exists(item.SourcePath))
         {
             SetStatus("Status_AnalysisFailed");
             return;
@@ -603,15 +686,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             var result = await _audioDiagnosticsService.AnalyzeAsync(
-                InputPath,
-                AudioInfo.Duration,
+                item.SourcePath,
+                item.AudioInfo.Duration,
                 _logService.Info,
                 value => ProgressValue = value,
                 _diagnosticsCancellation.Token);
 
             if (result.IsSuccess && result.Value is not null)
             {
-                AudioDiagnostics = result.Value;
+                item.SetAudioDiagnostics(result.Value);
+                item.SetAnalysisReport(_audioAnalysisInsightService.BuildReport(item.AudioInfo, result.Value));
+                AudioDiagnostics = item.AudioDiagnostics;
+                AnalysisReport = item.AnalysisReport;
                 ProgressValue = 100;
                 SetProcessingPhase("Phase_Ready");
                 SetStatus("Status_AdvancedAnalysisDone");
@@ -636,30 +722,61 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async Task AnalyzeSelectedFileAsync()
+    private async Task AnalyzeBatchItemAsync(BatchProcessingItem item, CancellationToken cancellationToken)
     {
-        _logService.Clear();
-        AudioInfo = null;
-        ProgressValue = 0;
+        item.Status = BatchProcessingStatus.Analyzing;
+        item.ErrorMessage = string.Empty;
+        item.Progress = 0;
+
+        if (ReferenceEquals(item, SelectedBatchItem))
+        {
+            AudioInfo = null;
+            AudioDiagnostics = null;
+            ProgressValue = 0;
+        }
+
         SetProcessingPhase("Phase_Analysis");
         SetStatus("Status_Analyzing");
 
-        var result = await _ffprobeService.AnalyzeAsync(InputPath, _logService.Info, CancellationToken.None);
+        var result = await _ffprobeService.AnalyzeAsync(item.SourcePath, _logService.Info, cancellationToken);
         if (result.IsSuccess && result.Value is not null)
         {
-            AudioInfo = result.Value;
+            item.SetAudioInfo(result.Value);
+            item.SetAudioDiagnostics(null);
+            item.SetAnalysisReport(_audioAnalysisInsightService.BuildReport(result.Value, diagnostics: null));
+            item.Progress = 100;
+            item.Status = BatchProcessingStatus.Ready;
+
+            if (ReferenceEquals(item, SelectedBatchItem))
+            {
+                AudioInfo = item.AudioInfo;
+                AudioDiagnostics = item.AudioDiagnostics;
+                AnalysisReport = item.AnalysisReport;
+            }
+
             SetProcessingPhase("Phase_Ready");
             SetStatus("Status_AnalysisDone");
-            _logService.Info(LocalizationService.Instance.Format("Log_CodecFormat", AudioInfo.CodecDisplay));
-            _logService.Info(LocalizationService.Instance.Format("Log_ContainerFormat", AudioInfo.ContainerDisplay));
+            _logService.Info(LocalizationService.Instance.Format("Log_CodecFormat", result.Value.CodecDisplay));
+            _logService.Info(LocalizationService.Instance.Format("Log_ContainerFormat", result.Value.ContainerDisplay));
 
-            if (AudioInfo.IsLikelyLossy)
+            if (result.Value.IsLikelyLossy)
             {
-                _logService.Warning(AudioInfo.LossyWarning);
+                _logService.Warning(result.Value.LossyWarning);
             }
         }
         else
         {
+            item.Status = BatchProcessingStatus.Failed;
+            item.ErrorMessage = result.ErrorMessage ?? LocalizationService.Instance["Status_AnalysisFailed"];
+            item.Progress = 0;
+
+            if (ReferenceEquals(item, SelectedBatchItem))
+            {
+                AudioInfo = item.AudioInfo;
+                AudioDiagnostics = item.AudioDiagnostics;
+                AnalysisReport = item.AnalysisReport;
+            }
+
             SetProcessingPhase("Phase_Error");
             SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_AnalysisFailed"]);
             _logService.Error(StatusText);
@@ -681,47 +798,88 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        var processableItems = _batchQueueService.GetProcessableItems(BatchItems);
+        if (processableItems.Count == 0)
+        {
+            SetStatus("Status_NoReadyFiles");
+            return;
+        }
+
         StopPreview();
         _processingCancellation?.Dispose();
         _processingCancellation = new CancellationTokenSource();
         IsBusy = true;
         ProgressValue = 0;
+        OverallProgressValue = 0;
         SetProcessingPhase("Phase_Start");
         SetStatus("Status_Processing");
-        _logService.Info(LocalizationService.Instance["Log_StartingProcessing"]);
+        _logService.Info(LocalizationService.Instance.Format("Log_BatchStartingFormat", processableItems.Count));
 
         try
         {
-            var options = BuildCurrentOptions();
-            var result = await _audioProcessingService.ProcessAsync(
-                options,
-                new Progress<ProcessingProgress>(UpdateProcessingProgress),
-                _processingCancellation.Token);
-
-            if (result.IsSuccess && result.Value is not null)
+            for (var i = 0; i < processableItems.Count; i++)
             {
-                ProgressValue = 100;
-                SetProcessingPhase("Phase_Done");
-                LastOutputPath = result.Value.OutputPath ?? string.Empty;
-                SetStatus("Status_DoneFormat", result.Value.OutputPath ?? string.Empty);
-
-                if (SaveLogFile)
+                var item = processableItems[i];
+                if (_processingCancellation.IsCancellationRequested)
                 {
-                    var prefix = Path.GetFileNameWithoutExtension(result.Value.OutputPath ?? "audio-quality-enhancer");
-                    var logPath = await _logService.SaveAsync(OutputDirectory, prefix, CancellationToken.None);
-                    _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
+                    break;
                 }
-            }
-            else
-            {
+
+                SelectedBatchItem = item;
+                item.Status = BatchProcessingStatus.Processing;
+                item.Progress = 0;
+                item.ErrorMessage = string.Empty;
+                ProgressValue = 0;
+                OverallProgressValue = BatchQueueService.CalculateOverallProgress(i, processableItems.Count, 0);
+                SetStatus("Status_BatchProcessingFormat", i + 1, processableItems.Count, item.FileName);
+
+                var result = await _audioProcessingService.ProcessAsync(
+                    BuildOptionsForItem(item),
+                    new Progress<ProcessingProgress>(progress => UpdateProcessingProgress(item, i, processableItems.Count, progress)),
+                    _processingCancellation.Token);
+
+                if (result.IsSuccess && result.Value is not null)
+                {
+                    item.Progress = 100;
+                    item.Status = BatchProcessingStatus.Done;
+                    item.OutputPath = result.Value.OutputPath ?? string.Empty;
+                    LastOutputPath = item.OutputPath;
+                    _logService.Info(LocalizationService.Instance.Format("Log_BatchItemDoneFormat", item.FileName));
+                    continue;
+                }
+
+                if (result.Value?.WasCancelled == true || _processingCancellation.IsCancellationRequested)
+                {
+                    item.Status = BatchProcessingStatus.Cancelled;
+                    item.ErrorMessage = result.ErrorMessage ?? LocalizationService.Instance["Error_ProcessingCancelled"];
+                    item.Progress = 0;
+                    SetProcessingPhase("Phase_Cancel");
+                    SetStatus("Status_Cancelling");
+                    _logService.Warning(item.ErrorMessage);
+                    break;
+                }
+
+                item.Status = BatchProcessingStatus.Failed;
+                item.ErrorMessage = result.ErrorMessage ?? LocalizationService.Instance["Status_ProcessingFailed"];
+                item.Progress = 0;
                 SetProcessingPhase("Phase_Error");
-                SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_ProcessingFailed"]);
-                _logService.Error(StatusText);
+                _logService.Error(LocalizationService.Instance.Format("Log_BatchItemFailedFormat", item.FileName, item.ErrorMessage));
 
                 if (result.Exception is not null)
                 {
                     _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
                 }
+            }
+
+            OverallProgressValue = 100;
+            ProgressValue = 100;
+            SetProcessingPhase("Phase_Done");
+            SetStatus("Status_BatchDoneFormat", CountStatus(BatchProcessingStatus.Done), CountStatus(BatchProcessingStatus.Failed), CountStatus(BatchProcessingStatus.Cancelled));
+
+            if (SaveLogFile)
+            {
+                var logPath = await _logService.SaveAsync(OutputDirectory, "audio-quality-enhancer-batch", CancellationToken.None);
+                _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
             }
         }
         finally
@@ -729,6 +887,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             IsBusy = false;
             _processingCancellation.Dispose();
             _processingCancellation = null;
+            UpdateBatchSummary();
         }
     }
 
@@ -738,6 +897,50 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SetProcessingPhase("Phase_Cancel");
         _processingCancellation?.Cancel();
         _diagnosticsCancellation?.Cancel();
+    }
+
+    private void RemoveSelectedFile()
+    {
+        var item = SelectedBatchItem;
+        if (item is null || IsBusy)
+        {
+            return;
+        }
+
+        var index = BatchItems.IndexOf(item);
+        RemoveBatchItem(item);
+
+        if (BatchItems.Count == 0)
+        {
+            SelectedBatchItem = null;
+        }
+        else
+        {
+            SelectedBatchItem = BatchItems[Math.Clamp(index, 0, BatchItems.Count - 1)];
+        }
+
+        SetStatus("Status_BatchItemRemoved");
+    }
+
+    private void ClearFinishedFiles()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var items = _batchQueueService.GetFinishedItems(BatchItems);
+        foreach (var item in items)
+        {
+            RemoveBatchItem(item);
+        }
+
+        if (SelectedBatchItem is null || !BatchItems.Contains(SelectedBatchItem))
+        {
+            SelectedBatchItem = BatchItems.FirstOrDefault();
+        }
+
+        SetStatus("Status_BatchFinishedCleared");
     }
 
     private void PlaySourcePreview() =>
@@ -883,9 +1086,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _updatingPositionFromTimer = false;
     }
 
-    private void UpdateProcessingProgress(ProcessingProgress progress)
+    private void UpdateProcessingProgress(BatchProcessingItem item, int itemIndex, int totalItems, ProcessingProgress progress)
     {
         ProgressValue = progress.Percentage;
+        item.Progress = progress.Percentage;
+        OverallProgressValue = BatchQueueService.CalculateOverallProgress(itemIndex, totalItems, progress.Percentage);
         SetProcessingPhaseRaw(string.IsNullOrWhiteSpace(progress.Detail)
             ? progress.Phase
             : $"{progress.Phase} - {progress.Detail}");
@@ -894,8 +1099,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool CanStartProcessing()
     {
         return !IsBusy &&
-               !string.IsNullOrWhiteSpace(InputPath) &&
-               File.Exists(InputPath) &&
+               _batchQueueService.GetProcessableItems(BatchItems).Count > 0 &&
                !string.IsNullOrWhiteSpace(OutputDirectory) &&
                SelectedPreset is not null &&
                SelectedExportFormat is not null;
@@ -904,9 +1108,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool CanAnalyzeDiagnostics()
     {
         return !IsBusy &&
-               AudioInfo is not null &&
-               !string.IsNullOrWhiteSpace(InputPath) &&
-               File.Exists(InputPath);
+               SelectedBatchItem?.AudioInfo is not null &&
+               !string.IsNullOrWhiteSpace(SelectedBatchItem.SourcePath) &&
+               File.Exists(SelectedBatchItem.SourcePath);
     }
 
     private void ApplyPresetDefaults(AudioPreset preset)
@@ -1010,23 +1214,94 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        FilterDetailsText = AudioProcessingService.BuildFilterPreview(BuildCurrentOptions());
+        FilterDetailsText = AudioProcessingService.BuildFilterPreview(BuildOptionsForItem(SelectedBatchItem));
     }
 
-    private ProcessingOptions BuildCurrentOptions()
+    private ProcessingOptions BuildOptionsForItem(BatchProcessingItem? item)
     {
         return new ProcessingOptions
         {
-            InputPath = InputPath,
+            InputPath = item?.SourcePath ?? InputPath,
             OutputDirectory = OutputDirectory,
             Preset = SelectedPreset ?? AudioPreset.Music,
             ExportFormat = SelectedExportFormat ?? ExportFormat.Flac,
-            SourceInfo = AudioInfo,
+            SourceInfo = item?.AudioInfo ?? AudioInfo,
             NoiseReductionFloor = NoiseReductionFloor,
             EnableSpeechCompression = EnableSpeechCompression,
             EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
             UseTwoPassLoudness = UseTwoPassLoudness
         };
+    }
+
+    private void AddBatchItem(BatchProcessingItem item)
+    {
+        item.PropertyChanged += OnBatchItemPropertyChanged;
+        BatchItems.Add(item);
+    }
+
+    private void RemoveBatchItem(BatchProcessingItem item)
+    {
+        item.PropertyChanged -= OnBatchItemPropertyChanged;
+        BatchItems.Remove(item);
+        if (ReferenceEquals(SelectedBatchItem, item))
+        {
+            SelectedBatchItem = null;
+        }
+
+        item.Dispose();
+    }
+
+    private void OnBatchItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasBatchItems));
+        UpdateBatchSummary();
+        RaiseCommandStates();
+    }
+
+    private void OnBatchItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        UpdateBatchSummary();
+        RaiseCommandStates();
+
+        if (ReferenceEquals(sender, SelectedBatchItem))
+        {
+            OnPropertyChanged(nameof(SelectedBatchItem));
+        }
+    }
+
+    private void SyncSelectedBatchItem()
+    {
+        var item = SelectedBatchItem;
+        InputPath = item?.SourcePath ?? string.Empty;
+        AudioInfo = item?.AudioInfo;
+        AudioDiagnostics = item?.AudioDiagnostics;
+        AnalysisReport = item?.AnalysisReport;
+        ProgressValue = item?.Progress ?? 0;
+
+        if (item is not null && File.Exists(item.OutputPath))
+        {
+            LastOutputPath = item.OutputPath;
+        }
+    }
+
+    private void UpdateBatchSummary()
+    {
+        var summary = _batchQueueService.BuildSummary(BatchItems);
+        BatchSummaryText = summary.HasItems
+            ? LocalizationService.Instance.Format(
+                "BatchSummary_Format",
+                summary.Total,
+                summary.Ready,
+                summary.Processing,
+                summary.Done,
+                summary.Failed,
+                summary.Cancelled)
+            : LocalizationService.Instance["BatchSummary_Empty"];
+    }
+
+    private int CountStatus(BatchProcessingStatus status)
+    {
+        return BatchItems.Count(item => item.Status == status);
     }
 
     private void OnLogAdded(object? sender, string line)
@@ -1072,10 +1347,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         RefreshLocalizedState();
+        foreach (var item in BatchItems)
+        {
+            item.RefreshLocalizedText();
+        }
+
         UpdateAnalysisWarnings();
         UpdateAnalysisReport();
+        if (SelectedBatchItem is not null)
+        {
+            SelectedBatchItem.SetAnalysisReport(AnalysisReport);
+        }
+
         UpdateQualityNotice();
         UpdateFilterDetails();
+        UpdateBatchSummary();
     }
 
     private void RefreshLocalizedState()
@@ -1146,6 +1432,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _selectOutputFolderCommand.RaiseCanExecuteChanged();
         _startCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
+        _removeSelectedFileCommand.RaiseCanExecuteChanged();
+        _clearFinishedFilesCommand.RaiseCanExecuteChanged();
         _playSourceCommand.RaiseCanExecuteChanged();
         _playOutputCommand.RaiseCanExecuteChanged();
         _stopPreviewCommand.RaiseCanExecuteChanged();
@@ -1182,12 +1470,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _audioPreviewService.PlaybackFailed -= OnPlaybackFailed;
         _audioPreviewService.PlaybackEnded -= OnPlaybackEnded;
+        BatchItems.CollectionChanged -= OnBatchItemsChanged;
         LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
         StopPreviewTimer();
         _processingCancellation?.Dispose();
         _diagnosticsCancellation?.Dispose();
         _audioPreviewService.Dispose();
-        _audioInfo?.Dispose();
-        _audioDiagnostics?.Dispose();
+        foreach (var item in BatchItems)
+        {
+            item.PropertyChanged -= OnBatchItemPropertyChanged;
+            item.Dispose();
+        }
     }
 }

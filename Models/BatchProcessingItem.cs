@@ -1,0 +1,162 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using AudioQualityEnhancer.Services;
+
+namespace AudioQualityEnhancer.Models;
+
+public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
+{
+    private BatchProcessingStatus _status = BatchProcessingStatus.Pending;
+    private AudioInfo? _audioInfo;
+    private AudioDiagnostics? _audioDiagnostics;
+    private AudioAnalysisReport? _analysisReport;
+    private string _outputPath = string.Empty;
+    private string _errorMessage = string.Empty;
+    private double _progress;
+
+    public BatchProcessingItem(string sourcePath)
+    {
+        SourcePath = sourcePath;
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string SourcePath { get; }
+
+    public string FileName => Path.GetFileName(SourcePath);
+
+    public BatchProcessingStatus Status
+    {
+        get => _status;
+        set
+        {
+            if (SetProperty(ref _status, value))
+            {
+                OnPropertyChanged(nameof(StatusDisplay));
+                OnPropertyChanged(nameof(CanProcess));
+                OnPropertyChanged(nameof(IsFinished));
+            }
+        }
+    }
+
+    public string StatusDisplay => LocalizationService.Instance[$"BatchStatus_{Status}"];
+
+    public AudioInfo? AudioInfo
+    {
+        get => _audioInfo;
+        private set => SetProperty(ref _audioInfo, value);
+    }
+
+    public AudioDiagnostics? AudioDiagnostics
+    {
+        get => _audioDiagnostics;
+        private set => SetProperty(ref _audioDiagnostics, value);
+    }
+
+    public AudioAnalysisReport? AnalysisReport
+    {
+        get => _analysisReport;
+        private set
+        {
+            if (SetProperty(ref _analysisReport, value))
+            {
+                OnPropertyChanged(nameof(ScoreDisplay));
+            }
+        }
+    }
+
+    public string ScoreDisplay => AnalysisReport?.ScoreDisplay ?? "-";
+
+    public string OutputPath
+    {
+        get => _outputPath;
+        set
+        {
+            if (SetProperty(ref _outputPath, value))
+            {
+                OnPropertyChanged(nameof(HasOutput));
+            }
+        }
+    }
+
+    public bool HasOutput => File.Exists(OutputPath);
+
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        set => SetProperty(ref _errorMessage, value);
+    }
+
+    public double Progress
+    {
+        get => _progress;
+        set
+        {
+            if (SetProperty(ref _progress, Math.Clamp(value, 0, 100)))
+            {
+                OnPropertyChanged(nameof(ProgressDisplay));
+            }
+        }
+    }
+
+    public string ProgressDisplay => $"{Progress:0}%";
+
+    public bool CanProcess => Status == BatchProcessingStatus.Ready;
+
+    public bool IsFinished => Status is BatchProcessingStatus.Done or BatchProcessingStatus.Failed or BatchProcessingStatus.Cancelled;
+
+    public void SetAudioInfo(AudioInfo? value)
+    {
+        if (ReferenceEquals(_audioInfo, value))
+        {
+            return;
+        }
+
+        _audioInfo?.Dispose();
+        AudioInfo = value;
+    }
+
+    public void SetAudioDiagnostics(AudioDiagnostics? value)
+    {
+        if (ReferenceEquals(_audioDiagnostics, value))
+        {
+            return;
+        }
+
+        _audioDiagnostics?.Dispose();
+        AudioDiagnostics = value;
+    }
+
+    public void SetAnalysisReport(AudioAnalysisReport? value)
+    {
+        AnalysisReport = value;
+    }
+
+    public void RefreshLocalizedText()
+    {
+        OnPropertyChanged(nameof(StatusDisplay));
+    }
+
+    public void Dispose()
+    {
+        _audioInfo?.Dispose();
+        _audioDiagnostics?.Dispose();
+    }
+
+    private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return false;
+        }
+
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
