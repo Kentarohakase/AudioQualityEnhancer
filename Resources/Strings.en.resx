@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="MainWindow_Title" xml:space="preserve"><value>Audio Quality Enhancer</value></data>
+  <data name="MainWindow_Subtitle" xml:space="preserve"><value>Analysis, gentle processing and export with FFmpeg</value></data>
+  <data name="Tools_Checking" xml:space="preserve"><value>Checking tools...</value></data>
+
+  <data name="Section_Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Section_Analysis" xml:space="preserve"><value>Analysis</value></data>
+  <data name="Section_QualityLimits" xml:space="preserve"><value>Quality limits</value></data>
+  <data name="Section_Processing" xml:space="preserve"><value>Processing</value></data>
+  <data name="Section_Output" xml:space="preserve"><value>Output</value></data>
+  <data name="Section_Log" xml:space="preserve"><value>Log</value></data>
+
+  <data name="Hint_DropFile" xml:space="preserve"><value>Drop file here</value></data>
+  <data name="Hint_DropFileOrSelect" xml:space="preserve"><value>or use the button to select one</value></data>
+
+  <data name="Button_SelectFile" xml:space="preserve"><value>Select file</value></data>
+  <data name="Button_PlaySource" xml:space="preserve"><value>Play original</value></data>
+  <data name="Button_PlayOutput" xml:space="preserve"><value>Play result</value></data>
+  <data name="Button_StopPreview" xml:space="preserve"><value>Stop</value></data>
+  <data name="Button_SelectFolder" xml:space="preserve"><value>Choose folder</value></data>
+  <data name="Button_Start" xml:space="preserve"><value>Start processing</value></data>
+  <data name="Button_Cancel" xml:space="preserve"><value>Cancel</value></data>
+
+  <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
+  <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
+  <data name="Field_BitRate" xml:space="preserve"><value>Bit rate</value></data>
+  <data name="Field_SampleRate" xml:space="preserve"><value>Sample rate</value></data>
+  <data name="Field_Channels" xml:space="preserve"><value>Channels</value></data>
+  <data name="Field_Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Field_FileSize" xml:space="preserve"><value>File size</value></data>
+  <data name="Field_Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Field_Preset" xml:space="preserve"><value>Preset</value></data>
+  <data name="Field_ExportFormat" xml:space="preserve"><value>Export format</value></data>
+  <data name="Field_FilterDetails" xml:space="preserve"><value>Filter details</value></data>
+  <data name="Field_NoiseFilter" xml:space="preserve"><value>Noise filter</value></data>
+  <data name="Field_OutputFolder" xml:space="preserve"><value>Folder</value></data>
+  <data name="Field_Language" xml:space="preserve"><value>Language</value></data>
+
+  <data name="Checkbox_TwoPassLoudness" xml:space="preserve"><value>Two-pass loudness</value></data>
+  <data name="Checkbox_SpeechCompression" xml:space="preserve"><value>Light speech compression</value></data>
+  <data name="Checkbox_SpeechPresenceBoost" xml:space="preserve"><value>Light intelligibility boost</value></data>
+  <data name="Checkbox_SaveLog" xml:space="preserve"><value>Also save log file</value></data>
+
+  <data name="Footer_Disclaimer" xml:space="preserve"><value>Original files are never overwritten. Stream copy picks a compatible container; otherwise the chosen parameters are used for export.</value></data>
+
+  <data name="Status_Ready" xml:space="preserve"><value>Ready.</value></data>
+  <data name="Status_Analyzing" xml:space="preserve"><value>Analyzing file...</value></data>
+  <data name="Status_AnalysisDone" xml:space="preserve"><value>Analysis complete.</value></data>
+  <data name="Status_AnalysisFailed" xml:space="preserve"><value>Analysis failed.</value></data>
+  <data name="Status_SelectPresetAndFormat" xml:space="preserve"><value>Please choose a preset and an export format.</value></data>
+  <data name="Status_Processing" xml:space="preserve"><value>Processing...</value></data>
+  <data name="Status_ProcessingFailed" xml:space="preserve"><value>Processing failed.</value></data>
+  <data name="Status_Cancelling" xml:space="preserve"><value>Cancellation requested...</value></data>
+  <data name="Status_DoneFormat" xml:space="preserve"><value>Done: {0}</value></data>
+  <data name="Status_PreviewPlayingFormat" xml:space="preserve"><value>Preview playing: {0}</value></data>
+  <data name="Status_PreviewStopped" xml:space="preserve"><value>Preview stopped.</value></data>
+  <data name="Status_PreviewEnded" xml:space="preserve"><value>Preview ended.</value></data>
+  <data name="Status_PreviewFailed" xml:space="preserve"><value>Preview failed.</value></data>
+
+  <data name="Phase_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Phase_Analysis" xml:space="preserve"><value>Analysis</value></data>
+  <data name="Phase_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Phase_Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Phase_Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Phase_Cancel" xml:space="preserve"><value>Cancelling</value></data>
+  <data name="Phase_CheckInput" xml:space="preserve"><value>Checking input</value></data>
+  <data name="Phase_CheckFFmpeg" xml:space="preserve"><value>Checking FFmpeg</value></data>
+  <data name="Phase_AnalyzingSource" xml:space="preserve"><value>Analyzing source</value></data>
+  <data name="Phase_PreparingProcessing" xml:space="preserve"><value>Preparing processing</value></data>
+  <data name="Phase_AnalyzingLoudness" xml:space="preserve"><value>Analyzing loudness</value></data>
+  <data name="Phase_ProcessingAudio" xml:space="preserve"><value>Processing audio</value></data>
+  <data name="Phase_SavingResult" xml:space="preserve"><value>Saving result</value></data>
+  <data name="Phase_Pass1of2" xml:space="preserve"><value>Pass 1 of 2</value></data>
+  <data name="Phase_Pass2of2" xml:space="preserve"><value>Pass 2 of 2</value></data>
+
+  <data name="Log_PreviewStartedFormat" xml:space="preserve"><value>Preview started: {0}</value></data>
+  <data name="Log_StartingProcessing" xml:space="preserve"><value>Starting processing.</value></data>
+  <data name="Log_CheckingTools" xml:space="preserve"><value>Checking FFmpeg and FFprobe...</value></data>
+  <data name="Log_FFmpegFound" xml:space="preserve"><value>FFmpeg was found.</value></data>
+  <data name="Log_FFprobeFound" xml:space="preserve"><value>FFprobe was found.</value></data>
+  <data name="Log_FFmpegUnavailable" xml:space="preserve"><value>FFmpeg is not available.</value></data>
+  <data name="Log_FFprobeUnavailable" xml:space="preserve"><value>FFprobe is not available.</value></data>
+  <data name="Log_CodecFormat" xml:space="preserve"><value>Codec: {0}</value></data>
+  <data name="Log_ContainerFormat" xml:space="preserve"><value>Container: {0}</value></data>
+  <data name="Log_TargetFormat" xml:space="preserve"><value>Target: {0}</value></data>
+  <data name="Log_FilterFormat" xml:space="preserve"><value>Filter: {0}</value></data>
+  <data name="Log_FilterNone" xml:space="preserve"><value>Filter: none</value></data>
+  <data name="Log_TwoPassActive" xml:space="preserve"><value>Loudness: two-pass mode active.</value></data>
+  <data name="Log_TwoPassStartingMeasure" xml:space="preserve"><value>Two-pass loudness: starting measurement pass.</value></data>
+  <data name="Log_AnalysisFilterFormat" xml:space="preserve"><value>Analysis filter: {0}</value></data>
+  <data name="Log_TwoPassMeasurementsApplied" xml:space="preserve"><value>Two-pass loudness: measurements applied.</value></data>
+  <data name="Log_TwoPassMeasurementsFailed" xml:space="preserve"><value>Two-pass loudness could not be evaluated. Processing continues with the safe single-pass filter.</value></data>
+  <data name="Log_RenderFilterFormat" xml:space="preserve"><value>Render filter: {0}</value></data>
+  <data name="Log_FinishedFormat" xml:space="preserve"><value>Finished: {0}</value></data>
+  <data name="Log_LogSavedFormat" xml:space="preserve"><value>Log file saved: {0}</value></data>
+  <data name="Log_LosslessExtractionFormat" xml:space="preserve"><value>Lossless extraction: {0}</value></data>
+  <data name="Log_ArchiveForcesFlac" xml:space="preserve"><value>Archive export forces FLAC so that the result is stored losslessly.</value></data>
+  <data name="Log_FFmpegStartingFormat" xml:space="preserve"><value>Starting FFmpeg: {0}</value></data>
+  <data name="Log_AnalyzingSourceFFprobe" xml:space="preserve"><value>Analyzing source with FFprobe...</value></data>
+
+  <data name="Error_FFmpegUnavailable" xml:space="preserve"><value>FFmpeg is not available.</value></data>
+  <data name="Error_FFprobeUnavailable" xml:space="preserve"><value>FFprobe is not available.</value></data>
+  <data name="Error_FFmpegNotFound" xml:space="preserve"><value>FFmpeg was not found. Install FFmpeg and make sure ffmpeg.exe is on PATH or next to the app.</value></data>
+  <data name="Error_FFprobeNotFound" xml:space="preserve"><value>FFprobe was not found. Install FFmpeg and make sure ffprobe.exe is on PATH or next to the app.</value></data>
+  <data name="Error_FFmpegExitCodeFormat" xml:space="preserve"><value>FFmpeg exited with code {0}. Details are in the log.</value></data>
+  <data name="Error_FFmpegStartFailed" xml:space="preserve"><value>An unexpected error occurred while starting FFmpeg.</value></data>
+  <data name="Error_ProcessingCancelled" xml:space="preserve"><value>Processing was cancelled.</value></data>
+  <data name="Error_AnalysisCancelled" xml:space="preserve"><value>Analysis was cancelled.</value></data>
+  <data name="Error_NoFileSelected" xml:space="preserve"><value>Please select a file first.</value></data>
+  <data name="Error_FileNotFound" xml:space="preserve"><value>The selected file does not exist.</value></data>
+  <data name="Error_SourceFileNotFound" xml:space="preserve"><value>The source file was not found.</value></data>
+  <data name="Error_UnsupportedFormat" xml:space="preserve"><value>This file format is not supported. Supported formats are mp3, wav, flac, m4a, aac, ogg, opus, mp4 and mkv.</value></data>
+  <data name="Error_UnsupportedFormatShort" xml:space="preserve"><value>This file format is not supported.</value></data>
+  <data name="Error_OutputFolderRequired" xml:space="preserve"><value>Please choose an output folder.</value></data>
+  <data name="Error_FFprobeAnalysisFailed" xml:space="preserve"><value>FFprobe could not analyze the file. Check that the file contains a readable audio stream.</value></data>
+  <data name="Error_FFprobeNoData" xml:space="preserve"><value>FFprobe did not return any analysis data.</value></data>
+  <data name="Error_NoAudioStream" xml:space="preserve"><value>No audio stream was found in the file.</value></data>
+  <data name="Error_FFprobeDataUnreadable" xml:space="preserve"><value>FFprobe data could not be read.</value></data>
+  <data name="Error_AnalysisFailed" xml:space="preserve"><value>An unexpected error occurred during analysis.</value></data>
+  <data name="Error_SourceAnalysisFailed" xml:space="preserve"><value>The source could not be analyzed.</value></data>
+  <data name="Error_PreparationFailed" xml:space="preserve"><value>Processing could not be prepared.</value></data>
+  <data name="Error_LoudnessMeasurementFailed" xml:space="preserve"><value>The loudness measurement pass failed.</value></data>
+  <data name="Error_TargetExists" xml:space="preserve"><value>The target file already exists. Please start processing again.</value></data>
+  <data name="Error_SaveFailed" xml:space="preserve"><value>The output file could not be saved after processing.</value></data>
+  <data name="Error_StreamCopyNotPossible" xml:space="preserve"><value>This audio stream cannot be reliably extracted without re-encoding. Choose an export format like FLAC or WAV instead.</value></data>
+  <data name="Error_PreviewFileNotFound" xml:space="preserve"><value>The preview file was not found.</value></data>
+  <data name="Error_PreviewOpenFailed" xml:space="preserve"><value>The file could not be opened for preview. The Windows playback system may not support this format.</value></data>
+  <data name="Error_PreviewFailedFormat" xml:space="preserve"><value>Preview failed: {0}</value></data>
+  <data name="Error_PreviewFailedGeneric" xml:space="preserve"><value>Preview failed: the Windows playback system does not support this format.</value></data>
+  <data name="Error_ToolNotFoundFormat" xml:space="preserve"><value>{0}.exe was not found. Install FFmpeg or place ffmpeg.exe and ffprobe.exe next to the app or inside the Tools folder.</value></data>
+  <data name="Error_ToolExitCodeFormat" xml:space="preserve"><value>{0} exited with code {1}.</value></data>
+
+  <data name="Filter_StreamCopy" xml:space="preserve"><value>Stream copy: -vn -c:a copy</value></data>
+  <data name="Filter_NoFilters" xml:space="preserve"><value>No audio filters. The track is only exported to the chosen target format.</value></data>
+
+  <data name="Quality_GeneralNote" xml:space="preserve"><value>This tool can enhance, normalize and restore audio, but it cannot recover information that was already destroyed by bad recording or lossy compression.</value></data>
+  <data name="Quality_LosslessTarget" xml:space="preserve"><value>A lossless target format avoids additional export loss but does not make a lossy source better than it is.</value></data>
+
+  <data name="Display_Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Display_Mono" xml:space="preserve"><value>1 (Mono)</value></data>
+  <data name="Display_Stereo" xml:space="preserve"><value>2 (Stereo)</value></data>
+  <data name="Display_ChannelsFormat" xml:space="preserve"><value>{0} channels</value></data>
+  <data name="Display_LikelyLossy" xml:space="preserve"><value>Likely lossy</value></data>
+  <data name="Display_LikelyLossless" xml:space="preserve"><value>Likely lossless or uncompressed</value></data>
+  <data name="Warning_LossySource" xml:space="preserve"><value>The source is already lossy. Processing can improve sound, loudness and intelligibility but cannot fully restore lost details.</value></data>
+
+  <data name="Preset_Music_Name" xml:space="preserve"><value>Enhance music</value></data>
+  <data name="Preset_Music_Description" xml:space="preserve"><value>Loudness normalization around -14 LUFS with a -1.5 dB true peak limit.</value></data>
+  <data name="Preset_Music_QualityNote" xml:space="preserve"><value>For music, aggressive noise reduction is intentionally not enabled so that dynamics and tonal character are preserved.</value></data>
+
+  <data name="Preset_Speech_Name" xml:space="preserve"><value>Enhance speech</value></data>
+  <data name="Preset_Speech_Description" xml:space="preserve"><value>High-pass at 80 Hz, normalization around -16 LUFS and optional subtle speech processing.</value></data>
+  <data name="Preset_Speech_QualityNote" xml:space="preserve"><value>For speech, intelligibility and loudness are prioritized. Compression and presence boost are intentionally moderate.</value></data>
+
+  <data name="Preset_Noise_Name" xml:space="preserve"><value>Reduce noise</value></data>
+  <data name="Preset_Noise_Description" xml:space="preserve"><value>Reduces background noise with afftdn. The strength is adjustable.</value></data>
+  <data name="Preset_Noise_QualityNote" xml:space="preserve"><value>Too much noise reduction can sound metallic or artificial. Start conservative and check the result.</value></data>
+
+  <data name="Preset_Copy_Name" xml:space="preserve"><value>Lossless extraction only</value></data>
+  <data name="Preset_Copy_Description" xml:space="preserve"><value>Extracts the first audio stream without filters and without re-encoding, when the codec is sensibly copyable.</value></data>
+  <data name="Preset_Copy_QualityNote" xml:space="preserve"><value>This option does not improve sound, but it avoids additional quality loss.</value></data>
+
+  <data name="Preset_Archive_Name" xml:space="preserve"><value>Archive export</value></data>
+  <data name="Preset_Archive_Description" xml:space="preserve"><value>Saves the processed audio track as FLAC.</value></data>
+  <data name="Preset_Archive_QualityNote" xml:space="preserve"><value>FLAC is lossless but does not restore details that were already lost.</value></data>
+
+  <data name="Preset_Everyday_Name" xml:space="preserve"><value>Everyday export</value></data>
+  <data name="Preset_Everyday_Description" xml:space="preserve"><value>Exports to an everyday format with good quality at a sensible file size.</value></data>
+  <data name="Preset_Everyday_QualityNote" xml:space="preserve"><value>For everyday exports, AAC 256k, MP3 320k or Opus 160k/192k are good choices.</value></data>
+
+  <data name="ExportFormat_Wav24_Name" xml:space="preserve"><value>WAV 24 bit</value></data>
+  <data name="ExportFormat_Wav24_Description" xml:space="preserve"><value>Uncompressed PCM at 24 bit. Very large but lossless after processing.</value></data>
+  <data name="ExportFormat_Flac_Name" xml:space="preserve"><value>FLAC</value></data>
+  <data name="ExportFormat_Flac_Description" xml:space="preserve"><value>Lossless compression. Useful for archiving after processing.</value></data>
+  <data name="ExportFormat_Premiere_Name" xml:space="preserve"><value>Premiere Pro</value></data>
+  <data name="ExportFormat_Premiere_Description" xml:space="preserve"><value>For video editing: WAV 24 bit at 48 kHz. Lossless after processing and compatible with Adobe Premiere Pro.</value></data>
+  <data name="ExportFormat_Mp3_Name" xml:space="preserve"><value>MP3 320k</value></data>
+  <data name="ExportFormat_Mp3_Description" xml:space="preserve"><value>Widely compatible but lossy.</value></data>
+  <data name="ExportFormat_Aac_Name" xml:space="preserve"><value>AAC 256k</value></data>
+  <data name="ExportFormat_Aac_Description" xml:space="preserve"><value>Good quality at a moderate file size.</value></data>
+  <data name="ExportFormat_Opus160_Name" xml:space="preserve"><value>Opus 160k</value></data>
+  <data name="ExportFormat_Opus160_Description" xml:space="preserve"><value>Efficient codec for small files at good quality.</value></data>
+  <data name="ExportFormat_Opus192_Name" xml:space="preserve"><value>Opus 192k</value></data>
+  <data name="ExportFormat_Opus192_Description" xml:space="preserve"><value>Efficient codec with more headroom for complex material.</value></data>
+
+  <data name="Language_German" xml:space="preserve"><value>Deutsch</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+</root>
