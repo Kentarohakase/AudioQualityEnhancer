@@ -9,6 +9,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Audio- und Videodateien mit Audiospur öffnen
 - Datei per Button oder Drag and Drop auswählen
 - Codec, Bitrate, Sample Rate, Kanäle, Dauer und Dateigröße anzeigen
+- Lautheit, Peak-Werte und mögliche technische Probleme optional genauer messen
 - Musik oder Sprache per Preset verbessern
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
@@ -37,6 +38,12 @@ Eingabe:
 - MKV
 
 Bei Videodateien wird aktuell die erste Audiospur verwendet.
+
+## Analyse
+
+Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, wenig Headroom oder sehr leises Material.
+
+Die erweiterten Werte sind Diagnosewerte. Sie sagen, wo Bearbeitung helfen kann, versprechen aber keine Wiederherstellung verlorener Details.
 
 ## Profile
 

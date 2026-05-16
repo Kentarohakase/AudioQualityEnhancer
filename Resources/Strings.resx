@@ -26,6 +26,7 @@
   <data name="Button_SelectFolder" xml:space="preserve"><value>Ordner wählen</value></data>
   <data name="Button_Start" xml:space="preserve"><value>Verarbeitung starten</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Erweiterte Analyse</value></data>
 
   <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
   <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
@@ -41,6 +42,12 @@
   <data name="Field_NoiseFilter" xml:space="preserve"><value>Rauschfilter</value></data>
   <data name="Field_OutputFolder" xml:space="preserve"><value>Ordner</value></data>
   <data name="Field_Language" xml:space="preserve"><value>Sprache</value></data>
+  <data name="Field_Loudness" xml:space="preserve"><value>Lautheit</value></data>
+  <data name="Field_TruePeak" xml:space="preserve"><value>True Peak</value></data>
+  <data name="Field_MaxPeak" xml:space="preserve"><value>Sample Peak</value></data>
+  <data name="Field_MeanVolume" xml:space="preserve"><value>Durchschnitt</value></data>
+  <data name="Field_LoudnessRange" xml:space="preserve"><value>Dynamik</value></data>
+  <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Misst Lautheit und Peaks mit FFmpeg. Das kann bei langen Dateien etwas dauern.</value></data>
 
   <data name="Checkbox_TwoPassLoudness" xml:space="preserve"><value>Zwei-Pass-Loudness</value></data>
   <data name="Checkbox_SpeechCompression" xml:space="preserve"><value>Leichte Sprachkompression</value></data>
@@ -62,9 +69,13 @@
   <data name="Status_PreviewStopped" xml:space="preserve"><value>Vorschau gestoppt.</value></data>
   <data name="Status_PreviewEnded" xml:space="preserve"><value>Vorschau beendet.</value></data>
   <data name="Status_PreviewFailed" xml:space="preserve"><value>Vorschau fehlgeschlagen.</value></data>
+  <data name="Status_AdvancedAnalysisRunning" xml:space="preserve"><value>Erweiterte Analyse läuft...</value></data>
+  <data name="Status_AdvancedAnalysisDone" xml:space="preserve"><value>Erweiterte Analyse abgeschlossen.</value></data>
+  <data name="Status_AdvancedAnalysisFailed" xml:space="preserve"><value>Erweiterte Analyse fehlgeschlagen.</value></data>
 
   <data name="Phase_Ready" xml:space="preserve"><value>Bereit</value></data>
   <data name="Phase_Analysis" xml:space="preserve"><value>Analyse</value></data>
+  <data name="Phase_AdvancedAnalysis" xml:space="preserve"><value>Erweiterte Analyse</value></data>
   <data name="Phase_Error" xml:space="preserve"><value>Fehler</value></data>
   <data name="Phase_Start" xml:space="preserve"><value>Start</value></data>
   <data name="Phase_Done" xml:space="preserve"><value>Fertig</value></data>
@@ -103,6 +114,8 @@
   <data name="Log_ArchiveForcesFlac" xml:space="preserve"><value>Archiv Export erzwingt FLAC, damit die Bearbeitung verlustfrei gespeichert wird.</value></data>
   <data name="Log_FFmpegStartingFormat" xml:space="preserve"><value>Starte FFmpeg: {0}</value></data>
   <data name="Log_AnalyzingSourceFFprobe" xml:space="preserve"><value>Analysiere Quelle mit FFprobe...</value></data>
+  <data name="Log_AdvancedAnalysisStarting" xml:space="preserve"><value>Starte erweiterte Analyse mit FFmpeg...</value></data>
+  <data name="Log_AdvancedAnalysisCompleteFormat" xml:space="preserve"><value>Erweiterte Analyse: Lautheit {0}, True Peak {1}.</value></data>
 
   <data name="Error_FFmpegUnavailable" xml:space="preserve"><value>FFmpeg ist nicht verfügbar.</value></data>
   <data name="Error_FFprobeUnavailable" xml:space="preserve"><value>FFprobe ist nicht verfügbar.</value></data>
@@ -135,6 +148,8 @@
   <data name="Error_PreviewFailedGeneric" xml:space="preserve"><value>Vorschau fehlgeschlagen: Das Windows-Wiedergabesystem unterstützt dieses Format nicht.</value></data>
   <data name="Error_ToolNotFoundFormat" xml:space="preserve"><value>{0}.exe wurde nicht gefunden. Installiere FFmpeg oder lege ffmpeg.exe und ffprobe.exe neben die App oder in den Tools-Ordner.</value></data>
   <data name="Error_ToolExitCodeFormat" xml:space="preserve"><value>{0} wurde mit Exit Code {1} beendet.</value></data>
+  <data name="Error_DiagnosticsFailed" xml:space="preserve"><value>Die erweiterte Audioanalyse konnte nicht ausgeführt werden.</value></data>
+  <data name="Error_DiagnosticsUnreadable" xml:space="preserve"><value>Die erweiterten Messwerte konnten nicht aus der FFmpeg-Ausgabe gelesen werden.</value></data>
 
   <data name="Filter_StreamCopy" xml:space="preserve"><value>Stream copy: -vn -c:a copy</value></data>
   <data name="Filter_NoFilters" xml:space="preserve"><value>Keine Audiofilter. Es wird nur in das gewählte Zielformat exportiert.</value></data>
@@ -149,6 +164,12 @@
   <data name="Display_LikelyLossy" xml:space="preserve"><value>Wahrscheinlich verlustbehaftet</value></data>
   <data name="Display_LikelyLossless" xml:space="preserve"><value>Wahrscheinlich verlustfrei oder unkomprimiert</value></data>
   <data name="Warning_LossySource" xml:space="preserve"><value>Die Quelle ist bereits verlustbehaftet. Die Bearbeitung kann Klang, Lautheit und Verständlichkeit verbessern, aber verlorene Details nicht vollständig wiederherstellen.</value></data>
+  <data name="Warning_LowBitrateFormat" xml:space="preserve"><value>Die Quelle hat eine niedrige Bitrate ({0}). Bearbeitung kann Verständlichkeit oder Lautheit verbessern, aber Kompressionsdetails bleiben verloren.</value></data>
+  <data name="Warning_LowSampleRateFormat" xml:space="preserve"><value>Die Quelle hat eine niedrige Sample Rate ({0}). Höhen und feine Details können bereits begrenzt sein.</value></data>
+  <data name="Warning_PotentialClipping" xml:space="preserve"><value>Der Peak liegt sehr nah an 0 dBFS. Das Material kann geclippt oder stark limitiert sein; verlorene Transienten lassen sich nicht zuverlässig wiederherstellen.</value></data>
+  <data name="Warning_LowHeadroom" xml:space="preserve"><value>Die Quelle hat wenig Headroom. Zusätzliche Anhebungen sollten vorsichtig eingesetzt werden.</value></data>
+  <data name="Warning_VeryQuiet" xml:space="preserve"><value>Die Quelle ist sehr leise. Normalisierung kann helfen, hebt aber auch vorhandenes Rauschen mit an.</value></data>
+  <data name="Warning_AlreadyLoud" xml:space="preserve"><value>Die Quelle ist bereits sehr laut. Weitere Kompression oder starke Anhebung kann Artefakte verstärken.</value></data>
 
   <data name="Preset_Music_Name" xml:space="preserve"><value>Musik verbessern</value></data>
   <data name="Preset_Music_Description" xml:space="preserve"><value>Loudness-Normalisierung auf etwa -14 LUFS mit True Peak Limit -1,5 dB.</value></data>

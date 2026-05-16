@@ -18,9 +18,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioPreviewService _audioPreviewService;
     private readonly FFmpegService _ffmpegService;
     private readonly FFprobeService _ffprobeService;
+    private readonly AudioDiagnosticsService _audioDiagnosticsService;
     private readonly AudioProcessingService _audioProcessingService;
     private readonly SettingsService _settingsService;
     private readonly AsyncRelayCommand _selectFileCommand;
+    private readonly AsyncRelayCommand _analyzeDiagnosticsCommand;
     private readonly RelayCommand _selectOutputFolderCommand;
     private readonly AsyncRelayCommand _startCommand;
     private readonly RelayCommand _cancelCommand;
@@ -33,10 +35,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _inputPath = string.Empty;
     private string _outputDirectory = string.Empty;
     private AudioInfo? _audioInfo;
+    private AudioDiagnostics? _audioDiagnostics;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
     private string _statusText;
     private string _qualityNotice = string.Empty;
+    private string _analysisWarningText = string.Empty;
     private string _logText = string.Empty;
     private string _toolStatusText;
     private string _processingPhaseText;
@@ -52,6 +56,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private int _noiseReductionFloor = -25;
     private bool _initialized;
     private CancellationTokenSource? _processingCancellation;
+    private CancellationTokenSource? _diagnosticsCancellation;
+    private bool _hasAnalysisWarnings;
 
     private DispatcherTimer? _previewTimer;
     private bool _updatingPositionFromTimer;
@@ -72,6 +78,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioPreviewService = new AudioPreviewService();
         _ffmpegService = new FFmpegService(_toolDiscoveryService);
         _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
+        _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
         _settingsService = App.SettingsService;
 
@@ -89,6 +96,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
 
         _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
+        _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics);
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
         _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
@@ -160,6 +168,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand SelectFileCommand => _selectFileCommand;
 
+    public ICommand AnalyzeDiagnosticsCommand => _analyzeDiagnosticsCommand;
+
     public ICommand SelectOutputFolderCommand => _selectOutputFolderCommand;
 
     public ICommand StartCommand => _startCommand;
@@ -205,8 +215,24 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _audioInfo, value))
             {
                 old?.Dispose();
+                UpdateAnalysisWarnings();
                 UpdateQualityNotice();
                 UpdateFilterDetails();
+            }
+        }
+    }
+
+    public AudioDiagnostics? AudioDiagnostics
+    {
+        get => _audioDiagnostics;
+        private set
+        {
+            var old = _audioDiagnostics;
+            if (SetProperty(ref _audioDiagnostics, value))
+            {
+                old?.Dispose();
+                UpdateAnalysisWarnings();
+                UpdateQualityNotice();
             }
         }
     }
@@ -258,6 +284,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _qualityNotice;
         private set => SetProperty(ref _qualityNotice, value);
+    }
+
+    public string AnalysisWarningText
+    {
+        get => _analysisWarningText;
+        private set => SetProperty(ref _analysisWarningText, value);
+    }
+
+    public bool HasAnalysisWarnings
+    {
+        get => _hasAnalysisWarnings;
+        private set => SetProperty(ref _hasAnalysisWarnings, value);
     }
 
     public string LogText
@@ -461,6 +499,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         StopPreview();
         InputPath = path;
         LastOutputPath = string.Empty;
+        AudioDiagnostics = null;
 
         var directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrWhiteSpace(directory))
@@ -499,6 +538,58 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         if (dialog.ShowDialog() == Forms.DialogResult.OK)
         {
             OutputDirectory = dialog.SelectedPath;
+        }
+    }
+
+    private async Task AnalyzeDiagnosticsAsync()
+    {
+        if (AudioInfo is null || string.IsNullOrWhiteSpace(InputPath) || !File.Exists(InputPath))
+        {
+            SetStatus("Status_AnalysisFailed");
+            return;
+        }
+
+        StopPreview();
+        _diagnosticsCancellation?.Dispose();
+        _diagnosticsCancellation = new CancellationTokenSource();
+        IsBusy = true;
+        ProgressValue = 0;
+        SetProcessingPhase("Phase_AdvancedAnalysis");
+        SetStatus("Status_AdvancedAnalysisRunning");
+
+        try
+        {
+            var result = await _audioDiagnosticsService.AnalyzeAsync(
+                InputPath,
+                AudioInfo.Duration,
+                _logService.Info,
+                value => ProgressValue = value,
+                _diagnosticsCancellation.Token);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                AudioDiagnostics = result.Value;
+                ProgressValue = 100;
+                SetProcessingPhase("Phase_Ready");
+                SetStatus("Status_AdvancedAnalysisDone");
+            }
+            else
+            {
+                SetProcessingPhase("Phase_Error");
+                SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_AdvancedAnalysisFailed"]);
+                _logService.Error(StatusText);
+
+                if (result.Exception is not null)
+                {
+                    _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
+                }
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+            _diagnosticsCancellation.Dispose();
+            _diagnosticsCancellation = null;
         }
     }
 
@@ -603,6 +694,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SetStatus("Status_Cancelling");
         SetProcessingPhase("Phase_Cancel");
         _processingCancellation?.Cancel();
+        _diagnosticsCancellation?.Cancel();
     }
 
     private void PlaySourcePreview() =>
@@ -697,6 +789,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                SelectedExportFormat is not null;
     }
 
+    private bool CanAnalyzeDiagnostics()
+    {
+        return !IsBusy &&
+               AudioInfo is not null &&
+               !string.IsNullOrWhiteSpace(InputPath) &&
+               File.Exists(InputPath);
+    }
+
     private void ApplyPresetDefaults(AudioPreset preset)
     {
         if (preset.IsArchiveExport)
@@ -721,6 +821,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             parts.Add(AudioInfo.LossyWarning);
         }
 
+        if (!string.IsNullOrWhiteSpace(AnalysisWarningText))
+        {
+            parts.Add(AnalysisWarningText);
+        }
+
         if (!string.IsNullOrWhiteSpace(SelectedPreset?.QualityNote))
         {
             parts.Add(SelectedPreset.QualityNote);
@@ -732,6 +837,50 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         QualityNotice = string.Join(Environment.NewLine + Environment.NewLine, parts);
+    }
+
+    private void UpdateAnalysisWarnings()
+    {
+        var warnings = new List<string>();
+
+        if (AudioInfo?.IsLikelyLossy == true && AudioInfo.BitRate is > 0)
+        {
+            var lowBitrateThreshold = AudioInfo.Channels == 1 ? 96_000 : 128_000;
+            if (AudioInfo.BitRate.Value < lowBitrateThreshold)
+            {
+                warnings.Add(LocalizationService.Instance.Format("Warning_LowBitrateFormat", AudioInfo.BitRateDisplay));
+            }
+        }
+
+        if (AudioInfo?.SampleRate is > 0 and < 32000)
+        {
+            warnings.Add(LocalizationService.Instance.Format("Warning_LowSampleRateFormat", AudioInfo.SampleRateDisplay));
+        }
+
+        var diagnostics = AudioDiagnostics;
+        if (diagnostics is not null)
+        {
+            if (diagnostics.HasPotentialClipping)
+            {
+                warnings.Add(LocalizationService.Instance["Warning_PotentialClipping"]);
+            }
+            else if ((diagnostics.TruePeakDb ?? diagnostics.MaxVolumeDb) is >= -1.0)
+            {
+                warnings.Add(LocalizationService.Instance["Warning_LowHeadroom"]);
+            }
+
+            if (diagnostics.IntegratedLoudnessLufs is < -28)
+            {
+                warnings.Add(LocalizationService.Instance["Warning_VeryQuiet"]);
+            }
+            else if (diagnostics.IntegratedLoudnessLufs is > -9)
+            {
+                warnings.Add(LocalizationService.Instance["Warning_AlreadyLoud"]);
+            }
+        }
+
+        AnalysisWarningText = string.Join(Environment.NewLine + Environment.NewLine, warnings);
+        HasAnalysisWarnings = warnings.Count > 0;
     }
 
     private void UpdateFilterDetails()
@@ -804,6 +953,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         RefreshLocalizedState();
+        UpdateAnalysisWarnings();
         UpdateQualityNotice();
         UpdateFilterDetails();
     }
@@ -872,6 +1022,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void RaiseCommandStates()
     {
         _selectFileCommand.RaiseCanExecuteChanged();
+        _analyzeDiagnosticsCommand.RaiseCanExecuteChanged();
         _selectOutputFolderCommand.RaiseCanExecuteChanged();
         _startCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
@@ -910,7 +1061,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
         StopPreviewTimer();
         _processingCancellation?.Dispose();
+        _diagnosticsCancellation?.Dispose();
         _audioPreviewService.Dispose();
         _audioInfo?.Dispose();
+        _audioDiagnostics?.Dispose();
     }
 }

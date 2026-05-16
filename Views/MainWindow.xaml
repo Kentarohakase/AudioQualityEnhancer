@@ -243,6 +243,9 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding [Field_Codec], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
@@ -264,7 +267,36 @@
                                 <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AudioInfo.FileSizeDisplay, TargetNullValue='-'}" Margin="0,0,18,0" />
                                 <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding [Field_Source], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
                                 <TextBlock Grid.Row="3" Grid.Column="3" Text="{Binding AudioInfo.LossyDisplay, TargetNullValue='-'}" TextWrapping="Wrap" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding [Field_Loudness], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,12,10,8" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding AudioDiagnostics.IntegratedLoudnessDisplay, TargetNullValue='-'}" Margin="0,12,18,8" />
+                                <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding [Field_TruePeak], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,12,10,8" />
+                                <TextBlock Grid.Row="4" Grid.Column="3" Text="{Binding AudioDiagnostics.TruePeakDisplay, TargetNullValue='-'}" Margin="0,12,0,8" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding [Field_MaxPeak], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AudioDiagnostics.MaxVolumeDisplay, TargetNullValue='-'}" Margin="0,0,18,8" />
+                                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding [Field_MeanVolume], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="5" Grid.Column="3" Text="{Binding AudioDiagnostics.MeanVolumeDisplay, TargetNullValue='-'}" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding [Field_LoudnessRange], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding AudioDiagnostics.LoudnessRangeDisplay, TargetNullValue='-'}" Margin="0,0,18,0" />
                             </Grid>
+                            <DockPanel Margin="0,14,0,0">
+                                <Button DockPanel.Dock="Left"
+                                        Content="{Binding [Button_AdvancedAnalysis], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding AnalyzeDiagnosticsCommand}" />
+                                <TextBlock Text="{Binding [Hint_AdvancedAnalysis], Source={x:Static loc:LocalizationService.Instance}}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="12,0,0,0"
+                                           VerticalAlignment="Center" />
+                            </DockPanel>
+                            <TextBlock Text="{Binding AnalysisWarningText}"
+                                       Visibility="{Binding HasAnalysisWarnings, Converter={StaticResource BoolToVis}}"
+                                       TextWrapping="Wrap"
+                                       LineHeight="19"
+                                       Foreground="#8A4B00"
+                                       Margin="0,12,0,0" />
                         </StackPanel>
                     </Border>
 
