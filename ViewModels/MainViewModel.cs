@@ -20,6 +20,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly FFmpegService _ffmpegService;
     private readonly FFprobeService _ffprobeService;
     private readonly AudioDiagnosticsService _audioDiagnosticsService;
+    private readonly AudioAnalysisInsightService _audioAnalysisInsightService;
     private readonly AudioProcessingService _audioProcessingService;
     private readonly SettingsService _settingsService;
     private readonly AsyncRelayCommand _selectFileCommand;
@@ -41,6 +42,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _outputDirectory = string.Empty;
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
+    private AudioAnalysisReport? _analysisReport;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
     private string _statusText;
@@ -84,6 +86,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _ffmpegService = new FFmpegService(_toolDiscoveryService);
         _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
         _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
+        _audioAnalysisInsightService = new AudioAnalysisInsightService();
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
         _settingsService = App.SettingsService;
 
@@ -233,6 +236,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 old?.Dispose();
                 UpdateAnalysisWarnings();
+                UpdateAnalysisReport();
                 UpdateQualityNotice();
                 UpdateFilterDetails();
             }
@@ -249,10 +253,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 old?.Dispose();
                 UpdateAnalysisWarnings();
+                UpdateAnalysisReport();
                 UpdateQualityNotice();
             }
         }
     }
+
+    public AudioAnalysisReport? AnalysisReport
+    {
+        get => _analysisReport;
+        private set
+        {
+            if (SetProperty(ref _analysisReport, value))
+            {
+                OnPropertyChanged(nameof(HasAnalysisReport));
+            }
+        }
+    }
+
+    public bool HasAnalysisReport => AnalysisReport is not null;
 
     public AudioPreset? SelectedPreset
     {
@@ -976,6 +995,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         HasAnalysisWarnings = warnings.Count > 0;
     }
 
+    private void UpdateAnalysisReport()
+    {
+        AnalysisReport = AudioInfo is null
+            ? null
+            : _audioAnalysisInsightService.BuildReport(AudioInfo, AudioDiagnostics);
+    }
+
     private void UpdateFilterDetails()
     {
         if (SelectedPreset is null || SelectedExportFormat is null)
@@ -1047,6 +1073,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         RefreshLocalizedState();
         UpdateAnalysisWarnings();
+        UpdateAnalysisReport();
         UpdateQualityNotice();
         UpdateFilterDetails();
     }

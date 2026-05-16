@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added a clearer analysis report with score, findings and practical recommendations based on the existing source and diagnostics data.
+
 ### Changed
 
 - Updated CI and release workflows for the current GitHub Actions runtimes and the upcoming Windows runner image migration.

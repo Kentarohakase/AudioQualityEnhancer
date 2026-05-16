@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:loc="clr-namespace:AudioQualityEnhancer.Services"
+        xmlns:models="clr-namespace:AudioQualityEnhancer.Models"
         mc:Ignorable="d"
         Title="{Binding [MainWindow_Title], Source={x:Static loc:LocalizationService.Instance}}"
         Width="1200"
@@ -114,6 +115,23 @@
         <Style TargetType="ComboBox">
             <Setter Property="MinHeight" Value="34" />
             <Setter Property="Padding" Value="6,4" />
+        </Style>
+
+        <Style x:Key="InsightSeverityBadgeStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#365149" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="MinWidth" Value="62" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,1,10,0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Severity}" Value="{x:Static models:AudioInsightSeverity.Warning}">
+                    <Setter Property="Foreground" Value="#8A4B00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Severity}" Value="{x:Static models:AudioInsightSeverity.Critical}">
+                    <Setter Property="Foreground" Value="#9A1B1B" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -281,6 +299,69 @@
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding [Field_LoudnessRange], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
                                 <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding AudioDiagnostics.LoudnessRangeDisplay, TargetNullValue='-'}" Margin="0,0,18,0" />
                             </Grid>
+
+                            <StackPanel Margin="0,14,0,0"
+                                        Visibility="{Binding HasAnalysisReport, Converter={StaticResource BoolToVis}}">
+                                <Separator Margin="0,0,0,12" />
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Left" Width="92">
+                                        <TextBlock Text="{Binding [Field_AnalysisScore], Source={x:Static loc:LocalizationService.Instance}}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="12" />
+                                        <TextBlock Text="{Binding AnalysisReport.ScoreDisplay}"
+                                                   FontSize="24"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding AnalysisReport.StatusText}"
+                                                   FontSize="15"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding AnalysisReport.Summary}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </DockPanel>
+
+                                <TextBlock Text="{Binding [Section_AnalysisFindings], Source={x:Static loc:LocalizationService.Instance}}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,12,0,6" />
+                                <ItemsControl ItemsSource="{Binding AnalysisReport.Findings}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,0,0,8">
+                                                <TextBlock DockPanel.Dock="Left"
+                                                           Text="{Binding SeverityDisplay}"
+                                                           Style="{StaticResource InsightSeverityBadgeStyle}" />
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Message}"
+                                                               Foreground="{StaticResource MutedTextBrush}"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,1,0,0" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <StackPanel Visibility="{Binding AnalysisReport.HasRecommendations, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding [Section_AnalysisRecommendations], Source={x:Static loc:LocalizationService.Instance}}"
+                                               FontWeight="SemiBold"
+                                               Margin="0,4,0,6" />
+                                    <ItemsControl ItemsSource="{Binding AnalysisReport.Recommendations}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Text}"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           Margin="0,0,0,6" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </StackPanel>
+
                             <DockPanel Margin="0,14,0,0">
                                 <Button DockPanel.Dock="Left"
                                         Content="{Binding [Button_AdvancedAnalysis], Source={x:Static loc:LocalizationService.Instance}}"

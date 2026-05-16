@@ -44,7 +44,7 @@ Bei Videodateien wird aktuell die erste Audiospur verwendet.
 
 Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, wenig Headroom oder sehr leises Material.
 
-Die erweiterten Werte sind Diagnosewerte. Sie sagen, wo Bearbeitung helfen kann, versprechen aber keine Wiederherstellung verlorener Details.
+Die App bewertet diese Daten zusätzlich mit einem einfachen Score, technischen Hinweisen und Empfehlungen. Das hilft bei der Wahl eines sinnvollen Presets. Der Score bewertet technische Auffälligkeiten, nicht subjektive Klangqualität, und verspricht keine Wiederherstellung verlorener Details.
 
 ## Profile
 

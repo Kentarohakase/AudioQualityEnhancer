@@ -50,6 +50,21 @@ public sealed partial class ResourceTests
         values.Add(unknownInfo.FileSizeDisplay);
         values.Add(unknownInfo.LossyDisplay);
 
+        using var reportInfo = new AudioInfo
+        {
+            Codec = "mp3",
+            IsLikelyLossy = true,
+            BitRate = 96_000,
+            SampleRate = 22_050,
+            Channels = 2,
+            FileSizeBytes = 1024
+        };
+        var report = new AudioAnalysisInsightService().BuildReport(reportInfo, diagnostics: null);
+        values.Add(report.StatusText);
+        values.Add(report.Summary);
+        values.AddRange(report.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
+        values.AddRange(report.Recommendations.Select(r => r.Text));
+
         foreach (var value in values)
         {
             Assert.DoesNotMatch(MissingResourceRegex(), value);

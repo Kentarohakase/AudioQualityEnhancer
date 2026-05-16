@@ -51,6 +51,9 @@
   <data name="Field_MaxPeak" xml:space="preserve"><value>Sample peak</value></data>
   <data name="Field_MeanVolume" xml:space="preserve"><value>Average</value></data>
   <data name="Field_LoudnessRange" xml:space="preserve"><value>Dynamics</value></data>
+  <data name="Field_AnalysisScore" xml:space="preserve"><value>Score</value></data>
+  <data name="Section_AnalysisFindings" xml:space="preserve"><value>Findings</value></data>
+  <data name="Section_AnalysisRecommendations" xml:space="preserve"><value>Recommendations</value></data>
   <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Measures loudness and peaks with FFmpeg. Long files may take a while.</value></data>
 
   <data name="Checkbox_TwoPassLoudness" xml:space="preserve"><value>Two-pass loudness</value></data>
@@ -183,6 +186,44 @@
   <data name="Warning_LowHeadroom" xml:space="preserve"><value>The source has little headroom. Additional boosts should be used carefully.</value></data>
   <data name="Warning_VeryQuiet" xml:space="preserve"><value>The source is very quiet. Normalization can help, but it also raises existing noise.</value></data>
   <data name="Warning_AlreadyLoud" xml:space="preserve"><value>The source is already very loud. More compression or heavy boosting can increase artifacts.</value></data>
+
+  <data name="AnalysisSeverity_Info" xml:space="preserve"><value>Info</value></data>
+  <data name="AnalysisSeverity_Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="AnalysisSeverity_Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="AnalysisStatus_Excellent" xml:space="preserve"><value>Green</value></data>
+  <data name="AnalysisStatus_Good" xml:space="preserve"><value>Solid</value></data>
+  <data name="AnalysisStatus_Caution" xml:space="preserve"><value>Needs care</value></data>
+  <data name="AnalysisStatus_Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="AnalysisSummary_Excellent" xml:space="preserve"><value>The analysis does not show relevant technical warning signs.</value></data>
+  <data name="AnalysisSummary_Good" xml:space="preserve"><value>The source looks mostly good, but individual points can still be worth checking.</value></data>
+  <data name="AnalysisSummary_Caution" xml:space="preserve"><value>There are technical warning signs. Processing may help, but it should be applied carefully.</value></data>
+  <data name="AnalysisSummary_Critical" xml:space="preserve"><value>The source has clear technical risks. Lost detail cannot be reliably restored.</value></data>
+  <data name="AnalysisFinding_NoIssues_Title" xml:space="preserve"><value>No notable measurements</value></data>
+  <data name="AnalysisFinding_NoIssues_Message" xml:space="preserve"><value>The available data does not show clear warning signs. The score does not replace listening.</value></data>
+  <data name="AnalysisFinding_LossySource_Title" xml:space="preserve"><value>Lossy source</value></data>
+  <data name="AnalysisFinding_LossySource_Message" xml:space="preserve"><value>The codec is probably lossy. Processing can improve tone and loudness, but it cannot recover lost detail.</value></data>
+  <data name="AnalysisFinding_LowBitrate_Title" xml:space="preserve"><value>Low bit rate</value></data>
+  <data name="AnalysisFinding_LowBitrate_Message" xml:space="preserve"><value>The bit rate is low. Compression artifacts will not disappear by exporting to FLAC or WAV.</value></data>
+  <data name="AnalysisFinding_LowSampleRate_Title" xml:space="preserve"><value>Low sample rate</value></data>
+  <data name="AnalysisFinding_LowSampleRate_Message" xml:space="preserve"><value>The sample rate already limits possible high frequencies and fine detail in the source.</value></data>
+  <data name="AnalysisFinding_PotentialClipping_Title" xml:space="preserve"><value>Possible clipping</value></data>
+  <data name="AnalysisFinding_PotentialClipping_Message" xml:space="preserve"><value>The peak is very close to 0 dBFS. Transients may already be damaged.</value></data>
+  <data name="AnalysisFinding_LowHeadroom_Title" xml:space="preserve"><value>Low headroom</value></data>
+  <data name="AnalysisFinding_LowHeadroom_Message" xml:space="preserve"><value>The source is close to the digital ceiling. Additional boosts should be used carefully.</value></data>
+  <data name="AnalysisFinding_VeryQuiet_Title" xml:space="preserve"><value>Very quiet source</value></data>
+  <data name="AnalysisFinding_VeryQuiet_Message" xml:space="preserve"><value>Normalization can help, but it raises existing noise as well.</value></data>
+  <data name="AnalysisFinding_AlreadyLoud_Title" xml:space="preserve"><value>Already very loud</value></data>
+  <data name="AnalysisFinding_AlreadyLoud_Message" xml:space="preserve"><value>More compression or heavy loudness boosting can increase artifacts.</value></data>
+  <data name="AnalysisFinding_AdvancedAnalysisRecommended_Title" xml:space="preserve"><value>Advanced analysis recommended</value></data>
+  <data name="AnalysisFinding_AdvancedAnalysisRecommended_Message" xml:space="preserve"><value>Loudness and peak recommendations become more precise after running advanced analysis.</value></data>
+  <data name="AnalysisRecommendation_LossySource" xml:space="preserve"><value>For lossy sources, normalize gently and treat a lossless target format as an editing or archive format only.</value></data>
+  <data name="AnalysisRecommendation_LowBitrate" xml:space="preserve"><value>With low bit rate sources, avoid aggressive noise reduction or strong high-frequency boosts.</value></data>
+  <data name="AnalysisRecommendation_LowSampleRate" xml:space="preserve"><value>Export with as little additional loss as possible, but do not expect restored high frequencies.</value></data>
+  <data name="AnalysisRecommendation_PotentialClipping" xml:space="preserve"><value>Avoid heavy boosting. Use careful normalization and preferably save the processed result losslessly.</value></data>
+  <data name="AnalysisRecommendation_LowHeadroom" xml:space="preserve"><value>Use a true-peak limit and leave some reserve to avoid creating new clipping.</value></data>
+  <data name="AnalysisRecommendation_VeryQuiet" xml:space="preserve"><value>Normalize carefully and listen back to check whether noise became distractingly louder.</value></data>
+  <data name="AnalysisRecommendation_AlreadyLoud" xml:space="preserve"><value>Avoid extra compression. A lossless export preserves the result but does not repair existing overprocessing.</value></data>
+  <data name="AnalysisRecommendation_AdvancedAnalysisRecommended" xml:space="preserve"><value>Run advanced analysis before deciding on stronger processing for critical material.</value></data>
 
   <data name="Preset_Music_Name" xml:space="preserve"><value>Enhance music</value></data>
   <data name="Preset_Music_Description" xml:space="preserve"><value>Loudness normalization around -14 LUFS with a -1.5 dB true peak limit.</value></data>
