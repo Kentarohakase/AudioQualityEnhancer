@@ -21,7 +21,9 @@ public sealed class FileNameService
 
     public string BuildOpenDialogFilter()
     {
-        return "Audio- und Videodateien|*.mp3;*.wav;*.flac;*.m4a;*.aac;*.ogg;*.opus;*.mp4;*.mkv|Alle Dateien|*.*";
+        var audio = LocalizationService.Instance["Dialog_FilterAudio"];
+        var all = LocalizationService.Instance["Dialog_FilterAll"];
+        return $"{audio}|*.mp3;*.wav;*.flac;*.m4a;*.aac;*.ogg;*.opus;*.mp4;*.mkv|{all}|*.*";
     }
 
     public bool IsSupportedInputFile(string path)
@@ -64,17 +66,18 @@ public sealed class FileNameService
     public CopyOutputSuggestion? SuggestCopyOutput(AudioInfo info)
     {
         var codec = info.Codec.Trim().ToLowerInvariant();
+        var loc = LocalizationService.Instance;
 
         return codec switch
         {
-            "mp3" => new CopyOutputSuggestion(".mp3", "MP3", "MP3 kann ohne Re-Encoding in eine MP3-Datei extrahiert werden."),
-            "aac" => new CopyOutputSuggestion(".m4a", "M4A/AAC", "AAC wird für die verlustfreie Extraktion in einem M4A-Container gespeichert."),
-            "alac" => new CopyOutputSuggestion(".m4a", "M4A/ALAC", "ALAC wird für die verlustfreie Extraktion in einem M4A-Container gespeichert."),
-            "flac" => new CopyOutputSuggestion(".flac", "FLAC", "FLAC kann ohne Re-Encoding in eine FLAC-Datei extrahiert werden."),
-            "opus" => new CopyOutputSuggestion(".opus", "Opus", "Opus kann ohne Re-Encoding in eine Opus-Datei extrahiert werden."),
-            "vorbis" => new CopyOutputSuggestion(".ogg", "Ogg Vorbis", "Vorbis wird für die verlustfreie Extraktion in einem Ogg-Container gespeichert."),
-            "pcm_s16le" or "pcm_s24le" or "pcm_s32le" or "pcm_f32le" or "pcm_f64le" => new CopyOutputSuggestion(".wav", "WAV/PCM", "PCM-Audio wird ohne Re-Encoding in einem WAV-Container gespeichert."),
-            "ac3" or "eac3" or "dts" => new CopyOutputSuggestion(".mka", "Matroska Audio", "Dieser Codec wird für verlustfreie Extraktion in einem MKA-Container gespeichert."),
+            "mp3" => new CopyOutputSuggestion(".mp3", "MP3", loc["CopyReason_Mp3"]),
+            "aac" => new CopyOutputSuggestion(".m4a", "M4A/AAC", loc["CopyReason_Aac"]),
+            "alac" => new CopyOutputSuggestion(".m4a", "M4A/ALAC", loc["CopyReason_Alac"]),
+            "flac" => new CopyOutputSuggestion(".flac", "FLAC", loc["CopyReason_Flac"]),
+            "opus" => new CopyOutputSuggestion(".opus", "Opus", loc["CopyReason_Opus"]),
+            "vorbis" => new CopyOutputSuggestion(".ogg", "Ogg Vorbis", loc["CopyReason_Vorbis"]),
+            "pcm_s16le" or "pcm_s24le" or "pcm_s32le" or "pcm_f32le" or "pcm_f64le" => new CopyOutputSuggestion(".wav", "WAV/PCM", loc["CopyReason_Pcm"]),
+            "ac3" or "eac3" or "dts" => new CopyOutputSuggestion(".mka", "Matroska Audio", loc["CopyReason_Ac3"]),
             _ => null
         };
     }

@@ -191,4 +191,24 @@
 
   <data name="Language_German" xml:space="preserve"><value>Deutsch</value></data>
   <data name="Language_English" xml:space="preserve"><value>English</value></data>
+
+  <data name="ToolStatus_Found" xml:space="preserve"><value>{0}: gefunden ({1})</value></data>
+  <data name="ToolStatus_NotFound" xml:space="preserve"><value>{0}: nicht gefunden</value></data>
+
+  <data name="Dialog_SelectFile_Title" xml:space="preserve"><value>Audio- oder Videodatei auswählen</value></data>
+  <data name="Dialog_SelectFolder_Title" xml:space="preserve"><value>Ausgabeordner auswählen</value></data>
+  <data name="Dialog_FilterAudio" xml:space="preserve"><value>Audio- und Videodateien</value></data>
+  <data name="Dialog_FilterAll" xml:space="preserve"><value>Alle Dateien</value></data>
+
+  <data name="Error_AppCrash" xml:space="preserve"><value>Die Anwendung konnte nicht korrekt fortgeführt werden.</value></data>
+  <data name="Error_CrashLogSaved" xml:space="preserve"><value>Details wurden gespeichert unter:</value></data>
+
+  <data name="CopyReason_Mp3" xml:space="preserve"><value>MP3 kann ohne Re-Encoding in eine MP3-Datei extrahiert werden.</value></data>
+  <data name="CopyReason_Aac" xml:space="preserve"><value>AAC wird für die verlustfreie Extraktion in einem M4A-Container gespeichert.</value></data>
+  <data name="CopyReason_Alac" xml:space="preserve"><value>ALAC wird für die verlustfreie Extraktion in einem M4A-Container gespeichert.</value></data>
+  <data name="CopyReason_Flac" xml:space="preserve"><value>FLAC kann ohne Re-Encoding in eine FLAC-Datei extrahiert werden.</value></data>
+  <data name="CopyReason_Opus" xml:space="preserve"><value>Opus kann ohne Re-Encoding in eine Opus-Datei extrahiert werden.</value></data>
+  <data name="CopyReason_Vorbis" xml:space="preserve"><value>Vorbis wird für die verlustfreie Extraktion in einem Ogg-Container gespeichert.</value></data>
+  <data name="CopyReason_Pcm" xml:space="preserve"><value>PCM-Audio wird ohne Re-Encoding in einem WAV-Container gespeichert.</value></data>
+  <data name="CopyReason_Ac3" xml:space="preserve"><value>Dieser Codec wird für verlustfreie Extraktion in einem MKA-Container gespeichert.</value></data>
 </root>

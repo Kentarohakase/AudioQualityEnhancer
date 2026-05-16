@@ -66,7 +66,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _ffmpegService = new FFmpegService(_toolDiscoveryService);
         _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
-        _settingsService = new SettingsService();
+        _settingsService = App.SettingsService;
 
         _statusText = LocalizationService.Instance["Status_Ready"];
         _toolStatusText = LocalizationService.Instance["Tools_Checking"];
@@ -194,8 +194,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         get => _audioInfo;
         private set
         {
+            var old = _audioInfo;
             if (SetProperty(ref _audioInfo, value))
             {
+                old?.Dispose();
                 UpdateQualityNotice();
                 UpdateFilterDetails();
             }
@@ -466,7 +468,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Audio- oder Videodatei auswählen",
+            Title = LocalizationService.Instance["Dialog_SelectFile_Title"],
             Filter = _fileNameService.BuildOpenDialogFilter(),
             CheckFileExists = true,
             Multiselect = false
@@ -482,7 +484,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Ausgabeordner auswählen",
+            Description = LocalizationService.Instance["Dialog_SelectFolder_Title"],
             UseDescriptionForTitle = true,
             SelectedPath = Directory.Exists(OutputDirectory) ? OutputDirectory : GetDefaultOutputDirectory()
         };
@@ -835,5 +837,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         StopPreviewTimer();
         _processingCancellation?.Dispose();
         _audioPreviewService.Dispose();
+        _audioInfo?.Dispose();
     }
 }

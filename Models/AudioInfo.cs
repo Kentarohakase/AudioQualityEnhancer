@@ -4,11 +4,16 @@ using AudioQualityEnhancer.Services;
 
 namespace AudioQualityEnhancer.Models;
 
-public sealed class AudioInfo : INotifyPropertyChanged
+public sealed class AudioInfo : INotifyPropertyChanged, IDisposable
 {
     public AudioInfo()
     {
         LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

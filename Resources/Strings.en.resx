@@ -191,4 +191,24 @@
 
   <data name="Language_German" xml:space="preserve"><value>Deutsch</value></data>
   <data name="Language_English" xml:space="preserve"><value>English</value></data>
+
+  <data name="ToolStatus_Found" xml:space="preserve"><value>{0}: found ({1})</value></data>
+  <data name="ToolStatus_NotFound" xml:space="preserve"><value>{0}: not found</value></data>
+
+  <data name="Dialog_SelectFile_Title" xml:space="preserve"><value>Select audio or video file</value></data>
+  <data name="Dialog_SelectFolder_Title" xml:space="preserve"><value>Select output folder</value></data>
+  <data name="Dialog_FilterAudio" xml:space="preserve"><value>Audio and video files</value></data>
+  <data name="Dialog_FilterAll" xml:space="preserve"><value>All files</value></data>
+
+  <data name="Error_AppCrash" xml:space="preserve"><value>The application could not continue correctly.</value></data>
+  <data name="Error_CrashLogSaved" xml:space="preserve"><value>Details have been saved to:</value></data>
+
+  <data name="CopyReason_Mp3" xml:space="preserve"><value>MP3 can be extracted into an MP3 file without re-encoding.</value></data>
+  <data name="CopyReason_Aac" xml:space="preserve"><value>AAC is stored in an M4A container for lossless extraction.</value></data>
+  <data name="CopyReason_Alac" xml:space="preserve"><value>ALAC is stored in an M4A container for lossless extraction.</value></data>
+  <data name="CopyReason_Flac" xml:space="preserve"><value>FLAC can be extracted into a FLAC file without re-encoding.</value></data>
+  <data name="CopyReason_Opus" xml:space="preserve"><value>Opus can be extracted into an Opus file without re-encoding.</value></data>
+  <data name="CopyReason_Vorbis" xml:space="preserve"><value>Vorbis is stored in an Ogg container for lossless extraction.</value></data>
+  <data name="CopyReason_Pcm" xml:space="preserve"><value>PCM audio is stored in a WAV container without re-encoding.</value></data>
+  <data name="CopyReason_Ac3" xml:space="preserve"><value>This codec is stored in an MKA container for lossless extraction.</value></data>
 </root>

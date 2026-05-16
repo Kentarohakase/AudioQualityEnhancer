@@ -5,13 +5,15 @@ namespace AudioQualityEnhancer;
 
 public partial class App : System.Windows.Application
 {
+    public static SettingsService SettingsService { get; } = new();
+
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
-        var settings = new SettingsService().Load();
+        var settings = SettingsService.Load();
         try
         {
             LocalizationService.Instance.Culture = new CultureInfo(settings.Language);
@@ -27,8 +29,9 @@ public partial class App : System.Windows.Application
     private static void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
         var logPath = WriteCrashLog(e.Exception);
+        var loc = LocalizationService.Instance;
         System.Windows.MessageBox.Show(
-            $"Die Anwendung konnte nicht korrekt gestartet werden.{Environment.NewLine}{Environment.NewLine}Details wurden gespeichert unter:{Environment.NewLine}{logPath}",
+            $"{loc["Error_AppCrash"]}{Environment.NewLine}{Environment.NewLine}{loc["Error_CrashLogSaved"]}{Environment.NewLine}{logPath}",
             "Audio Quality Enhancer",
             System.Windows.MessageBoxButton.OK,
             System.Windows.MessageBoxImage.Error);
