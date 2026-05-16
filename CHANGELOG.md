@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.1 - 2026-05-16
+
+### Fixed
+
+- `MainWindow.OnClosed` now wraps `PersistSettings()` in a try-finally block so `MainViewModel.Dispose()` always runs even if saving settings throws.
+- Drag-and-drop file loading no longer throws `NullReferenceException` when `IDataObject.GetData(FileDrop)` returns null (defensive `as string[]` cast in both `OnDrop` and `GetDroppedFiles`).
+
 ## 0.8.0 - 2026-05-16
 
 ### Added

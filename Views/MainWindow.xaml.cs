@@ -35,7 +35,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        var files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+        var files = e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[];
+        if (files is null || files.Length == 0)
+        {
+            e.Handled = true;
+            return;
+        }
+
         await _viewModel.LoadInputFilesAsync(files);
         e.Handled = true;
     }
@@ -57,13 +63,20 @@ public partial class MainWindow : Window
             return Array.Empty<string>();
         }
 
-        return (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+        return e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[]
+               ?? Array.Empty<string>();
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _viewModel.PersistSettings();
-        _viewModel.Dispose();
-        base.OnClosed(e);
+        try
+        {
+            _viewModel.PersistSettings();
+        }
+        finally
+        {
+            _viewModel.Dispose();
+            base.OnClosed(e);
+        }
     }
 }
