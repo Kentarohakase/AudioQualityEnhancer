@@ -10,9 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AudioQualityEnhancer.Tests\**\*" />
     <Compile Remove="Temp\**\*" />
+    <EmbeddedResource Remove="AudioQualityEnhancer.Tests\**\*" />
     <EmbeddedResource Remove="Temp\**\*" />
+    <None Remove="AudioQualityEnhancer.Tests\**\*" />
     <None Remove="Temp\**\*" />
+    <Page Remove="AudioQualityEnhancer.Tests\**\*" />
     <Page Remove="Temp\**\*" />
   </ItemGroup>
 

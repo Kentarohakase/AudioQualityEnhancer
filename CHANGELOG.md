@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added automated tests for FFprobe parsing, FFmpeg diagnostics parsing, file naming, export profiles and resource key parity.
+
 ## 0.5.1 - 2026-05-16
 
 ### Fixed

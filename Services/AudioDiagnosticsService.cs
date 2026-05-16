@@ -152,7 +152,7 @@ public sealed partial class AudioDiagnosticsService
         }
     }
 
-    private static IReadOnlyList<string> BuildArguments(string inputPath)
+    internal static IReadOnlyList<string> BuildArguments(string inputPath)
     {
         return new[]
         {
@@ -173,7 +173,7 @@ public sealed partial class AudioDiagnosticsService
         };
     }
 
-    private static AudioDiagnostics? ParseDiagnostics(string output)
+    internal static AudioDiagnostics? ParseDiagnostics(string output)
     {
         var summary = LastSection(output, "Summary:") ?? output;
         var integrated = TryMatchDouble(summary, IntegratedLoudnessRegex());

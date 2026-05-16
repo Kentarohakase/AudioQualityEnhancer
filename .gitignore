@@ -34,6 +34,5 @@ _ReSharper*/
 # Visual Studio Code
 .vscode/
 
-# Local agent/tool settings
-.claude/
+# Local workspace files
 *_wpftmp.csproj

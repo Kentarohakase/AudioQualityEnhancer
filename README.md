@@ -115,8 +115,11 @@ Die App sucht FFmpeg in dieser Reihenfolge:
 
 ```powershell
 dotnet build
+dotnet test
 dotnet run
 ```
+
+Die Tests prüfen Parser, Dateilogik, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
 
 ## Release bauen
 

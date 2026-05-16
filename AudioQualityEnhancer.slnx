@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AudioQualityEnhancer.csproj" />
+  <Project Path="AudioQualityEnhancer.Tests/AudioQualityEnhancer.Tests.csproj" />
+</Solution>

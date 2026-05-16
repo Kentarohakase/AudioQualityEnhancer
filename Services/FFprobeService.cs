@@ -90,7 +90,7 @@ public sealed class FFprobeService
         }
     }
 
-    private static AudioInfo? ParseAudioInfo(string inputPath, string json)
+    internal static AudioInfo? ParseAudioInfo(string inputPath, string json)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
