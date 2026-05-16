@@ -41,6 +41,9 @@ jobs:
       - name: Build
         run: dotnet build -c Release
 
+      - name: Test
+        run: dotnet test AudioQualityEnhancer.Tests -c Release --no-build
+
       - name: Package (without FFmpeg)
         shell: pwsh
         run: .\scripts\package-release.ps1 -Version "${{ steps.vars.outputs.version }}"
