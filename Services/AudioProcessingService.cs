@@ -151,17 +151,17 @@ public sealed class AudioProcessingService
         try
         {
             Report(progress, 98, "Speichere Ergebnis");
-            if (File.Exists(plan.FinalOutputPath))
-            {
-                return Result<ProcessResult>.Failure("Die Zieldatei existiert inzwischen bereits. Bitte starte die Verarbeitung erneut.");
-            }
-
             File.Move(tempOutputPath, plan.FinalOutputPath);
             _logService.Info($"Fertig: {plan.FinalOutputPath}");
 
             Report(progress, 100, "Fertig");
             var completedResult = ffmpegResult.Value with { OutputPath = plan.FinalOutputPath };
             return Result<ProcessResult>.Success(completedResult);
+        }
+        catch (IOException ex) when (File.Exists(plan.FinalOutputPath))
+        {
+            TryDeleteTempFile(tempOutputPath);
+            return Result<ProcessResult>.Failure("Die Zieldatei existiert inzwischen bereits. Bitte starte die Verarbeitung erneut.", ex, ffmpegResult.Value);
         }
         catch (Exception ex)
         {

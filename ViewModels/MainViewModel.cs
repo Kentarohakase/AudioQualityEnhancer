@@ -58,6 +58,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
 
         _logService.LogAdded += OnLogAdded;
+        _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
 
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
@@ -526,6 +527,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         return !IsBusy &&
                !string.IsNullOrWhiteSpace(InputPath) &&
                File.Exists(InputPath) &&
+               !string.IsNullOrWhiteSpace(OutputDirectory) &&
                SelectedPreset is not null &&
                SelectedExportFormat is not null;
     }
@@ -607,6 +609,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private void OnPlaybackFailed(object? sender, string errorMessage)
+    {
+        StatusText = errorMessage;
+        _logService.Error(errorMessage);
+    }
+
     private void RaiseCommandStates()
     {
         _selectFileCommand.RaiseCanExecuteChanged();
@@ -643,6 +651,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        _audioPreviewService.PlaybackFailed -= OnPlaybackFailed;
         _processingCancellation?.Dispose();
         _audioPreviewService.Dispose();
     }

@@ -57,7 +57,7 @@ public sealed class LogService
         Directory.CreateDirectory(logDirectory);
 
         var safePrefix = string.Concat(filePrefix.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch));
-        var path = Path.Combine(logDirectory, $"{safePrefix}_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        var path = Path.Combine(logDirectory, $"{safePrefix}_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log");
         await File.WriteAllTextAsync(path, CurrentText, Encoding.UTF8, cancellationToken);
         return path;
     }
