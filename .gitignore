@@ -1,0 +1,33 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.log
+Logs/
+Temp/
+Output/
+
+# Generated or processed media files
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.mp4
+*.mkv
+*.mka
+
+# FFmpeg binaries are expected to be installed separately or placed next to a local build intentionally.
+ffmpeg.exe
+ffprobe.exe
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# Visual Studio Code
+.vscode/
