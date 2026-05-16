@@ -12,6 +12,7 @@ public sealed class FileNameServiceTests
     [InlineData("voice.m4a")]
     [InlineData("video.MP4")]
     [InlineData("video.mkv")]
+    [InlineData("audio.mka")]
     public void IsSupportedInputFile_AcceptsSupportedExtensions(string fileName)
     {
         var service = new FileNameService();

@@ -16,14 +16,15 @@ public sealed class FileNameService
         ".ogg",
         ".opus",
         ".mp4",
-        ".mkv"
+        ".mkv",
+        ".mka"
     };
 
     public string BuildOpenDialogFilter()
     {
         var audio = LocalizationService.Instance["Dialog_FilterAudio"];
         var all = LocalizationService.Instance["Dialog_FilterAll"];
-        return $"{audio}|*.mp3;*.wav;*.flac;*.m4a;*.aac;*.ogg;*.opus;*.mp4;*.mkv|{all}|*.*";
+        return $"{audio}|*.mp3;*.wav;*.flac;*.m4a;*.aac;*.ogg;*.opus;*.mp4;*.mkv;*.mka|{all}|*.*";
     }
 
     public bool IsSupportedInputFile(string path)

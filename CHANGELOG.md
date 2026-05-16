@@ -1,10 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 - 2026-05-17
 
 ### Added
 
-- Added post-export result validation with before/after technical measurements, queue warnings and optional Markdown reports.
+- Added post-export result validation with before/after technical measurements for codec, container, duration, sample rate, channels, file size, loudness and peaks.
+- Added warnings for missing, empty or unreadable output files, duration mismatches, possible clipping, low headroom and missed loudness targets.
+- Added optional Markdown result reports in the output folder with per-file findings and measured values.
+
+### Fixed
+
+- Output files that cannot be validated are now marked as failed instead of being reported as finished.
+- Matroska audio (`.mka`) is accepted for analysis so lossless stream-copy exports for AC3/EAC3/DTS can be checked correctly.
 
 ## 0.8.8 - 2026-05-17
 

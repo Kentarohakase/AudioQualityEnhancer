@@ -917,7 +917,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 {
                     item.OutputPath = result.Value.OutputPath ?? string.Empty;
                     LastOutputPath = item.OutputPath;
-                    await ValidateProcessedItemAsync(item, _processingCancellation.Token);
+                    var validationSucceeded = await ValidateProcessedItemAsync(item, _processingCancellation.Token);
 
                     if (_processingCancellation.IsCancellationRequested)
                     {
@@ -927,6 +927,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                         SetStatus("Status_Cancelling");
                         _logService.Warning(item.ErrorMessage);
                         break;
+                    }
+
+                    if (!validationSucceeded)
+                    {
+                        item.Status = BatchProcessingStatus.Failed;
+                        item.Progress = 0;
+                        SetProcessingPhase("Phase_Error");
+                        continue;
                     }
 
                     item.Progress = 100;
@@ -992,11 +1000,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _diagnosticsCancellation?.Cancel();
     }
 
-    private async Task ValidateProcessedItemAsync(BatchProcessingItem item, CancellationToken cancellationToken)
+    private async Task<bool> ValidateProcessedItemAsync(BatchProcessingItem item, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(item.OutputPath))
         {
-            return;
+            item.ErrorMessage = LocalizationService.Instance["Error_OutputFileMissingValidation"];
+            return false;
         }
 
         SetProcessingPhase("Phase_ResultValidation");
@@ -1032,7 +1041,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             item.ErrorMessage = result.ErrorMessage ?? LocalizationService.Instance["Status_ResultValidationFailed"];
             _logService.Warning(LocalizationService.Instance.Format("Log_ValidationFailedFormat", item.FileName, item.ErrorMessage));
+            return false;
         }
+
+        return true;
     }
 
     private async Task SaveQualityReportAsync(CancellationToken cancellationToken)

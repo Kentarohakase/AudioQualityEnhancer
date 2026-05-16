@@ -148,6 +148,17 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void BuildFileProblemReport_UsesCriticalStatus()
+    {
+        using var source = CreateInfo("wav", isLossy: false);
+
+        var report = AudioValidationService.BuildFileProblemReport(source, string.Empty, "missing");
+
+        Assert.Equal(AudioComparisonStatus.Critical, report.Status);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.OutputMissing);
+    }
+
+    [Fact]
     public void BuildReport_LossySourceToLosslessFormatStaysInformational()
     {
         using var source = CreateInfo("mp3", isLossy: true);

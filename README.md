@@ -141,13 +141,13 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofi
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.8.8
+.\scripts\package-release.ps1 -Version 0.9.0
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.8.8 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.9.0 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.
