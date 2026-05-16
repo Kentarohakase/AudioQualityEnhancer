@@ -29,7 +29,9 @@ New-Item -ItemType Directory -Force -Path $artifactsDir | Out-Null
 dotnet publish -c Release -r $Runtime --self-contained true `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:IncludeAllContentForSelfExtract=true `
     -p:EnableCompressionInSingleFile=true `
+    -p:SatelliteResourceLanguages="de%3Ben" `
     -o $publishDir
 
 if ($LASTEXITCODE -ne 0) {
