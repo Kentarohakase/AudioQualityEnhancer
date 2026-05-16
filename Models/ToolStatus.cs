@@ -1,9 +1,8 @@
-using System.ComponentModel;
 using AudioQualityEnhancer.Services;
 
 namespace AudioQualityEnhancer.Models;
 
-public sealed class ToolStatus : INotifyPropertyChanged
+public sealed class ToolStatus
 {
     public ToolStatus(
         string name,
@@ -19,10 +18,7 @@ public sealed class ToolStatus : INotifyPropertyChanged
         IsAvailable = isAvailable;
         VersionLine = versionLine;
         ErrorMessage = errorMessage;
-        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
     }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string Name { get; }
 
@@ -39,12 +35,4 @@ public sealed class ToolStatus : INotifyPropertyChanged
     public string DisplayText => IsAvailable
         ? LocalizationService.Instance.Format("ToolStatus_Found", Name, Source)
         : LocalizationService.Instance.Format("ToolStatus_NotFound", Name);
-
-    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == "Item[]")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayText)));
-        }
-    }
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 - 2026-05-16
+
+### Fixed
+
+- Tool status, status text and processing phase now refresh more reliably when the UI language is changed.
+- Removed an unnecessary localization event subscription from `ToolStatus`.
+- Audio preview now closes the underlying media player on playback errors and detaches media events during cleanup.
+- README release examples now use the current version number.
+- Local `.claude/` agent settings are ignored by Git.
+
 ## 0.4.0 - 2026-05-16
 
 ### Added

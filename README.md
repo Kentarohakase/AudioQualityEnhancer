@@ -115,13 +115,13 @@ dotnet run
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.1
+.\scripts\package-release.ps1 -Version 0.4.1
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.1 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.4.1 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.

@@ -56,16 +56,21 @@ public sealed class AudioPreviewService : IDisposable
             return;
         }
 
+        var player = _player;
+        _player = null;
         NaturalDuration = null;
 
         try
         {
-            _player.Stop();
-            _player.Close();
+            player.MediaOpened -= OnMediaOpened;
+            player.MediaFailed -= OnMediaFailed;
+            player.MediaEnded -= OnMediaEnded;
+            player.Stop();
+            player.Close();
         }
-        finally
+        catch
         {
-            _player = null;
+            // Preview cleanup should not crash the app.
         }
     }
 
@@ -76,6 +81,11 @@ public sealed class AudioPreviewService : IDisposable
 
     private void OnMediaOpened(object? sender, EventArgs e)
     {
+        if (!ReferenceEquals(sender, _player))
+        {
+            return;
+        }
+
         NaturalDuration = _player?.NaturalDuration.HasTimeSpan == true
             ? _player.NaturalDuration.TimeSpan
             : null;
@@ -83,14 +93,26 @@ public sealed class AudioPreviewService : IDisposable
 
     private void OnMediaFailed(object? sender, ExceptionEventArgs e)
     {
+        if (!ReferenceEquals(sender, _player))
+        {
+            return;
+        }
+
         var message = e.ErrorException?.Message is { Length: > 0 } msg
             ? LocalizationService.Instance.Format("Error_PreviewFailedFormat", msg)
             : LocalizationService.Instance["Error_PreviewFailedGeneric"];
+        Stop();
         PlaybackFailed?.Invoke(this, message);
     }
 
     private void OnMediaEnded(object? sender, EventArgs e)
     {
+        if (!ReferenceEquals(sender, _player))
+        {
+            return;
+        }
+
+        Stop();
         PlaybackEnded?.Invoke(this, EventArgs.Empty);
     }
 }

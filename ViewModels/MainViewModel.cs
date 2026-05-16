@@ -28,6 +28,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _playOutputCommand;
     private readonly RelayCommand _stopPreviewCommand;
 
+    private ToolStatus? _ffmpegStatus;
+    private ToolStatus? _ffprobeStatus;
     private string _inputPath = string.Empty;
     private string _outputDirectory = string.Empty;
     private AudioInfo? _audioInfo;
@@ -56,6 +58,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private double _previewPositionSeconds;
     private double _previewDurationSeconds;
     private bool _isPreviewActive;
+    private string? _activePreviewLabelKey;
+    private string? _statusTextResourceKey = "Status_Ready";
+    private object?[] _statusTextArguments = Array.Empty<object?>();
+    private string? _processingPhaseResourceKey = "Phase_Ready";
+    private object?[] _processingPhaseArguments = Array.Empty<object?>();
 
     public MainViewModel()
     {
@@ -420,27 +427,27 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _initialized = true;
         _logService.Info(LocalizationService.Instance["Log_CheckingTools"]);
 
-        var ffmpeg = await _toolDiscoveryService.GetStatusAsync("ffmpeg", CancellationToken.None);
-        var ffprobe = await _toolDiscoveryService.GetStatusAsync("ffprobe", CancellationToken.None);
+        _ffmpegStatus = await _toolDiscoveryService.GetStatusAsync("ffmpeg", CancellationToken.None);
+        _ffprobeStatus = await _toolDiscoveryService.GetStatusAsync("ffprobe", CancellationToken.None);
 
-        ToolStatusText = $"{ffmpeg.DisplayText} | {ffprobe.DisplayText}";
+        RefreshToolStatusText();
 
-        if (ffmpeg.IsAvailable)
+        if (_ffmpegStatus.IsAvailable)
         {
-            _logService.Info(ffmpeg.VersionLine ?? LocalizationService.Instance["Log_FFmpegFound"]);
+            _logService.Info(_ffmpegStatus.VersionLine ?? LocalizationService.Instance["Log_FFmpegFound"]);
         }
         else
         {
-            _logService.Warning(ffmpeg.ErrorMessage ?? LocalizationService.Instance["Log_FFmpegUnavailable"]);
+            _logService.Warning(_ffmpegStatus.ErrorMessage ?? LocalizationService.Instance["Log_FFmpegUnavailable"]);
         }
 
-        if (ffprobe.IsAvailable)
+        if (_ffprobeStatus.IsAvailable)
         {
-            _logService.Info(ffprobe.VersionLine ?? LocalizationService.Instance["Log_FFprobeFound"]);
+            _logService.Info(_ffprobeStatus.VersionLine ?? LocalizationService.Instance["Log_FFprobeFound"]);
         }
         else
         {
-            _logService.Warning(ffprobe.ErrorMessage ?? LocalizationService.Instance["Log_FFprobeUnavailable"]);
+            _logService.Warning(_ffprobeStatus.ErrorMessage ?? LocalizationService.Instance["Log_FFprobeUnavailable"]);
         }
     }
 
@@ -500,15 +507,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _logService.Clear();
         AudioInfo = null;
         ProgressValue = 0;
-        ProcessingPhaseText = LocalizationService.Instance["Phase_Analysis"];
-        StatusText = LocalizationService.Instance["Status_Analyzing"];
+        SetProcessingPhase("Phase_Analysis");
+        SetStatus("Status_Analyzing");
 
         var result = await _ffprobeService.AnalyzeAsync(InputPath, _logService.Info, CancellationToken.None);
         if (result.IsSuccess && result.Value is not null)
         {
             AudioInfo = result.Value;
-            ProcessingPhaseText = LocalizationService.Instance["Phase_Ready"];
-            StatusText = LocalizationService.Instance["Status_AnalysisDone"];
+            SetProcessingPhase("Phase_Ready");
+            SetStatus("Status_AnalysisDone");
             _logService.Info(LocalizationService.Instance.Format("Log_CodecFormat", AudioInfo.CodecDisplay));
             _logService.Info(LocalizationService.Instance.Format("Log_ContainerFormat", AudioInfo.ContainerDisplay));
 
@@ -519,8 +526,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
         else
         {
-            ProcessingPhaseText = LocalizationService.Instance["Phase_Error"];
-            StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_AnalysisFailed"];
+            SetProcessingPhase("Phase_Error");
+            SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_AnalysisFailed"]);
             _logService.Error(StatusText);
 
             if (result.Exception is not null)
@@ -536,7 +543,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (SelectedPreset is null || SelectedExportFormat is null)
         {
-            StatusText = LocalizationService.Instance["Status_SelectPresetAndFormat"];
+            SetStatus("Status_SelectPresetAndFormat");
             return;
         }
 
@@ -545,8 +552,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _processingCancellation = new CancellationTokenSource();
         IsBusy = true;
         ProgressValue = 0;
-        ProcessingPhaseText = LocalizationService.Instance["Phase_Start"];
-        StatusText = LocalizationService.Instance["Status_Processing"];
+        SetProcessingPhase("Phase_Start");
+        SetStatus("Status_Processing");
         _logService.Info(LocalizationService.Instance["Log_StartingProcessing"]);
 
         try
@@ -560,9 +567,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (result.IsSuccess && result.Value is not null)
             {
                 ProgressValue = 100;
-                ProcessingPhaseText = LocalizationService.Instance["Phase_Done"];
+                SetProcessingPhase("Phase_Done");
                 LastOutputPath = result.Value.OutputPath ?? string.Empty;
-                StatusText = LocalizationService.Instance.Format("Status_DoneFormat", result.Value.OutputPath ?? string.Empty);
+                SetStatus("Status_DoneFormat", result.Value.OutputPath ?? string.Empty);
 
                 if (SaveLogFile)
                 {
@@ -573,8 +580,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             }
             else
             {
-                ProcessingPhaseText = LocalizationService.Instance["Phase_Error"];
-                StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_ProcessingFailed"];
+                SetProcessingPhase("Phase_Error");
+                SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_ProcessingFailed"]);
                 _logService.Error(StatusText);
 
                 if (result.Exception is not null)
@@ -593,33 +600,35 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void CancelProcessing()
     {
-        StatusText = LocalizationService.Instance["Status_Cancelling"];
-        ProcessingPhaseText = LocalizationService.Instance["Phase_Cancel"];
+        SetStatus("Status_Cancelling");
+        SetProcessingPhase("Phase_Cancel");
         _processingCancellation?.Cancel();
     }
 
     private void PlaySourcePreview() =>
-        PlayPreview(InputPath, LocalizationService.Instance["Button_PlaySource"]);
+        PlayPreview(InputPath, "Button_PlaySource");
 
     private void PlayOutputPreview() =>
-        PlayPreview(LastOutputPath, LocalizationService.Instance["Button_PlayOutput"]);
+        PlayPreview(LastOutputPath, "Button_PlayOutput");
 
-    private void PlayPreview(string path, string label)
+    private void PlayPreview(string path, string labelKey)
     {
         StopPreviewTimer();
         var result = _audioPreviewService.Play(path);
         if (result.IsSuccess)
         {
+            _activePreviewLabelKey = labelKey;
             IsPreviewActive = true;
             PreviewDurationSeconds = 0;
             PreviewPositionSeconds = 0;
-            StatusText = LocalizationService.Instance.Format("Status_PreviewPlayingFormat", label);
+            SetStatus("Status_PreviewPlayingFormat", LocalizationService.Instance[labelKey]);
             _logService.Info(LocalizationService.Instance.Format("Log_PreviewStartedFormat", path));
             StartPreviewTimer();
             return;
         }
 
-        StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_PreviewFailed"];
+        _activePreviewLabelKey = null;
+        SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_PreviewFailed"]);
         _logService.Error(StatusText);
 
         if (result.Exception is not null)
@@ -633,9 +642,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         StopPreviewTimer();
         _audioPreviewService.Stop();
         IsPreviewActive = false;
+        _activePreviewLabelKey = null;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
-        StatusText = LocalizationService.Instance["Status_PreviewStopped"];
+        SetStatus("Status_PreviewStopped");
     }
 
     private void StartPreviewTimer()
@@ -672,9 +682,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void UpdateProcessingProgress(ProcessingProgress progress)
     {
         ProgressValue = progress.Percentage;
-        ProcessingPhaseText = string.IsNullOrWhiteSpace(progress.Detail)
+        SetProcessingPhaseRaw(string.IsNullOrWhiteSpace(progress.Detail)
             ? progress.Phase
-            : $"{progress.Phase} - {progress.Detail}";
+            : $"{progress.Phase} - {progress.Detail}");
     }
 
     private bool CanStartProcessing()
@@ -770,7 +780,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPreviewActive = false;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
-        StatusText = errorMessage;
+        _activePreviewLabelKey = null;
+        SetStatusRaw(errorMessage);
         _logService.Error(errorMessage);
     }
 
@@ -778,9 +789,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         StopPreviewTimer();
         IsPreviewActive = false;
+        _activePreviewLabelKey = null;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
-        StatusText = LocalizationService.Instance["Status_PreviewEnded"];
+        SetStatus("Status_PreviewEnded");
         RaiseCommandStates();
     }
 
@@ -791,8 +803,70 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        RefreshLocalizedState();
         UpdateQualityNotice();
         UpdateFilterDetails();
+    }
+
+    private void RefreshLocalizedState()
+    {
+        RefreshToolStatusText();
+
+        if (_activePreviewLabelKey is not null && IsPreviewActive)
+        {
+            SetStatus("Status_PreviewPlayingFormat", LocalizationService.Instance[_activePreviewLabelKey]);
+        }
+        else if (_statusTextResourceKey is not null)
+        {
+            StatusText = FormatLocalized(_statusTextResourceKey, _statusTextArguments);
+        }
+
+        if (_processingPhaseResourceKey is not null)
+        {
+            ProcessingPhaseText = FormatLocalized(_processingPhaseResourceKey, _processingPhaseArguments);
+        }
+    }
+
+    private void RefreshToolStatusText()
+    {
+        ToolStatusText = _ffmpegStatus is null || _ffprobeStatus is null
+            ? LocalizationService.Instance["Tools_Checking"]
+            : $"{_ffmpegStatus.DisplayText} | {_ffprobeStatus.DisplayText}";
+    }
+
+    private void SetStatus(string resourceKey, params object?[] arguments)
+    {
+        _statusTextResourceKey = resourceKey;
+        _statusTextArguments = arguments;
+        StatusText = FormatLocalized(resourceKey, arguments);
+    }
+
+    private void SetStatusRaw(string text)
+    {
+        _statusTextResourceKey = null;
+        _statusTextArguments = Array.Empty<object?>();
+        StatusText = text;
+    }
+
+    private void SetProcessingPhase(string resourceKey, params object?[] arguments)
+    {
+        _processingPhaseResourceKey = resourceKey;
+        _processingPhaseArguments = arguments;
+        ProcessingPhaseText = FormatLocalized(resourceKey, arguments);
+    }
+
+    private void SetProcessingPhaseRaw(string text)
+    {
+        _processingPhaseResourceKey = null;
+        _processingPhaseArguments = Array.Empty<object?>();
+        ProcessingPhaseText = text;
+    }
+
+    private static string FormatLocalized(string resourceKey, object?[] arguments)
+    {
+        return arguments.Length == 0
+            ? LocalizationService.Instance[resourceKey]
+            : LocalizationService.Instance.Format(resourceKey, arguments);
     }
 
     private void RaiseCommandStates()

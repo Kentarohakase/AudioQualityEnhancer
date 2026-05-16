@@ -33,3 +33,7 @@ _ReSharper*/
 
 # Visual Studio Code
 .vscode/
+
+# Local agent/tool settings
+.claude/
+*_wpftmp.csproj
