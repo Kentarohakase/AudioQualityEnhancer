@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version
+        required: true
+        default: "0.2.0"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Package
+        shell: pwsh
+        run: .\scripts\package-release.ps1 -Version "${{ inputs.version }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioQualityEnhancer-${{ inputs.version }}-win-x64
+          path: artifacts\AudioQualityEnhancer-${{ inputs.version }}-win-x64.zip

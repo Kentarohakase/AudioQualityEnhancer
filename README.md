@@ -1,6 +1,6 @@
 # AudioQualityEnhancer
 
-AudioQualityEnhancer ist ein kleines Windows Desktop Tool für die Analyse, schonende Bearbeitung und den Export von Audio mit FFmpeg und FFprobe. Die App ist als C# WPF Anwendung mit MVVM-Struktur gebaut und zielt auf .NET 10.
+AudioQualityEnhancer ist ein Windows Desktop Tool für die Analyse, schonende Bearbeitung und den Export von Audio mit FFmpeg und FFprobe. Die App ist in C# mit WPF, MVVM und .NET 10 gebaut.
 
 Das Tool macht keine falschen Qualitätsversprechen: Es kann Audio normalisieren, filtern, entrauschen und in sinnvolle Zielformate exportieren. Es kann aber keine Informationen zurückholen, die durch schlechte Aufnahme, Clipping oder verlustbehaftete Kompression bereits zerstört wurden.
 
@@ -12,7 +12,11 @@ Das Tool macht keine falschen Qualitätsversprechen: Es kann Audio normalisieren
 - Anzeige von Codec, Bitrate, Sample Rate, Kanälen, Dauer, Container und Dateigröße
 - Hinweis, ob die Quelle wahrscheinlich verlustbehaftet ist
 - Presets für Musik, Sprache, Rauschreduzierung, verlustfreie Extraktion, Archiv und Alltag
+- Optionale Zwei-Pass-Loudness-Normalisierung für Musik und Sprache
 - Ausgabe als WAV 24 Bit, FLAC, MP3 320k, AAC 256k, Opus 160k oder Opus 192k
+- Vorher/Nachher-Vorschau für Original und erzeugte Datei
+- Sichtbare Filterdetails und Prozessphasen
+- Tool-Erkennung für FFmpeg und FFprobe im App-Header
 - Stream-Copy für verlustfreie Extraktion, wenn der Quellcodec sinnvoll kopierbar ist
 - Keine direkte Überschreibung der Originaldatei
 - Automatisch eindeutige Ausgabedateinamen
@@ -21,6 +25,7 @@ Das Tool macht keine falschen Qualitätsversprechen: Es kann Audio normalisieren
 - Sichtbares UI-Log und optional gespeicherte Logdatei
 - FFmpeg-stderr wird geloggt, aber nicht automatisch als Fehler gewertet
 - Erfolg oder Fehler wird über den Exit Code geprüft
+- Portable ZIP-Erstellung per PowerShell-Skript
 
 ## Was das Tool nicht kann
 
@@ -28,14 +33,10 @@ Dieses Tool kann Audio verbessern, normalisieren und restaurieren, aber keine In
 
 Eine MP3-Datei wird durch Export nach FLAC nicht besser. FLAC ist trotzdem sinnvoll, wenn eine bereits bearbeitete Datei ohne weitere Exportverluste archiviert werden soll.
 
-## Screenshots
-
-Screenshots können später hier ergänzt werden.
-
 ## Voraussetzungen
 
 - Windows
-- .NET 10 SDK
+- .NET 10 SDK zum Bauen
 - FFmpeg und FFprobe
 - Optional: GitHub CLI, wenn das Repository direkt per `gh` erstellt und gepusht werden soll
 
@@ -59,7 +60,18 @@ ffmpeg -version
 ffprobe -version
 ```
 
-Alternativ können `ffmpeg.exe` und `ffprobe.exe` bewusst neben die gebaute App gelegt werden. Sie werden nicht in dieses Repository committed.
+Portable Variante:
+
+- `ffmpeg.exe` und `ffprobe.exe` neben `AudioQualityEnhancer.exe` legen.
+- Oder beide Dateien in den Unterordner `Tools/` legen.
+
+Suchreihenfolge der App:
+
+1. App-Ordner
+2. `Tools/`
+3. Windows `PATH`
+
+FFmpeg-Binaries werden bewusst nicht in Git committed.
 
 ## Build
 
@@ -75,11 +87,25 @@ dotnet run
 
 ## Release EXE erstellen
 
+Einzelne EXE:
+
 ```powershell
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish/win-x64
 ```
 
-Die erzeugte EXE liegt danach in `publish/win-x64`. FFmpeg und FFprobe müssen weiterhin installiert sein oder bewusst neben die EXE gelegt werden.
+Portable ZIP ohne FFmpeg:
+
+```powershell
+.\scripts\package-release.ps1 -Version 0.2.0
+```
+
+Portable ZIP mit FFmpeg und FFprobe im `Tools/`-Ordner:
+
+```powershell
+.\scripts\package-release.ps1 -Version 0.2.0 -IncludeFFmpeg
+```
+
+Die Pakete werden in `artifacts/` erstellt. Pakete mit gebündeltem FFmpeg tragen den Suffix `win-x64-with-ffmpeg`.
 
 ## Nutzung
 
@@ -87,8 +113,10 @@ Die erzeugte EXE liegt danach in `publish/win-x64`. FFmpeg und FFprobe müssen w
 2. Analyse prüfen.
 3. Preset wählen.
 4. Ausgabeformat und Ausgabeordner wählen.
-5. Verarbeitung starten.
-6. Fortschritt und FFmpeg-Log im UI beobachten.
+5. Optional Original anhören.
+6. Verarbeitung starten.
+7. Fortschritt, Prozessphase und FFmpeg-Log im UI beobachten.
+8. Ergebnis anhören.
 
 Unterstützte Eingaben:
 
@@ -108,11 +136,11 @@ Bei Videodateien wird nur die erste Audiospur verarbeitet.
 
 ### Musik verbessern
 
-Normalisiert Musik ungefähr auf `-14 LUFS`, `TP=-1.5 dB`, `LRA=11`. Es wird keine aggressive Rauschreduzierung angewendet.
+Normalisiert Musik ungefähr auf `-14 LUFS`, `TP=-1.5 dB`, `LRA=11`. Standardmäßig wird ein Zwei-Pass-Loudness-Workflow genutzt, damit das Ziel genauer getroffen wird.
 
 ### Sprache verbessern
 
-Setzt einen High-Pass bei 80 Hz und normalisiert ungefähr auf `-16 LUFS`, `TP=-1.5 dB`, `LRA=11`. Optional können leichte Kompression und eine dezente Anhebung im Präsenzbereich aktiviert werden.
+Setzt einen High-Pass bei 80 Hz und normalisiert ungefähr auf `-16 LUFS`, `TP=-1.5 dB`, `LRA=11`. Optional können leichte Kompression und eine dezente Anhebung im Präsenzbereich aktiviert werden. Auch hier kann Zwei-Pass-Loudness genutzt werden.
 
 ### Rauschen reduzieren
 
@@ -143,32 +171,23 @@ Für alltagstaugliche Dateien sind AAC 256k, MP3 320k oder Opus 160k/192k vorges
 
 ```text
 AudioQualityEnhancer/
+  .github/workflows/
+    release.yml
   Models/
-    AudioInfo.cs
-    AudioPreset.cs
-    ExportFormat.cs
-    ProcessResult.cs
-    ProcessingOptions.cs
-    Result.cs
   Services/
-    AudioProcessingService.cs
-    FFmpegService.cs
-    FFprobeService.cs
-    FileNameService.cs
-    LogService.cs
+  Tools/
+    README.md
   ViewModels/
-    AsyncRelayCommand.cs
-    MainViewModel.cs
-    RelayCommand.cs
   Views/
-    MainWindow.xaml
-    MainWindow.xaml.cs
+  scripts/
+    package-release.ps1
   App.xaml
   App.xaml.cs
   AudioQualityEnhancer.csproj
-  GlobalUsings.cs
+  CHANGELOG.md
+  LICENSE
   README.md
-  .gitignore
+  RELEASE_NOTES.md
 ```
 
 ## Sicherheit und Dateien
@@ -178,7 +197,7 @@ AudioQualityEnhancer/
 - Während der Verarbeitung wird eine temporäre Datei erzeugt und erst nach erfolgreichem FFmpeg-Lauf verschoben.
 - Logs speichern keine absichtlich gesetzten Tokens, API Keys oder Passwörter.
 - Es werden keine Zugangsdaten gespeichert.
-- Build Outputs, Logs, temporäre Dateien, erzeugte Audiodateien und FFmpeg-Binaries sind per `.gitignore` ausgeschlossen.
+- Build Outputs, Logs, temporäre Dateien, erzeugte Audiodateien, Release-Artefakte und FFmpeg-Binaries sind per `.gitignore` ausgeschlossen.
 
 ## GitHub Repository
 
@@ -209,7 +228,8 @@ Dieses Projekt steht unter der MIT-Lizenz. Details stehen in `LICENSE`.
 ## Bekannte Grenzen
 
 - FFmpeg-Filter können hörbare Artefakte erzeugen, besonders bei starker Rauschreduzierung.
-- `loudnorm` wird in dieser Version als einfacher Ein-Pass-Filter verwendet. Für streng broadcast-konforme Workflows wäre eine Zwei-Pass-Loudness-Normalisierung genauer.
+- Zwei-Pass-Loudness trifft Zielwerte genauer, macht aber keine verlorenen Details wiederherstellbar.
+- Die Vorschau nutzt das Windows-Wiedergabesystem. Je nach System werden nicht alle Codecs gleich gut unterstützt.
 - Es wird die erste Audiospur verarbeitet. Mehrspur-Auswahl ist nicht eingebaut.
 - Videobilder werden nicht exportiert.
 - Clipping, stark beschädigte Aufnahmen und verlorene Codec-Details können nicht vollständig repariert werden.

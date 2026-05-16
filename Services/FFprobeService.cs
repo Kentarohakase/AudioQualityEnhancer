@@ -8,20 +8,22 @@ namespace AudioQualityEnhancer.Services;
 public sealed class FFprobeService
 {
     private readonly FileNameService _fileNameService;
+    private readonly ToolDiscoveryService _toolDiscoveryService;
 
-    public FFprobeService(FileNameService fileNameService)
+    public FFprobeService(FileNameService fileNameService, ToolDiscoveryService toolDiscoveryService)
     {
         _fileNameService = fileNameService;
+        _toolDiscoveryService = toolDiscoveryService;
     }
 
     public async Task<Result> CheckAvailabilityAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var result = await RunProcessAsync(new[] { "-version" }, cancellationToken);
-            return result.ExitCode == 0
+            var status = await _toolDiscoveryService.GetStatusAsync("ffprobe", cancellationToken);
+            return status.IsAvailable
                 ? Result.Success()
-                : Result.Failure("FFprobe wurde gefunden, konnte aber nicht korrekt gestartet werden.");
+                : Result.Failure(status.ErrorMessage ?? "FFprobe ist nicht verfügbar.");
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
@@ -140,12 +142,12 @@ public sealed class FFprobeService
         };
     }
 
-    private static async Task<ProcessResult> RunProcessAsync(IReadOnlyList<string> arguments, CancellationToken cancellationToken)
+    private async Task<ProcessResult> RunProcessAsync(IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
         {
-            FileName = ResolveExecutable("ffprobe"),
+            FileName = _toolDiscoveryService.ResolveExecutable("ffprobe"),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -175,24 +177,6 @@ public sealed class FFprobeService
             TryKill(process);
             throw;
         }
-    }
-
-    private static string ResolveExecutable(string toolName)
-    {
-        var exeName = $"{toolName}.exe";
-        var appLocalPath = Path.Combine(AppContext.BaseDirectory, exeName);
-        if (File.Exists(appLocalPath))
-        {
-            return appLocalPath;
-        }
-
-        var toolsPath = Path.Combine(AppContext.BaseDirectory, "Tools", exeName);
-        if (File.Exists(toolsPath))
-        {
-            return toolsPath;
-        }
-
-        return exeName;
     }
 
     private static void TryKill(Process process)

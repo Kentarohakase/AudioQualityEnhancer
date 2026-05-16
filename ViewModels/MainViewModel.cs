@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using System.Windows.Input;
 using AudioQualityEnhancer.Models;
 using AudioQualityEnhancer.Services;
@@ -9,10 +8,12 @@ using Forms = System.Windows.Forms;
 
 namespace AudioQualityEnhancer.ViewModels;
 
-public sealed class MainViewModel : INotifyPropertyChanged
+public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly FileNameService _fileNameService;
     private readonly LogService _logService;
+    private readonly ToolDiscoveryService _toolDiscoveryService;
+    private readonly AudioPreviewService _audioPreviewService;
     private readonly FFmpegService _ffmpegService;
     private readonly FFprobeService _ffprobeService;
     private readonly AudioProcessingService _audioProcessingService;
@@ -20,6 +21,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly RelayCommand _selectOutputFolderCommand;
     private readonly AsyncRelayCommand _startCommand;
     private readonly RelayCommand _cancelCommand;
+    private readonly RelayCommand _playSourceCommand;
+    private readonly RelayCommand _playOutputCommand;
+    private readonly RelayCommand _stopPreviewCommand;
 
     private string _inputPath = string.Empty;
     private string _outputDirectory = string.Empty;
@@ -29,11 +33,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _statusText = "Bereit.";
     private string _qualityNotice = string.Empty;
     private string _logText = string.Empty;
+    private string _toolStatusText = "Werkzeuge werden geprüft...";
+    private string _processingPhaseText = "Bereit";
+    private string _filterDetailsText = string.Empty;
+    private string _lastOutputPath = string.Empty;
     private double _progressValue;
     private bool _isBusy;
     private bool _saveLogFile = true;
     private bool _enableSpeechCompression;
     private bool _enableSpeechPresenceBoost = true;
+    private bool _useTwoPassLoudness = true;
     private int _noiseReductionFloor = -25;
     private bool _initialized;
     private CancellationTokenSource? _processingCancellation;
@@ -42,8 +51,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         _fileNameService = new FileNameService();
         _logService = new LogService();
-        _ffmpegService = new FFmpegService();
-        _ffprobeService = new FFprobeService(_fileNameService);
+        _toolDiscoveryService = new ToolDiscoveryService();
+        _audioPreviewService = new AudioPreviewService();
+        _ffmpegService = new FFmpegService(_toolDiscoveryService);
+        _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
 
         _logService.LogAdded += OnLogAdded;
@@ -55,11 +66,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
         _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
+        _playSourceCommand = new RelayCommand(() => PlayPreview(InputPath, "Original"), () => !IsBusy && File.Exists(InputPath));
+        _playOutputCommand = new RelayCommand(() => PlayPreview(LastOutputPath, "Ergebnis"), () => !IsBusy && File.Exists(LastOutputPath));
+        _stopPreviewCommand = new RelayCommand(StopPreview);
 
         SelectedPreset = AudioPreset.Music;
         SelectedExportFormat = ExportFormat.Flac;
         OutputDirectory = GetDefaultOutputDirectory();
         UpdateQualityNotice();
+        UpdateFilterDetails();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -75,6 +90,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand StartCommand => _startCommand;
 
     public ICommand CancelCommand => _cancelCommand;
+
+    public ICommand PlaySourceCommand => _playSourceCommand;
+
+    public ICommand PlayOutputCommand => _playOutputCommand;
+
+    public ICommand StopPreviewCommand => _stopPreviewCommand;
 
     public string InputPath
     {
@@ -108,6 +129,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (SetProperty(ref _audioInfo, value))
             {
                 UpdateQualityNotice();
+                UpdateFilterDetails();
             }
         }
     }
@@ -127,7 +149,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 ApplyPresetDefaults(value);
                 OnPropertyChanged(nameof(IsSpeechPreset));
                 OnPropertyChanged(nameof(IsNoisePreset));
+                OnPropertyChanged(nameof(IsLoudnessPreset));
                 UpdateQualityNotice();
+                UpdateFilterDetails();
                 RaiseCommandStates();
             }
         }
@@ -141,6 +165,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (value is not null && SetProperty(ref _selectedExportFormat, value))
             {
                 UpdateQualityNotice();
+                UpdateFilterDetails();
                 RaiseCommandStates();
             }
         }
@@ -162,6 +187,37 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _logText;
         private set => SetProperty(ref _logText, value);
+    }
+
+    public string ToolStatusText
+    {
+        get => _toolStatusText;
+        private set => SetProperty(ref _toolStatusText, value);
+    }
+
+    public string ProcessingPhaseText
+    {
+        get => _processingPhaseText;
+        private set => SetProperty(ref _processingPhaseText, value);
+    }
+
+    public string FilterDetailsText
+    {
+        get => _filterDetailsText;
+        private set => SetProperty(ref _filterDetailsText, value);
+    }
+
+    public string LastOutputPath
+    {
+        get => _lastOutputPath;
+        private set
+        {
+            if (SetProperty(ref _lastOutputPath, value))
+            {
+                OnPropertyChanged(nameof(HasOutputPreview));
+                RaiseCommandStates();
+            }
+        }
     }
 
     public double ProgressValue
@@ -191,24 +247,58 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool EnableSpeechCompression
     {
         get => _enableSpeechCompression;
-        set => SetProperty(ref _enableSpeechCompression, value);
+        set
+        {
+            if (SetProperty(ref _enableSpeechCompression, value))
+            {
+                UpdateFilterDetails();
+            }
+        }
     }
 
     public bool EnableSpeechPresenceBoost
     {
         get => _enableSpeechPresenceBoost;
-        set => SetProperty(ref _enableSpeechPresenceBoost, value);
+        set
+        {
+            if (SetProperty(ref _enableSpeechPresenceBoost, value))
+            {
+                UpdateFilterDetails();
+            }
+        }
+    }
+
+    public bool UseTwoPassLoudness
+    {
+        get => _useTwoPassLoudness;
+        set
+        {
+            if (SetProperty(ref _useTwoPassLoudness, value))
+            {
+                UpdateFilterDetails();
+            }
+        }
     }
 
     public int NoiseReductionFloor
     {
         get => _noiseReductionFloor;
-        set => SetProperty(ref _noiseReductionFloor, value);
+        set
+        {
+            if (SetProperty(ref _noiseReductionFloor, value))
+            {
+                UpdateFilterDetails();
+            }
+        }
     }
 
     public bool IsSpeechPreset => SelectedPreset?.Id == AudioPreset.Speech.Id;
 
     public bool IsNoisePreset => SelectedPreset?.Id == AudioPreset.NoiseReduction.Id;
+
+    public bool IsLoudnessPreset => SelectedPreset?.Id == AudioPreset.Music.Id || SelectedPreset?.Id == AudioPreset.Speech.Id;
+
+    public bool HasOutputPreview => File.Exists(LastOutputPath);
 
     public async Task InitializeAsync()
     {
@@ -220,20 +310,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _initialized = true;
         _logService.Info("Prüfe FFmpeg und FFprobe...");
 
-        var ffmpeg = await _ffmpegService.CheckAvailabilityAsync(CancellationToken.None);
-        if (ffmpeg.IsSuccess)
+        var ffmpeg = await _toolDiscoveryService.GetStatusAsync("ffmpeg", CancellationToken.None);
+        var ffprobe = await _toolDiscoveryService.GetStatusAsync("ffprobe", CancellationToken.None);
+
+        ToolStatusText = $"{ffmpeg.DisplayText} | {ffprobe.DisplayText}";
+
+        if (ffmpeg.IsAvailable)
         {
-            _logService.Info("FFmpeg wurde gefunden.");
+            _logService.Info(ffmpeg.VersionLine ?? "FFmpeg wurde gefunden.");
         }
         else
         {
             _logService.Warning(ffmpeg.ErrorMessage ?? "FFmpeg ist nicht verfügbar.");
         }
 
-        var ffprobe = await _ffprobeService.CheckAvailabilityAsync(CancellationToken.None);
-        if (ffprobe.IsSuccess)
+        if (ffprobe.IsAvailable)
         {
-            _logService.Info("FFprobe wurde gefunden.");
+            _logService.Info(ffprobe.VersionLine ?? "FFprobe wurde gefunden.");
         }
         else
         {
@@ -248,7 +341,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        _audioPreviewService.Stop();
         InputPath = path;
+        LastOutputPath = string.Empty;
 
         var directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrWhiteSpace(directory))
@@ -295,12 +390,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _logService.Clear();
         AudioInfo = null;
         ProgressValue = 0;
+        ProcessingPhaseText = "Analyse";
         StatusText = "Analysiere Datei...";
 
         var result = await _ffprobeService.AnalyzeAsync(InputPath, _logService.Info, CancellationToken.None);
         if (result.IsSuccess && result.Value is not null)
         {
             AudioInfo = result.Value;
+            ProcessingPhaseText = "Bereit";
             StatusText = "Analyse abgeschlossen.";
             _logService.Info($"Codec: {AudioInfo.CodecDisplay}");
             _logService.Info($"Container: {AudioInfo.Container}");
@@ -312,6 +409,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         else
         {
+            ProcessingPhaseText = "Fehler";
             StatusText = result.ErrorMessage ?? "Analyse fehlgeschlagen.";
             _logService.Error(StatusText);
 
@@ -332,35 +430,28 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        _audioPreviewService.Stop();
         _processingCancellation?.Dispose();
         _processingCancellation = new CancellationTokenSource();
         IsBusy = true;
         ProgressValue = 0;
+        ProcessingPhaseText = "Start";
         StatusText = "Verarbeitung läuft...";
         _logService.Info("Starte Verarbeitung.");
 
         try
         {
-            var options = new ProcessingOptions
-            {
-                InputPath = InputPath,
-                OutputDirectory = OutputDirectory,
-                Preset = SelectedPreset,
-                ExportFormat = SelectedExportFormat,
-                SourceInfo = AudioInfo,
-                NoiseReductionFloor = NoiseReductionFloor,
-                EnableSpeechCompression = EnableSpeechCompression,
-                EnableSpeechPresenceBoost = EnableSpeechPresenceBoost
-            };
-
+            var options = BuildCurrentOptions();
             var result = await _audioProcessingService.ProcessAsync(
                 options,
-                new Progress<double>(value => ProgressValue = value),
+                new Progress<ProcessingProgress>(UpdateProcessingProgress),
                 _processingCancellation.Token);
 
             if (result.IsSuccess && result.Value is not null)
             {
                 ProgressValue = 100;
+                ProcessingPhaseText = "Fertig";
+                LastOutputPath = result.Value.OutputPath ?? string.Empty;
                 StatusText = $"Fertig: {result.Value.OutputPath}";
 
                 if (SaveLogFile)
@@ -372,6 +463,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
             else
             {
+                ProcessingPhaseText = "Fehler";
                 StatusText = result.ErrorMessage ?? "Verarbeitung fehlgeschlagen.";
                 _logService.Error(StatusText);
 
@@ -392,7 +484,41 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void CancelProcessing()
     {
         StatusText = "Abbruch wird angefordert...";
+        ProcessingPhaseText = "Abbruch";
         _processingCancellation?.Cancel();
+    }
+
+    private void PlayPreview(string path, string label)
+    {
+        var result = _audioPreviewService.Play(path);
+        if (result.IsSuccess)
+        {
+            StatusText = $"Vorschau läuft: {label}";
+            _logService.Info($"Vorschau gestartet: {path}");
+            return;
+        }
+
+        StatusText = result.ErrorMessage ?? "Vorschau fehlgeschlagen.";
+        _logService.Error(StatusText);
+
+        if (result.Exception is not null)
+        {
+            _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
+        }
+    }
+
+    private void StopPreview()
+    {
+        _audioPreviewService.Stop();
+        StatusText = "Vorschau gestoppt.";
+    }
+
+    private void UpdateProcessingProgress(ProcessingProgress progress)
+    {
+        ProgressValue = progress.Percentage;
+        ProcessingPhaseText = string.IsNullOrWhiteSpace(progress.Detail)
+            ? progress.Phase
+            : $"{progress.Phase} - {progress.Detail}";
     }
 
     private bool CanStartProcessing()
@@ -441,6 +567,33 @@ public sealed class MainViewModel : INotifyPropertyChanged
         QualityNotice = string.Join(Environment.NewLine + Environment.NewLine, parts);
     }
 
+    private void UpdateFilterDetails()
+    {
+        if (SelectedPreset is null || SelectedExportFormat is null)
+        {
+            FilterDetailsText = string.Empty;
+            return;
+        }
+
+        FilterDetailsText = AudioProcessingService.BuildFilterPreview(BuildCurrentOptions());
+    }
+
+    private ProcessingOptions BuildCurrentOptions()
+    {
+        return new ProcessingOptions
+        {
+            InputPath = InputPath,
+            OutputDirectory = OutputDirectory,
+            Preset = SelectedPreset ?? AudioPreset.Music,
+            ExportFormat = SelectedExportFormat ?? ExportFormat.Flac,
+            SourceInfo = AudioInfo,
+            NoiseReductionFloor = NoiseReductionFloor,
+            EnableSpeechCompression = EnableSpeechCompression,
+            EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
+            UseTwoPassLoudness = UseTwoPassLoudness
+        };
+    }
+
     private void OnLogAdded(object? sender, string line)
     {
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
@@ -460,6 +613,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _selectOutputFolderCommand.RaiseCanExecuteChanged();
         _startCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
+        _playSourceCommand.RaiseCanExecuteChanged();
+        _playOutputCommand.RaiseCanExecuteChanged();
+        _stopPreviewCommand.RaiseCanExecuteChanged();
     }
 
     private static string GetDefaultOutputDirectory()
@@ -483,5 +639,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public void Dispose()
+    {
+        _processingCancellation?.Dispose();
+        _audioPreviewService.Dispose();
     }
 }

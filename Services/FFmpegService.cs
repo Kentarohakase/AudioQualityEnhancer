@@ -7,25 +7,19 @@ namespace AudioQualityEnhancer.Services;
 
 public sealed class FFmpegService
 {
+    private readonly ToolDiscoveryService _toolDiscoveryService;
+
+    public FFmpegService(ToolDiscoveryService toolDiscoveryService)
+    {
+        _toolDiscoveryService = toolDiscoveryService;
+    }
+
     public async Task<Result> CheckAvailabilityAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await ExecuteAsync(
-                new[] { "-version" },
-                log: null,
-                progress: null,
-                totalDuration: null,
-                cancellationToken);
-
-            return result.IsSuccess
-                ? Result.Success()
-                : Result.Failure(result.ErrorMessage ?? "FFmpeg wurde gefunden, konnte aber nicht korrekt gestartet werden.", result.Exception);
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
-        {
-            return Result.Failure("FFmpeg wurde nicht gefunden. Installiere FFmpeg und stelle sicher, dass ffmpeg.exe im PATH liegt oder neben der App liegt.", ex);
-        }
+        var status = await _toolDiscoveryService.GetStatusAsync("ffmpeg", cancellationToken);
+        return status.IsAvailable
+            ? Result.Success()
+            : Result.Failure(status.ErrorMessage ?? "FFmpeg ist nicht verfügbar.");
     }
 
     public async Task<Result<ProcessResult>> ExecuteAsync(
@@ -38,7 +32,7 @@ public sealed class FFmpegService
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
         {
-            FileName = ResolveExecutable("ffmpeg"),
+            FileName = _toolDiscoveryService.ResolveExecutable("ffmpeg"),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -136,24 +130,6 @@ public sealed class FFmpegService
         {
             return Result<ProcessResult>.Failure("Beim Starten von FFmpeg ist ein unerwarteter Fehler aufgetreten.", ex);
         }
-    }
-
-    private static string ResolveExecutable(string toolName)
-    {
-        var exeName = $"{toolName}.exe";
-        var appLocalPath = Path.Combine(AppContext.BaseDirectory, exeName);
-        if (File.Exists(appLocalPath))
-        {
-            return appLocalPath;
-        }
-
-        var toolsPath = Path.Combine(AppContext.BaseDirectory, "Tools", exeName);
-        if (File.Exists(toolsPath))
-        {
-            return toolsPath;
-        }
-
-        return exeName;
     }
 
     private static string FormatCommand(IEnumerable<string> arguments)

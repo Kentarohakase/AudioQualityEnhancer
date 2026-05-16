@@ -50,4 +50,10 @@ public partial class MainWindow : Window
         var files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
         return files.Length > 0 && File.Exists(files[0]) && _fileNameService.IsSupportedInputFile(files[0]);
     }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _viewModel.Dispose();
+        base.OnClosed(e);
+    }
 }

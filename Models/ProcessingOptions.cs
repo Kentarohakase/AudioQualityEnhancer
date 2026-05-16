@@ -17,4 +17,6 @@ public sealed class ProcessingOptions
     public bool EnableSpeechCompression { get; init; }
 
     public bool EnableSpeechPresenceBoost { get; init; }
+
+    public bool UseTwoPassLoudness { get; init; } = true;
 }
