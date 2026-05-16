@@ -19,6 +19,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly FFmpegService _ffmpegService;
     private readonly FFprobeService _ffprobeService;
     private readonly AudioProcessingService _audioProcessingService;
+    private readonly SettingsService _settingsService;
     private readonly AsyncRelayCommand _selectFileCommand;
     private readonly RelayCommand _selectOutputFolderCommand;
     private readonly AsyncRelayCommand _startCommand;
@@ -64,6 +65,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _ffmpegService = new FFmpegService(_toolDiscoveryService);
         _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
+        _settingsService = new SettingsService();
 
         _logService.LogAdded += OnLogAdded;
         _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
@@ -80,11 +82,40 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _playOutputCommand = new RelayCommand(() => PlayPreview(LastOutputPath, "Ergebnis"), () => !IsBusy && File.Exists(LastOutputPath));
         _stopPreviewCommand = new RelayCommand(StopPreview);
 
-        SelectedPreset = AudioPreset.Music;
-        SelectedExportFormat = ExportFormat.Flac;
-        OutputDirectory = GetDefaultOutputDirectory();
+        ApplySettings(_settingsService.Load());
         UpdateQualityNotice();
         UpdateFilterDetails();
+    }
+
+    private void ApplySettings(AppSettings settings)
+    {
+        SelectedPreset = AudioPreset.All.FirstOrDefault(p => p.Id == settings.PresetId) ?? AudioPreset.Music;
+        SelectedExportFormat = ExportFormat.All.FirstOrDefault(f => f.Id == settings.ExportFormatId) ?? ExportFormat.Flac;
+        OutputDirectory = !string.IsNullOrWhiteSpace(settings.OutputDirectory) && Directory.Exists(settings.OutputDirectory)
+            ? settings.OutputDirectory
+            : GetDefaultOutputDirectory();
+        SaveLogFile = settings.SaveLogFile;
+        EnableSpeechCompression = settings.EnableSpeechCompression;
+        EnableSpeechPresenceBoost = settings.EnableSpeechPresenceBoost;
+        UseTwoPassLoudness = settings.UseTwoPassLoudness;
+        NoiseReductionFloor = settings.NoiseReductionFloor;
+    }
+
+    public void PersistSettings()
+    {
+        var settings = new AppSettings
+        {
+            Language = _settingsService.Load().Language,
+            PresetId = SelectedPreset?.Id ?? AudioPreset.Music.Id,
+            ExportFormatId = SelectedExportFormat?.Id ?? ExportFormat.Flac.Id,
+            OutputDirectory = OutputDirectory,
+            SaveLogFile = SaveLogFile,
+            EnableSpeechCompression = EnableSpeechCompression,
+            EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
+            UseTwoPassLoudness = UseTwoPassLoudness,
+            NoiseReductionFloor = NoiseReductionFloor
+        };
+        _settingsService.Save(settings);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
