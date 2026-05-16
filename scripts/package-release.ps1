@@ -26,7 +26,7 @@ function Assert-InRoot {
 
 New-Item -ItemType Directory -Force -Path $artifactsDir | Out-Null
 
-dotnet publish -c Release -r $Runtime --self-contained true `
+dotnet publish AudioQualityEnhancer.csproj -c Release -r $Runtime --self-contained true `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:IncludeAllContentForSelfExtract=true `
