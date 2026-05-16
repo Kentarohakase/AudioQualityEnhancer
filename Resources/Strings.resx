@@ -66,9 +66,11 @@
   <data name="Field_SelectedFile" xml:space="preserve"><value>Ausgewählte Datei</value></data>
   <data name="Field_CurrentFileProgress" xml:space="preserve"><value>Aktuelle Datei</value></data>
   <data name="Field_OverallProgress" xml:space="preserve"><value>Gesamtfortschritt</value></data>
+  <data name="Field_AudioTrack" xml:space="preserve"><value>Audiospur</value></data>
   <data name="Section_AnalysisFindings" xml:space="preserve"><value>Auffälligkeiten</value></data>
   <data name="Section_AnalysisRecommendations" xml:space="preserve"><value>Empfehlungen</value></data>
   <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Misst Lautheit und Peaks mit FFmpeg. Das kann bei langen Dateien etwas dauern.</value></data>
+  <data name="Hint_AudioTrack" xml:space="preserve"><value>Bei Videoquellen wird nur diese Audiospur verarbeitet.</value></data>
 
   <data name="Checkbox_TwoPassLoudness" xml:space="preserve"><value>Zwei-Pass-Loudness</value></data>
   <data name="Checkbox_SpeechCompression" xml:space="preserve"><value>Leichte Sprachkompression</value></data>
@@ -106,6 +108,7 @@
   <data name="Status_BatchProcessingFormat" xml:space="preserve"><value>Verarbeite {0} von {1}: {2}</value></data>
   <data name="Status_BatchDoneFormat" xml:space="preserve"><value>Warteschlange abgeschlossen. Fertig: {0}, Fehler: {1}, abgebrochen: {2}.</value></data>
   <data name="Status_BatchItemRemoved" xml:space="preserve"><value>Datei aus der Warteschlange entfernt.</value></data>
+  <data name="Status_AudioStreamSelectedFormat" xml:space="preserve"><value>Audiospur ausgewaehlt: {0}</value></data>
   <data name="Status_BatchFinishedCleared" xml:space="preserve"><value>Abgeschlossene Einträge entfernt.</value></data>
 
   <data name="BatchStatus_Pending" xml:space="preserve"><value>Wartet</value></data>

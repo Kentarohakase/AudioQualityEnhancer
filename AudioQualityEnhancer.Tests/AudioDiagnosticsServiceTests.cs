@@ -1,4 +1,5 @@
 using AudioQualityEnhancer.Services;
+using AudioQualityEnhancer.Models;
 
 namespace AudioQualityEnhancer.Tests;
 
@@ -13,6 +14,17 @@ public sealed class AudioDiagnosticsServiceTests
         Assert.Contains("0:a:0", args);
         Assert.Contains("ebur128=peak=true,volumedetect", args);
         Assert.Equal("NUL", args[^1]);
+    }
+
+    [Fact]
+    public void BuildArguments_UsesSelectedAudioStream()
+    {
+        var stream = new AudioStreamInfo(4, 1, "aac", "AAC", 192_000, 48_000, 2, TimeSpan.FromSeconds(30), "eng", "English", string.Empty);
+
+        var args = AudioDiagnosticsService.BuildArguments("input.mkv", stream);
+
+        Assert.Contains("0:4", args);
+        Assert.DoesNotContain("0:a:0", args);
     }
 
     [Fact]

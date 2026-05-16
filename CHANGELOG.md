@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.8 - 2026-05-17
+
+### Added
+
+- Added audio track detection and per-file audio track selection for video sources.
+
 ## 0.8.1 - 2026-05-16
 
 ### Fixed

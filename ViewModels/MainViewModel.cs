@@ -48,6 +48,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
     private BatchProcessingItem? _selectedBatchItem;
+    private AudioStreamInfo? _selectedAudioStream;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
     private string _statusText;
@@ -69,6 +70,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _useTwoPassLoudness = true;
     private int _noiseReductionFloor = -25;
     private bool _initialized;
+    private bool _syncingSelectedBatchItem;
     private CancellationTokenSource? _processingCancellation;
     private CancellationTokenSource? _diagnosticsCancellation;
     private bool _hasAnalysisWarnings;
@@ -252,6 +254,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (SetProperty(ref _audioInfo, value))
             {
+                OnPropertyChanged(nameof(AvailableAudioStreams));
+                OnPropertyChanged(nameof(HasMultipleAudioStreams));
                 UpdateAnalysisWarnings();
                 UpdateAnalysisReport();
                 UpdateQualityNotice();
@@ -302,6 +306,22 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasBatchItems => BatchItems.Count > 0;
+
+    public IReadOnlyList<AudioStreamInfo> AvailableAudioStreams => AudioInfo?.AudioStreams ?? Array.Empty<AudioStreamInfo>();
+
+    public AudioStreamInfo? SelectedAudioStream
+    {
+        get => _selectedAudioStream;
+        set
+        {
+            if (SetProperty(ref _selectedAudioStream, value) && !_syncingSelectedBatchItem)
+            {
+                SelectAudioStreamForCurrentItem(value);
+            }
+        }
+    }
+
+    public bool HasMultipleAudioStreams => AudioInfo?.HasMultipleAudioStreams == true;
 
     public AudioPreset? SelectedPreset
     {
@@ -690,7 +710,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 item.AudioInfo.Duration,
                 _logService.Info,
                 value => ProgressValue = value,
-                _diagnosticsCancellation.Token);
+                _diagnosticsCancellation.Token,
+                item.SelectedAudioStream);
 
             if (result.IsSuccess && result.Value is not null)
             {
@@ -752,6 +773,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 AudioInfo = item.AudioInfo;
                 AudioDiagnostics = item.AudioDiagnostics;
                 AnalysisReport = item.AnalysisReport;
+                SelectedAudioStream = item.SelectedAudioStream;
             }
 
             SetProcessingPhase("Phase_Ready");
@@ -775,6 +797,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 AudioInfo = item.AudioInfo;
                 AudioDiagnostics = item.AudioDiagnostics;
                 AnalysisReport = item.AnalysisReport;
+                SelectedAudioStream = item.SelectedAudioStream;
             }
 
             SetProcessingPhase("Phase_Error");
@@ -1226,11 +1249,33 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             Preset = SelectedPreset ?? AudioPreset.Music,
             ExportFormat = SelectedExportFormat ?? ExportFormat.Flac,
             SourceInfo = item?.AudioInfo ?? AudioInfo,
+            AudioStream = item?.SelectedAudioStream ?? SelectedAudioStream,
             NoiseReductionFloor = NoiseReductionFloor,
             EnableSpeechCompression = EnableSpeechCompression,
             EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
             UseTwoPassLoudness = UseTwoPassLoudness
         };
+    }
+
+    private void SelectAudioStreamForCurrentItem(AudioStreamInfo? audioStream)
+    {
+        var item = SelectedBatchItem;
+        if (item?.AudioInfo is null || audioStream is null)
+        {
+            return;
+        }
+
+        item.SelectAudioStream(audioStream);
+        if (item.AudioInfo is not null)
+        {
+            item.SetAnalysisReport(_audioAnalysisInsightService.BuildReport(item.AudioInfo, diagnostics: null));
+        }
+
+        AudioInfo = item.AudioInfo;
+        AudioDiagnostics = item.AudioDiagnostics;
+        AnalysisReport = item.AnalysisReport;
+        UpdateFilterDetails();
+        SetStatus("Status_AudioStreamSelectedFormat", audioStream.DisplayName);
     }
 
     private void AddBatchItem(BatchProcessingItem item)
@@ -1272,11 +1317,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void SyncSelectedBatchItem()
     {
         var item = SelectedBatchItem;
-        InputPath = item?.SourcePath ?? string.Empty;
-        AudioInfo = item?.AudioInfo;
-        AudioDiagnostics = item?.AudioDiagnostics;
-        AnalysisReport = item?.AnalysisReport;
-        ProgressValue = item?.Progress ?? 0;
+        _syncingSelectedBatchItem = true;
+        try
+        {
+            InputPath = item?.SourcePath ?? string.Empty;
+            AudioInfo = item?.AudioInfo;
+            AudioDiagnostics = item?.AudioDiagnostics;
+            AnalysisReport = item?.AnalysisReport;
+            SelectedAudioStream = item?.SelectedAudioStream;
+            ProgressValue = item?.Progress ?? 0;
+        }
+        finally
+        {
+            _syncingSelectedBatchItem = false;
+        }
 
         if (item is not null && File.Exists(item.OutputPath))
         {
@@ -1362,6 +1416,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         UpdateQualityNotice();
         UpdateFilterDetails();
         UpdateBatchSummary();
+        OnPropertyChanged(nameof(AvailableAudioStreams));
+        OnPropertyChanged(nameof(SelectedAudioStream));
     }
 
     private void RefreshLocalizedState()

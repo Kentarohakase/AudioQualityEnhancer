@@ -106,7 +106,8 @@ public sealed class AudioProcessingService
         var filterGraph = plan.FilterGraph;
         if (plan.ShouldUseTwoPassLoudness)
         {
-            var pass1Result = await RunLoudnessAnalysisPassAsync(options.InputPath, plan, sourceInfo, progress, cancellationToken);
+            var selectedStream = ResolveAudioStream(options.AudioStream, sourceInfo);
+            var pass1Result = await RunLoudnessAnalysisPassAsync(options.InputPath, plan, sourceInfo, selectedStream, progress, cancellationToken);
             if (pass1Result.IsFailure)
             {
                 TryDeleteTempFile(tempOutputPath);
@@ -125,7 +126,8 @@ public sealed class AudioProcessingService
             }
         }
 
-        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph);
+        var renderStream = ResolveAudioStream(options.AudioStream, sourceInfo);
+        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph, renderStream);
         if (plan.ShouldUseTwoPassLoudness)
         {
             _logService.Info(LocalizationService.Instance.Format("Log_RenderFilterFormat", filterGraph));
@@ -176,6 +178,7 @@ public sealed class AudioProcessingService
         string inputPath,
         OutputPlan plan,
         AudioInfo sourceInfo,
+        AudioStreamInfo? audioStream,
         IProgress<ProcessingProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -184,7 +187,7 @@ public sealed class AudioProcessingService
         Report(progress, 12, phase, pass1Detail);
 
         var pass1Filter = BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, null, printJson: true);
-        var pass1Arguments = BuildLoudnessAnalysisArguments(inputPath, pass1Filter);
+        var pass1Arguments = BuildLoudnessAnalysisArguments(inputPath, pass1Filter, audioStream);
 
         _logService.Info(LocalizationService.Instance["Log_TwoPassStartingMeasure"]);
         _logService.Info(LocalizationService.Instance.Format("Log_AnalysisFilterFormat", pass1Filter));
@@ -288,9 +291,10 @@ public sealed class AudioProcessingService
         string inputPath,
         string outputPath,
         IReadOnlyList<string> codecArguments,
-        string filterGraph)
+        string filterGraph,
+        AudioStreamInfo? audioStream)
     {
-        var args = BuildInputArguments(inputPath);
+        var args = BuildInputArguments(inputPath, audioStream);
 
         if (!string.IsNullOrWhiteSpace(filterGraph))
         {
@@ -303,9 +307,9 @@ public sealed class AudioProcessingService
         return args;
     }
 
-    private static IReadOnlyList<string> BuildLoudnessAnalysisArguments(string inputPath, string filterGraph)
+    private static IReadOnlyList<string> BuildLoudnessAnalysisArguments(string inputPath, string filterGraph, AudioStreamInfo? audioStream)
     {
-        var args = BuildInputArguments(inputPath);
+        var args = BuildInputArguments(inputPath, audioStream);
         args.Add("-af");
         args.Add(filterGraph);
         args.Add("-f");
@@ -314,7 +318,7 @@ public sealed class AudioProcessingService
         return args;
     }
 
-    private static List<string> BuildInputArguments(string inputPath)
+    internal static List<string> BuildInputArguments(string inputPath, AudioStreamInfo? audioStream)
     {
         return new List<string>
         {
@@ -328,11 +332,30 @@ public sealed class AudioProcessingService
             "-i",
             inputPath,
             "-map",
-            "0:a:0",
+            audioStream?.FFmpegMapSpecifier ?? "0:a:0",
             "-vn",
             "-sn",
             "-dn"
         };
+    }
+
+    internal static AudioStreamInfo? ResolveAudioStream(AudioStreamInfo? requestedStream, AudioInfo sourceInfo)
+    {
+        if (sourceInfo.AudioStreams.Count == 0)
+        {
+            return requestedStream;
+        }
+
+        if (requestedStream is not null)
+        {
+            var matchingStream = sourceInfo.AudioStreams.FirstOrDefault(stream => stream.StreamIndex == requestedStream.StreamIndex);
+            if (matchingStream is not null)
+            {
+                return matchingStream;
+            }
+        }
+
+        return sourceInfo.SelectedAudioStream ?? sourceInfo.AudioStreams.First();
     }
 
     private static string BuildLoudnormFilter(

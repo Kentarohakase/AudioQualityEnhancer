@@ -20,7 +20,8 @@ public sealed partial class AudioDiagnosticsService
         TimeSpan? totalDuration,
         Action<string>? log,
         Action<double>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        AudioStreamInfo? audioStream = null)
     {
         if (string.IsNullOrWhiteSpace(inputPath) || !File.Exists(inputPath))
         {
@@ -44,7 +45,7 @@ public sealed partial class AudioDiagnosticsService
 
         log?.Invoke(LocalizationService.Instance["Log_AdvancedAnalysisStarting"]);
 
-        var result = await RunAnalysisProcessAsync(inputPath, totalDuration, progress, cancellationToken);
+        var result = await RunAnalysisProcessAsync(inputPath, totalDuration, progress, cancellationToken, audioStream);
         if (result.IsFailure || result.Value is null)
         {
             return Result<AudioDiagnostics>.Failure(result.ErrorMessage ?? LocalizationService.Instance["Error_DiagnosticsFailed"], result.Exception);
@@ -65,7 +66,8 @@ public sealed partial class AudioDiagnosticsService
         string inputPath,
         TimeSpan? totalDuration,
         Action<double>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        AudioStreamInfo? audioStream)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
@@ -77,7 +79,7 @@ public sealed partial class AudioDiagnosticsService
             CreateNoWindow = true
         };
 
-        foreach (var argument in BuildArguments(inputPath))
+        foreach (var argument in BuildArguments(inputPath, audioStream))
         {
             process.StartInfo.ArgumentList.Add(argument);
         }
@@ -152,7 +154,7 @@ public sealed partial class AudioDiagnosticsService
         }
     }
 
-    internal static IReadOnlyList<string> BuildArguments(string inputPath)
+    internal static IReadOnlyList<string> BuildArguments(string inputPath, AudioStreamInfo? audioStream = null)
     {
         return new[]
         {
@@ -161,7 +163,7 @@ public sealed partial class AudioDiagnosticsService
             "-i",
             inputPath,
             "-map",
-            "0:a:0",
+            audioStream?.FFmpegMapSpecifier ?? "0:a:0",
             "-vn",
             "-sn",
             "-dn",

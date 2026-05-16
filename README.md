@@ -8,6 +8,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 
 - Audio- und Videodateien mit Audiospur öffnen
 - Datei per Button oder Drag and Drop auswählen
+- Audiospur bei Videoquellen auswählen, wenn mehrere Spuren vorhanden sind
 - Codec, Bitrate, Sample Rate, Kanäle, Dauer und Dateigröße anzeigen
 - Lautheit, Peak-Werte und mögliche technische Probleme optional genauer messen
 - Musik oder Sprache per Preset verbessern
@@ -24,7 +25,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Aus einer schlechten Aufnahme keine perfekte Studioaufnahme machen
 - Aus MP3 durch FLAC wieder echte verlorene Qualität herstellen
 - Clipping oder stark zerstörtes Material vollständig reparieren
-- Mehrere Audiospuren aus Videos manuell auswählen
+- stark beschädigte oder fehlende Audiospuren automatisch ersetzen
 
 ## Unterstützte Dateien
 
@@ -39,7 +40,7 @@ Eingabe:
 - MP4
 - MKV
 
-Bei Videodateien wird aktuell die erste Audiospur verwendet.
+Bei Videodateien wird die erste Audiospur vorausgewählt. Wenn mehrere Audiospuren vorhanden sind, kannst du pro Datei die gewünschte Spur auswählen.
 
 ## Analyse
 
@@ -133,13 +134,13 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Exportprofile und Sprachresso
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.8.0
+.\scripts\package-release.ps1 -Version 0.8.8
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.8.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.8.8 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.

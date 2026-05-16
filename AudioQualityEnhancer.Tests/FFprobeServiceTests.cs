@@ -47,6 +47,9 @@ public sealed class FFprobeServiceTests
             Assert.Equal("mov,mp4,m4a,3gp,3g2,mj2", info.Container);
             Assert.True(info.IsLikelyLossy);
             Assert.True(info.FileSizeBytes > 0);
+            Assert.Single(info.AudioStreams);
+            Assert.Equal(0, info.AudioStreams[0].AudioStreamIndex);
+            Assert.Equal("0:0", info.SelectedAudioStream?.FFmpegMapSpecifier);
         }
         finally
         {
@@ -90,6 +93,77 @@ public sealed class FFprobeServiceTests
             Assert.Equal(2, info.Channels);
             Assert.Equal(TimeSpan.FromSeconds(30.25), info.Duration);
             Assert.False(info.IsLikelyLossy);
+            Assert.Equal(900000, info.AudioStreams[0].BitRate);
+            Assert.Equal(TimeSpan.FromSeconds(30.25), info.AudioStreams[0].Duration);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseAudioInfo_ReadsMultipleAudioStreamsWithMetadata()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "movie.mkv");
+            File.WriteAllText(inputPath, "fake media bytes");
+            var json = """
+                {
+                  "streams": [
+                    { "index": 0, "codec_type": "video", "codec_name": "h264" },
+                    {
+                      "index": 1,
+                      "codec_type": "audio",
+                      "codec_name": "aac",
+                      "codec_long_name": "AAC",
+                      "bit_rate": "192000",
+                      "sample_rate": "48000",
+                      "channels": 2,
+                      "duration": "120.0",
+                      "tags": { "language": "deu", "title": "Deutsch" }
+                    },
+                    {
+                      "index": 3,
+                      "codec_type": "audio",
+                      "codec_name": "ac3",
+                      "codec_long_name": "ATSC A/52A",
+                      "bit_rate": "384000",
+                      "sample_rate": "48000",
+                      "channels": 6,
+                      "tags": { "language": "eng", "handler_name": "Surround" }
+                    }
+                  ],
+                  "format": {
+                    "format_name": "matroska,webm",
+                    "duration": "125.0"
+                  }
+                }
+                """;
+
+            using var info = FFprobeService.ParseAudioInfo(inputPath, json);
+
+            Assert.NotNull(info);
+            Assert.True(info.HasMultipleAudioStreams);
+            Assert.Equal(2, info.AudioStreams.Count);
+            Assert.Equal("aac", info.Codec);
+            Assert.Equal(1, info.SelectedAudioStreamIndex);
+            Assert.Equal("Deutsch", info.SelectedAudioStream?.Title);
+            Assert.Equal("deu", info.AudioStreams[0].Language);
+            Assert.Equal("eng", info.AudioStreams[1].Language);
+            Assert.Equal("Surround", info.AudioStreams[1].HandlerName);
+            Assert.Equal(3, info.AudioStreams[1].StreamIndex);
+            Assert.Equal(1, info.AudioStreams[1].AudioStreamIndex);
+            Assert.Equal(TimeSpan.FromSeconds(125), info.AudioStreams[1].Duration);
+
+            using var selectedInfo = info.WithSelectedAudioStream(info.AudioStreams[1]);
+            Assert.Equal("ac3", selectedInfo.Codec);
+            Assert.Equal(3, selectedInfo.SelectedAudioStreamIndex);
+            Assert.Equal(6, selectedInfo.Channels);
+            Assert.True(selectedInfo.IsLikelyLossy);
         }
         finally
         {

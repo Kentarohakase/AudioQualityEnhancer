@@ -249,6 +249,21 @@
                             <TextBox Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
                                      IsReadOnly="True" />
 
+                            <StackPanel Margin="0,12,0,0"
+                                        Visibility="{Binding HasMultipleAudioStreams, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding [Field_AudioTrack], Source={x:Static loc:LocalizationService.Instance}}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AvailableAudioStreams}"
+                                          SelectedItem="{Binding SelectedAudioStream, Mode=TwoWay}"
+                                          DisplayMemberPath="DisplayName" />
+                                <TextBlock Text="{Binding [Hint_AudioTrack], Source={x:Static loc:LocalizationService.Instance}}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Margin="0,4,0,0" />
+                            </StackPanel>
+
                             <Grid Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

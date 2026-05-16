@@ -10,6 +10,7 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
+    private AudioStreamInfo? _selectedAudioStream;
     private string _outputPath = string.Empty;
     private string _errorMessage = string.Empty;
     private double _progress;
@@ -67,6 +68,12 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
 
     public string ScoreDisplay => AnalysisReport?.ScoreDisplay ?? "-";
 
+    public AudioStreamInfo? SelectedAudioStream
+    {
+        get => _selectedAudioStream;
+        private set => SetProperty(ref _selectedAudioStream, value);
+    }
+
     public string OutputPath
     {
         get => _outputPath;
@@ -114,6 +121,8 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
 
         _audioInfo?.Dispose();
         AudioInfo = value;
+        SelectedAudioStream = value?.SelectedAudioStream;
+        OnPropertyChanged(nameof(HasMultipleAudioStreams));
     }
 
     public void SetAudioDiagnostics(AudioDiagnostics? value)
@@ -130,6 +139,21 @@ public sealed class BatchProcessingItem : INotifyPropertyChanged, IDisposable
     public void SetAnalysisReport(AudioAnalysisReport? value)
     {
         AnalysisReport = value;
+    }
+
+    public bool HasMultipleAudioStreams => AudioInfo?.HasMultipleAudioStreams == true;
+
+    public void SelectAudioStream(AudioStreamInfo? audioStream)
+    {
+        if (AudioInfo is null || audioStream is null)
+        {
+            return;
+        }
+
+        var selectedInfo = AudioInfo.WithSelectedAudioStream(audioStream);
+        SetAudioInfo(selectedInfo);
+        SetAudioDiagnostics(null);
+        SetAnalysisReport(null);
     }
 
     public void RefreshLocalizedText()

@@ -151,6 +151,38 @@ public sealed class BatchQueueServiceTests
         }
     }
 
+    [Fact]
+    public void BatchProcessingItem_KeepsSelectedAudioStreamPerItem()
+    {
+        var first = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(30), "deu", "Deutsch", string.Empty);
+        var second = new AudioStreamInfo(2, 1, "ac3", "AC-3", 384_000, 48_000, 6, TimeSpan.FromSeconds(30), "eng", "English", string.Empty);
+        using var item = new BatchProcessingItem(@"C:\audio\movie.mkv");
+        using var info = new AudioInfo
+        {
+            SourcePath = item.SourcePath,
+            Codec = first.Codec,
+            BitRate = first.BitRate,
+            SampleRate = first.SampleRate,
+            Channels = first.Channels,
+            Duration = first.Duration,
+            AudioStreams = new[] { first, second },
+            SelectedAudioStreamIndex = first.StreamIndex,
+            IsLikelyLossy = true
+        };
+
+        item.SetAudioInfo(info);
+        item.SetAudioDiagnostics(new AudioDiagnostics());
+        item.SetAnalysisReport(new AudioAnalysisReport(100, AudioAnalysisStatus.Excellent, "ok", "ok", Array.Empty<AudioAnalysisFinding>(), Array.Empty<AudioAnalysisRecommendation>()));
+
+        item.SelectAudioStream(second);
+
+        Assert.Equal(second.StreamIndex, item.SelectedAudioStream?.StreamIndex);
+        Assert.Equal("ac3", item.AudioInfo?.Codec);
+        Assert.Equal(6, item.AudioInfo?.Channels);
+        Assert.Null(item.AudioDiagnostics);
+        Assert.Null(item.AnalysisReport);
+    }
+
     private static string CreateFile(string directory, string fileName)
     {
         var path = Path.Combine(directory, fileName);

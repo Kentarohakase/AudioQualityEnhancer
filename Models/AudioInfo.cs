@@ -36,6 +36,16 @@ public sealed class AudioInfo : INotifyPropertyChanged, IDisposable
 
     public string Container { get; init; } = string.Empty;
 
+    public IReadOnlyList<AudioStreamInfo> AudioStreams { get; init; } = Array.Empty<AudioStreamInfo>();
+
+    public int SelectedAudioStreamIndex { get; init; }
+
+    public AudioStreamInfo? SelectedAudioStream =>
+        AudioStreams.FirstOrDefault(stream => stream.StreamIndex == SelectedAudioStreamIndex) ??
+        AudioStreams.FirstOrDefault();
+
+    public bool HasMultipleAudioStreams => AudioStreams.Count > 1;
+
     public string ContainerDisplay => string.IsNullOrWhiteSpace(Container)
         ? LocalizationService.Instance["Display_Unknown"]
         : Container;
@@ -88,6 +98,39 @@ public sealed class AudioInfo : INotifyPropertyChanged, IDisposable
     public string LossyWarning => IsLikelyLossy
         ? LocalizationService.Instance["Warning_LossySource"]
         : string.Empty;
+
+    public AudioInfo WithSelectedAudioStream(AudioStreamInfo? audioStream)
+    {
+        if (AudioStreams.Count == 0)
+        {
+            return this;
+        }
+
+        var selectedStream = AudioStreams.FirstOrDefault(stream => stream.StreamIndex == audioStream?.StreamIndex) ??
+                             AudioStreams.First();
+
+        return new AudioInfo
+        {
+            SourcePath = SourcePath,
+            Codec = selectedStream.Codec,
+            CodecLongName = selectedStream.CodecLongName,
+            BitRate = selectedStream.BitRate,
+            SampleRate = selectedStream.SampleRate,
+            Channels = selectedStream.Channels,
+            Duration = selectedStream.Duration ?? Duration,
+            Container = Container,
+            AudioStreams = AudioStreams,
+            SelectedAudioStreamIndex = selectedStream.StreamIndex,
+            FileSizeBytes = FileSizeBytes,
+            IsLikelyLossy = IsCodecLikelyLossy(selectedStream.Codec)
+        };
+    }
+
+    public static bool IsCodecLikelyLossy(string codec)
+    {
+        var normalized = codec.Trim().ToLowerInvariant();
+        return normalized is "mp3" or "aac" or "vorbis" or "opus" or "ac3" or "eac3" or "wma" or "wmav1" or "wmav2" or "amr_nb" or "amr_wb" or "mp2" or "dts";
+    }
 
     private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {

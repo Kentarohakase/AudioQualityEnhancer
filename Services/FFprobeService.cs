@@ -100,46 +100,78 @@ public sealed class FFprobeService
             return null;
         }
 
-        JsonElement? audioStream = null;
+        var audioStreams = new List<AudioStreamInfo>();
+        var audioStreamIndex = 0;
         foreach (var stream in streams.EnumerateArray())
         {
             if (TryGetString(stream, "codec_type") == "audio")
             {
-                audioStream = stream;
-                break;
+                audioStreams.Add(ParseAudioStream(stream, audioStreamIndex));
+                audioStreamIndex++;
             }
         }
 
-        if (audioStream is null)
+        if (audioStreams.Count == 0)
         {
             return null;
         }
 
-        var streamElement = audioStream.Value;
         root.TryGetProperty("format", out var formatElement);
 
-        var codec = TryGetString(streamElement, "codec_name") ?? string.Empty;
-        var codecLongName = TryGetString(streamElement, "codec_long_name") ?? string.Empty;
+        var selectedStream = audioStreams[0];
         var container = TryGetString(formatElement, "format_name") ?? Path.GetExtension(inputPath).TrimStart('.');
-        var bitRate = TryGetLong(streamElement, "bit_rate") ?? TryGetLong(formatElement, "bit_rate");
-        var sampleRate = TryGetInt(streamElement, "sample_rate");
-        var channels = TryGetInt(streamElement, "channels");
-        var duration = TryGetDuration(streamElement, "duration") ?? TryGetDuration(formatElement, "duration");
+        var formatBitRate = TryGetLong(formatElement, "bit_rate");
+        var formatDuration = TryGetDuration(formatElement, "duration");
         var fileSize = new FileInfo(inputPath).Length;
 
         return new AudioInfo
         {
             SourcePath = inputPath,
-            Codec = codec,
-            CodecLongName = codecLongName,
-            BitRate = bitRate,
-            SampleRate = sampleRate,
-            Channels = channels,
-            Duration = duration,
+            Codec = selectedStream.Codec,
+            CodecLongName = selectedStream.CodecLongName,
+            BitRate = selectedStream.BitRate ?? formatBitRate,
+            SampleRate = selectedStream.SampleRate,
+            Channels = selectedStream.Channels,
+            Duration = selectedStream.Duration ?? formatDuration,
             Container = container,
+            AudioStreams = audioStreams.Select(stream => stream with
+            {
+                BitRate = stream.BitRate ?? formatBitRate,
+                Duration = stream.Duration ?? formatDuration
+            }).ToArray(),
+            SelectedAudioStreamIndex = selectedStream.StreamIndex,
             FileSizeBytes = fileSize,
-            IsLikelyLossy = IsLikelyLossy(codec)
+            IsLikelyLossy = AudioInfo.IsCodecLikelyLossy(selectedStream.Codec)
         };
+    }
+
+    private static AudioStreamInfo ParseAudioStream(JsonElement streamElement, int audioStreamIndex)
+    {
+        var streamIndex = TryGetInt(streamElement, "index") ?? audioStreamIndex;
+        var codec = TryGetString(streamElement, "codec_name") ?? string.Empty;
+        var codecLongName = TryGetString(streamElement, "codec_long_name") ?? string.Empty;
+        var bitRate = TryGetLong(streamElement, "bit_rate");
+        var sampleRate = TryGetInt(streamElement, "sample_rate");
+        var channels = TryGetInt(streamElement, "channels");
+        var duration = TryGetDuration(streamElement, "duration");
+
+        streamElement.TryGetProperty("tags", out var tagsElement);
+        var language = TryGetString(tagsElement, "language") ?? string.Empty;
+        var title = TryGetString(tagsElement, "title") ?? string.Empty;
+        var handlerName = TryGetString(tagsElement, "handler_name") ?? string.Empty;
+
+        return new AudioStreamInfo(
+            streamIndex,
+            audioStreamIndex,
+            codec,
+            codecLongName,
+            bitRate,
+            sampleRate,
+            channels,
+            duration,
+            language,
+            title,
+            handlerName);
     }
 
     private async Task<ProcessResult> RunProcessAsync(IReadOnlyList<string> arguments, CancellationToken cancellationToken)
@@ -261,9 +293,4 @@ public sealed class FFprobeService
             : null;
     }
 
-    private static bool IsLikelyLossy(string codec)
-    {
-        var normalized = codec.Trim().ToLowerInvariant();
-        return normalized is "mp3" or "aac" or "vorbis" or "opus" or "ac3" or "eac3" or "wma" or "wmav1" or "wmav2" or "amr_nb" or "amr_wb" or "mp2" or "dts";
-    }
 }

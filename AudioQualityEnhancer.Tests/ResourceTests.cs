@@ -50,6 +50,13 @@ public sealed partial class ResourceTests
         values.Add(unknownInfo.FileSizeDisplay);
         values.Add(unknownInfo.LossyDisplay);
 
+        var streamInfo = new AudioStreamInfo(2, 1, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(20), "eng", "English", string.Empty);
+        values.Add(streamInfo.DisplayName);
+        values.Add(streamInfo.BitRateDisplay);
+        values.Add(streamInfo.SampleRateDisplay);
+        values.Add(streamInfo.ChannelsDisplay);
+        values.Add(streamInfo.DurationDisplay);
+
         using var reportInfo = new AudioInfo
         {
             Codec = "mp3",

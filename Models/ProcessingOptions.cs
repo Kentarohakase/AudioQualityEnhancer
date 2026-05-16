@@ -12,6 +12,8 @@ public sealed class ProcessingOptions
 
     public AudioInfo? SourceInfo { get; init; }
 
+    public AudioStreamInfo? AudioStream { get; init; }
+
     public int NoiseReductionFloor { get; init; } = -25;
 
     public bool EnableSpeechCompression { get; init; }

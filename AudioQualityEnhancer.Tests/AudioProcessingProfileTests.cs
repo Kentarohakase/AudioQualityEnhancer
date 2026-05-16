@@ -79,4 +79,52 @@ public sealed class AudioProcessingProfileTests
         Assert.Contains(ExportFormat.PremierePro, ExportFormat.All);
         Assert.Contains(ExportFormat.Opus_192, ExportFormat.All);
     }
+
+    [Fact]
+    public void BuildInputArguments_DefaultsToFirstAudioStream()
+    {
+        var args = AudioProcessingService.BuildInputArguments("input.mp4", audioStream: null);
+
+        Assert.Contains("-map", args);
+        Assert.Contains("0:a:0", args);
+    }
+
+    [Fact]
+    public void BuildInputArguments_MapsSelectedAudioStreamByContainerStreamIndex()
+    {
+        var stream = new AudioStreamInfo(
+            StreamIndex: 3,
+            AudioStreamIndex: 1,
+            Codec: "aac",
+            CodecLongName: "AAC",
+            BitRate: 192_000,
+            SampleRate: 48_000,
+            Channels: 2,
+            Duration: TimeSpan.FromSeconds(10),
+            Language: "eng",
+            Title: "English",
+            HandlerName: string.Empty);
+
+        var args = AudioProcessingService.BuildInputArguments("input.mkv", stream);
+
+        Assert.Contains("0:3", args);
+        Assert.DoesNotContain("0:a:0", args);
+    }
+
+    [Fact]
+    public void ResolveAudioStream_FallsBackToSelectedSourceStreamForInvalidRequest()
+    {
+        var first = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(10), "deu", "Deutsch", string.Empty);
+        var invalid = new AudioStreamInfo(99, 9, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(10), "eng", "English", string.Empty);
+        using var info = new AudioInfo
+        {
+            Codec = "aac",
+            AudioStreams = new[] { first },
+            SelectedAudioStreamIndex = first.StreamIndex
+        };
+
+        var resolved = AudioProcessingService.ResolveAudioStream(invalid, info);
+
+        Assert.Same(first, resolved);
+    }
 }
