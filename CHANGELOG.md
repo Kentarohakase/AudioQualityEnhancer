@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.1 - 2026-05-16
+
+### Fixed
+
+- Added missing German translations for all v0.5.0 resource keys (button labels, field names, status messages, log lines, error messages and analysis warnings were showing as `!key!` placeholders when the UI language was set to German).
+- `ToolStatus.DisplayText` was hardcoded German (`gefunden` / `nicht gefunden`); it now uses `LocalizationService` and live-refreshes when the language is switched.
+- File-dialog title (`Audio- oder Videodatei auswählen`) and folder-dialog title (`Ausgabeordner auswählen`) were hardcoded German; both now resolve from resources.
+- Open-file-dialog filter labels were hardcoded German; they now come from `Dialog_FilterAudio` / `Dialog_FilterAll`.
+- `AudioInfo` accumulated `LocalizationService.PropertyChanged` subscriptions on every file load (memory leak); `AudioInfo` now implements `IDisposable` and `MainViewModel` disposes the previous instance before replacing it.
+- Crash dialog in `App.OnDispatcherUnhandledException` was hardcoded German; it now reads `Error_AppCrash` / `Error_CrashLogSaved` from resources.
+- `SuggestCopyOutput` reason strings in `FileNameService` were hardcoded German; they now resolve through `CopyReason_*` resource keys.
+- `App` and `MainViewModel` each created a separate `SettingsService` instance and loaded `settings.json` twice; `App.SettingsService` is now a static singleton shared by both.
+- `AudioPreviewService`: media-event handlers now guard with `ReferenceEquals` against stale sender references; `Stop()` nulls `_player` first and detaches all event handlers before closing, preventing callbacks from firing on a disposed player.
+
 ## 0.5.0 - 2026-05-16
 
 ### Added

@@ -245,4 +245,5 @@
   <data name="CopyReason_Vorbis" xml:space="preserve"><value>Vorbis wird für die verlustfreie Extraktion in einem Ogg-Container gespeichert.</value></data>
   <data name="CopyReason_Pcm" xml:space="preserve"><value>PCM-Audio wird ohne Re-Encoding in einem WAV-Container gespeichert.</value></data>
   <data name="CopyReason_Ac3" xml:space="preserve"><value>Dieser Codec wird für verlustfreie Extraktion in einem MKA-Container gespeichert.</value></data>
+
 </root>
