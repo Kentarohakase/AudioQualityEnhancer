@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Updated CI and release workflows for the current GitHub Actions runtimes and the upcoming Windows runner image migration.
+
 ## 0.6.1 - 2026-05-16
 
 ### Fixed
