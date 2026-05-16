@@ -126,13 +126,13 @@ Die Tests prüfen Parser, Dateilogik, Exportprofile und Sprachressourcen. Sie st
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.6.1
+.\scripts\package-release.ps1 -Version 0.7.0
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.6.1 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.7.0 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.
