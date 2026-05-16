@@ -33,12 +33,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
-    private string _statusText = "Bereit.";
+    private string _statusText;
     private string _qualityNotice = string.Empty;
     private string _logText = string.Empty;
-    private string _toolStatusText = "Werkzeuge werden geprüft...";
-    private string _processingPhaseText = "Bereit";
+    private string _toolStatusText;
+    private string _processingPhaseText;
     private string _filterDetailsText = string.Empty;
+    private LanguageOption _selectedLanguage = LanguageOption.German;
     private string _lastOutputPath = string.Empty;
     private double _progressValue;
     private bool _isBusy;
@@ -67,19 +68,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
         _settingsService = new SettingsService();
 
+        _statusText = LocalizationService.Instance["Status_Ready"];
+        _toolStatusText = LocalizationService.Instance["Tools_Checking"];
+        _processingPhaseText = LocalizationService.Instance["Phase_Ready"];
+
         _logService.LogAdded += OnLogAdded;
         _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
         _audioPreviewService.PlaybackEnded += OnPlaybackEnded;
+        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
 
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
+        Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
 
         _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
         _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
-        _playSourceCommand = new RelayCommand(() => PlayPreview(InputPath, "Original"), () => !IsBusy && File.Exists(InputPath));
-        _playOutputCommand = new RelayCommand(() => PlayPreview(LastOutputPath, "Ergebnis"), () => !IsBusy && File.Exists(LastOutputPath));
+        _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
+        _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
         _stopPreviewCommand = new RelayCommand(StopPreview);
 
         ApplySettings(_settingsService.Load());
@@ -89,6 +96,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplySettings(AppSettings settings)
     {
+        SelectedLanguage = LanguageOption.All.FirstOrDefault(l => l.Code == settings.Language) ?? LanguageOption.German;
         SelectedPreset = AudioPreset.All.FirstOrDefault(p => p.Id == settings.PresetId) ?? AudioPreset.Music;
         SelectedExportFormat = ExportFormat.All.FirstOrDefault(f => f.Id == settings.ExportFormatId) ?? ExportFormat.Flac;
         OutputDirectory = !string.IsNullOrWhiteSpace(settings.OutputDirectory) && Directory.Exists(settings.OutputDirectory)
@@ -105,7 +113,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var settings = new AppSettings
         {
-            Language = _settingsService.Load().Language,
+            Language = SelectedLanguage?.Code ?? LanguageOption.German.Code,
             PresetId = SelectedPreset?.Id ?? AudioPreset.Music.Id,
             ExportFormatId = SelectedExportFormat?.Id ?? ExportFormat.Flac.Id,
             OutputDirectory = OutputDirectory,
@@ -123,6 +131,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ObservableCollection<AudioPreset> Presets { get; }
 
     public ObservableCollection<ExportFormat> ExportFormats { get; }
+
+    public ObservableCollection<LanguageOption> Languages { get; }
+
+    public LanguageOption SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            if (SetProperty(ref _selectedLanguage, value))
+            {
+                LocalizationService.Instance.Culture = new CultureInfo(value.Code);
+            }
+        }
+    }
 
     public ICommand SelectFileCommand => _selectFileCommand;
 
@@ -389,7 +416,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _initialized = true;
-        _logService.Info("Prüfe FFmpeg und FFprobe...");
+        _logService.Info(LocalizationService.Instance["Log_CheckingTools"]);
 
         var ffmpeg = await _toolDiscoveryService.GetStatusAsync("ffmpeg", CancellationToken.None);
         var ffprobe = await _toolDiscoveryService.GetStatusAsync("ffprobe", CancellationToken.None);
@@ -398,20 +425,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (ffmpeg.IsAvailable)
         {
-            _logService.Info(ffmpeg.VersionLine ?? "FFmpeg wurde gefunden.");
+            _logService.Info(ffmpeg.VersionLine ?? LocalizationService.Instance["Log_FFmpegFound"]);
         }
         else
         {
-            _logService.Warning(ffmpeg.ErrorMessage ?? "FFmpeg ist nicht verfügbar.");
+            _logService.Warning(ffmpeg.ErrorMessage ?? LocalizationService.Instance["Log_FFmpegUnavailable"]);
         }
 
         if (ffprobe.IsAvailable)
         {
-            _logService.Info(ffprobe.VersionLine ?? "FFprobe wurde gefunden.");
+            _logService.Info(ffprobe.VersionLine ?? LocalizationService.Instance["Log_FFprobeFound"]);
         }
         else
         {
-            _logService.Warning(ffprobe.ErrorMessage ?? "FFprobe ist nicht verfügbar.");
+            _logService.Warning(ffprobe.ErrorMessage ?? LocalizationService.Instance["Log_FFprobeUnavailable"]);
         }
     }
 
@@ -471,17 +498,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _logService.Clear();
         AudioInfo = null;
         ProgressValue = 0;
-        ProcessingPhaseText = "Analyse";
-        StatusText = "Analysiere Datei...";
+        ProcessingPhaseText = LocalizationService.Instance["Phase_Analysis"];
+        StatusText = LocalizationService.Instance["Status_Analyzing"];
 
         var result = await _ffprobeService.AnalyzeAsync(InputPath, _logService.Info, CancellationToken.None);
         if (result.IsSuccess && result.Value is not null)
         {
             AudioInfo = result.Value;
-            ProcessingPhaseText = "Bereit";
-            StatusText = "Analyse abgeschlossen.";
-            _logService.Info($"Codec: {AudioInfo.CodecDisplay}");
-            _logService.Info($"Container: {AudioInfo.Container}");
+            ProcessingPhaseText = LocalizationService.Instance["Phase_Ready"];
+            StatusText = LocalizationService.Instance["Status_AnalysisDone"];
+            _logService.Info(LocalizationService.Instance.Format("Log_CodecFormat", AudioInfo.CodecDisplay));
+            _logService.Info(LocalizationService.Instance.Format("Log_ContainerFormat", AudioInfo.ContainerDisplay));
 
             if (AudioInfo.IsLikelyLossy)
             {
@@ -490,8 +517,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
         else
         {
-            ProcessingPhaseText = "Fehler";
-            StatusText = result.ErrorMessage ?? "Analyse fehlgeschlagen.";
+            ProcessingPhaseText = LocalizationService.Instance["Phase_Error"];
+            StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_AnalysisFailed"];
             _logService.Error(StatusText);
 
             if (result.Exception is not null)
@@ -507,7 +534,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (SelectedPreset is null || SelectedExportFormat is null)
         {
-            StatusText = "Bitte Preset und Ausgabeformat wählen.";
+            StatusText = LocalizationService.Instance["Status_SelectPresetAndFormat"];
             return;
         }
 
@@ -516,9 +543,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _processingCancellation = new CancellationTokenSource();
         IsBusy = true;
         ProgressValue = 0;
-        ProcessingPhaseText = "Start";
-        StatusText = "Verarbeitung läuft...";
-        _logService.Info("Starte Verarbeitung.");
+        ProcessingPhaseText = LocalizationService.Instance["Phase_Start"];
+        StatusText = LocalizationService.Instance["Status_Processing"];
+        _logService.Info(LocalizationService.Instance["Log_StartingProcessing"]);
 
         try
         {
@@ -531,21 +558,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (result.IsSuccess && result.Value is not null)
             {
                 ProgressValue = 100;
-                ProcessingPhaseText = "Fertig";
+                ProcessingPhaseText = LocalizationService.Instance["Phase_Done"];
                 LastOutputPath = result.Value.OutputPath ?? string.Empty;
-                StatusText = $"Fertig: {result.Value.OutputPath}";
+                StatusText = LocalizationService.Instance.Format("Status_DoneFormat", result.Value.OutputPath ?? string.Empty);
 
                 if (SaveLogFile)
                 {
                     var prefix = Path.GetFileNameWithoutExtension(result.Value.OutputPath ?? "audio-quality-enhancer");
                     var logPath = await _logService.SaveAsync(OutputDirectory, prefix, CancellationToken.None);
-                    _logService.Info($"Logdatei gespeichert: {logPath}");
+                    _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
                 }
             }
             else
             {
-                ProcessingPhaseText = "Fehler";
-                StatusText = result.ErrorMessage ?? "Verarbeitung fehlgeschlagen.";
+                ProcessingPhaseText = LocalizationService.Instance["Phase_Error"];
+                StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_ProcessingFailed"];
                 _logService.Error(StatusText);
 
                 if (result.Exception is not null)
@@ -564,10 +591,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void CancelProcessing()
     {
-        StatusText = "Abbruch wird angefordert...";
-        ProcessingPhaseText = "Abbruch";
+        StatusText = LocalizationService.Instance["Status_Cancelling"];
+        ProcessingPhaseText = LocalizationService.Instance["Phase_Cancel"];
         _processingCancellation?.Cancel();
     }
+
+    private void PlaySourcePreview() =>
+        PlayPreview(InputPath, LocalizationService.Instance["Button_PlaySource"]);
+
+    private void PlayOutputPreview() =>
+        PlayPreview(LastOutputPath, LocalizationService.Instance["Button_PlayOutput"]);
 
     private void PlayPreview(string path, string label)
     {
@@ -578,13 +611,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             IsPreviewActive = true;
             PreviewDurationSeconds = 0;
             PreviewPositionSeconds = 0;
-            StatusText = $"Vorschau läuft: {label}";
-            _logService.Info($"Vorschau gestartet: {path}");
+            StatusText = LocalizationService.Instance.Format("Status_PreviewPlayingFormat", label);
+            _logService.Info(LocalizationService.Instance.Format("Log_PreviewStartedFormat", path));
             StartPreviewTimer();
             return;
         }
 
-        StatusText = result.ErrorMessage ?? "Vorschau fehlgeschlagen.";
+        StatusText = result.ErrorMessage ?? LocalizationService.Instance["Status_PreviewFailed"];
         _logService.Error(StatusText);
 
         if (result.Exception is not null)
@@ -600,7 +633,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPreviewActive = false;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
-        StatusText = "Vorschau gestoppt.";
+        StatusText = LocalizationService.Instance["Status_PreviewStopped"];
     }
 
     private void StartPreviewTimer()
@@ -668,7 +701,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var parts = new List<string>
         {
-            "Dieses Tool kann Audio verbessern, normalisieren und restaurieren, aber keine Informationen zurückholen, die durch schlechte Aufnahme oder verlustbehaftete Kompression bereits zerstört wurden."
+            LocalizationService.Instance["Quality_GeneralNote"]
         };
 
         if (AudioInfo?.IsLikelyLossy == true)
@@ -683,7 +716,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (SelectedExportFormat?.IsLossless == true)
         {
-            parts.Add("Ein verlustfreies Zielformat vermeidet zusätzliche Exportverluste, macht eine verlustbehaftete Quelle aber nicht besser als sie ist.");
+            parts.Add(LocalizationService.Instance["Quality_LosslessTarget"]);
         }
 
         QualityNotice = string.Join(Environment.NewLine + Environment.NewLine, parts);
@@ -745,8 +778,19 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPreviewActive = false;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
-        StatusText = "Vorschau beendet.";
+        StatusText = LocalizationService.Instance["Status_PreviewEnded"];
         RaiseCommandStates();
+    }
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != "Item[]")
+        {
+            return;
+        }
+
+        UpdateQualityNotice();
+        UpdateFilterDetails();
     }
 
     private void RaiseCommandStates()
@@ -787,6 +831,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _audioPreviewService.PlaybackFailed -= OnPlaybackFailed;
         _audioPreviewService.PlaybackEnded -= OnPlaybackEnded;
+        LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
         StopPreviewTimer();
         _processingCancellation?.Dispose();
         _audioPreviewService.Dispose();

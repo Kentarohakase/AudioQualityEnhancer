@@ -27,13 +27,13 @@ public sealed class AudioProcessingService
     {
         if (options.Preset.IsCopyOnly)
         {
-            return "Stream copy: -vn -c:a copy";
+            return LocalizationService.Instance["Filter_StreamCopy"];
         }
 
         var filterPlan = BuildFilterPlan(options);
         if (!filterPlan.HasFilters)
         {
-            return "Keine Audiofilter. Es wird nur in das gewählte Zielformat exportiert.";
+            return LocalizationService.Instance["Filter_NoFilters"];
         }
 
         if (filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness)
@@ -51,28 +51,28 @@ public sealed class AudioProcessingService
         IProgress<ProcessingProgress>? progress,
         CancellationToken cancellationToken)
     {
-        Report(progress, 2, "Prüfe Eingabe");
+        Report(progress, 2, LocalizationService.Instance["Phase_CheckInput"]);
 
         if (string.IsNullOrWhiteSpace(options.InputPath) || !File.Exists(options.InputPath))
         {
-            return Result<ProcessResult>.Failure("Die Quelldatei wurde nicht gefunden.");
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_SourceFileNotFound"]);
         }
 
         if (!_fileNameService.IsSupportedInputFile(options.InputPath))
         {
-            return Result<ProcessResult>.Failure("Dieses Dateiformat wird nicht unterstützt.");
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_UnsupportedFormatShort"]);
         }
 
         if (string.IsNullOrWhiteSpace(options.OutputDirectory))
         {
-            return Result<ProcessResult>.Failure("Bitte wähle einen Ausgabeordner aus.");
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_OutputFolderRequired"]);
         }
 
-        Report(progress, 5, "Prüfe FFmpeg");
+        Report(progress, 5, LocalizationService.Instance["Phase_CheckFFmpeg"]);
         var ffmpegAvailability = await _ffmpegService.CheckAvailabilityAsync(cancellationToken);
         if (ffmpegAvailability.IsFailure)
         {
-            return Result<ProcessResult>.Failure(ffmpegAvailability.ErrorMessage ?? "FFmpeg ist nicht verfügbar.", ffmpegAvailability.Exception);
+            return Result<ProcessResult>.Failure(ffmpegAvailability.ErrorMessage ?? LocalizationService.Instance["Error_FFmpegUnavailable"], ffmpegAvailability.Exception);
         }
 
         Directory.CreateDirectory(options.OutputDirectory);
@@ -80,27 +80,27 @@ public sealed class AudioProcessingService
         var sourceInfo = options.SourceInfo;
         if (sourceInfo is null)
         {
-            Report(progress, 8, "Analysiere Quelle");
+            Report(progress, 8, LocalizationService.Instance["Phase_AnalyzingSource"]);
             var analysis = await _ffprobeService.AnalyzeAsync(options.InputPath, _logService.Info, cancellationToken);
             if (analysis.IsFailure || analysis.Value is null)
             {
-                return Result<ProcessResult>.Failure(analysis.ErrorMessage ?? "Die Quelle konnte nicht analysiert werden.", analysis.Exception);
+                return Result<ProcessResult>.Failure(analysis.ErrorMessage ?? LocalizationService.Instance["Error_SourceAnalysisFailed"], analysis.Exception);
             }
 
             sourceInfo = analysis.Value;
         }
 
-        Report(progress, 10, "Bereite Verarbeitung vor");
+        Report(progress, 10, LocalizationService.Instance["Phase_PreparingProcessing"]);
         var outputPlan = BuildOutputPlan(options, sourceInfo);
         if (outputPlan.IsFailure || outputPlan.Value is null)
         {
-            return Result<ProcessResult>.Failure(outputPlan.ErrorMessage ?? "Die Verarbeitung konnte nicht vorbereitet werden.", outputPlan.Exception);
+            return Result<ProcessResult>.Failure(outputPlan.ErrorMessage ?? LocalizationService.Instance["Error_PreparationFailed"], outputPlan.Exception);
         }
 
         var plan = outputPlan.Value;
         var tempOutputPath = _fileNameService.CreateTemporaryOutputPath(options.OutputDirectory, plan.FinalOutputPath);
 
-        _logService.Info($"Ziel: {plan.FinalOutputPath}");
+        _logService.Info(LocalizationService.Instance.Format("Log_TargetFormat", plan.FinalOutputPath));
         LogFilterPlan(plan);
 
         var filterGraph = plan.FilterGraph;
@@ -110,17 +110,17 @@ public sealed class AudioProcessingService
             if (pass1Result.IsFailure)
             {
                 TryDeleteTempFile(tempOutputPath);
-                return Result<ProcessResult>.Failure(pass1Result.ErrorMessage ?? "Der Loudness-Messpass ist fehlgeschlagen.", pass1Result.Exception);
+                return Result<ProcessResult>.Failure(pass1Result.ErrorMessage ?? LocalizationService.Instance["Error_LoudnessMeasurementFailed"], pass1Result.Exception);
             }
 
             if (pass1Result.Value is not null)
             {
                 filterGraph = BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, pass1Result.Value, printJson: false);
-                _logService.Info("Zwei-Pass-Loudness: Messwerte wurden übernommen.");
+                _logService.Info(LocalizationService.Instance["Log_TwoPassMeasurementsApplied"]);
             }
             else
             {
-                _logService.Warning("Zwei-Pass-Loudness konnte nicht ausgewertet werden. Die Verarbeitung läuft mit dem sicheren Ein-Pass-Filter weiter.");
+                _logService.Warning(LocalizationService.Instance["Log_TwoPassMeasurementsFailed"]);
                 filterGraph = plan.FilterGraph;
             }
         }
@@ -128,17 +128,19 @@ public sealed class AudioProcessingService
         var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph);
         if (plan.ShouldUseTwoPassLoudness)
         {
-            _logService.Info($"Renderfilter: {filterGraph}");
+            _logService.Info(LocalizationService.Instance.Format("Log_RenderFilterFormat", filterGraph));
         }
 
         var renderStart = plan.ShouldUseTwoPassLoudness ? 50d : 12d;
         var renderSpan = plan.ShouldUseTwoPassLoudness ? 45d : 83d;
 
-        Report(progress, renderStart, "Verarbeite Audio", plan.ShouldUseTwoPassLoudness ? "Pass 2 von 2" : null);
+        var processingPhase = LocalizationService.Instance["Phase_ProcessingAudio"];
+        var pass2Detail = plan.ShouldUseTwoPassLoudness ? LocalizationService.Instance["Phase_Pass2of2"] : null;
+        Report(progress, renderStart, processingPhase, pass2Detail);
         var ffmpegResult = await _ffmpegService.ExecuteAsync(
             ffmpegArguments,
             _logService.Info,
-            value => Report(progress, renderStart + value / 100d * renderSpan, "Verarbeite Audio", plan.ShouldUseTwoPassLoudness ? "Pass 2 von 2" : null),
+            value => Report(progress, renderStart + value / 100d * renderSpan, processingPhase, pass2Detail),
             sourceInfo.Duration,
             cancellationToken);
 
@@ -150,23 +152,23 @@ public sealed class AudioProcessingService
 
         try
         {
-            Report(progress, 98, "Speichere Ergebnis");
+            Report(progress, 98, LocalizationService.Instance["Phase_SavingResult"]);
             File.Move(tempOutputPath, plan.FinalOutputPath);
-            _logService.Info($"Fertig: {plan.FinalOutputPath}");
+            _logService.Info(LocalizationService.Instance.Format("Log_FinishedFormat", plan.FinalOutputPath));
 
-            Report(progress, 100, "Fertig");
+            Report(progress, 100, LocalizationService.Instance["Phase_Done"]);
             var completedResult = ffmpegResult.Value with { OutputPath = plan.FinalOutputPath };
             return Result<ProcessResult>.Success(completedResult);
         }
         catch (IOException ex) when (File.Exists(plan.FinalOutputPath))
         {
             TryDeleteTempFile(tempOutputPath);
-            return Result<ProcessResult>.Failure("Die Zieldatei existiert inzwischen bereits. Bitte starte die Verarbeitung erneut.", ex, ffmpegResult.Value);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_TargetExists"], ex, ffmpegResult.Value);
         }
         catch (Exception ex)
         {
             TryDeleteTempFile(tempOutputPath);
-            return Result<ProcessResult>.Failure("Die Ausgabedatei konnte nach der Verarbeitung nicht gespeichert werden.", ex, ffmpegResult.Value);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_SaveFailed"], ex, ffmpegResult.Value);
         }
     }
 
@@ -177,24 +179,26 @@ public sealed class AudioProcessingService
         IProgress<ProcessingProgress>? progress,
         CancellationToken cancellationToken)
     {
-        Report(progress, 12, "Analysiere Loudness", "Pass 1 von 2");
+        var phase = LocalizationService.Instance["Phase_AnalyzingLoudness"];
+        var pass1Detail = LocalizationService.Instance["Phase_Pass1of2"];
+        Report(progress, 12, phase, pass1Detail);
 
         var pass1Filter = BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, null, printJson: true);
         var pass1Arguments = BuildLoudnessAnalysisArguments(inputPath, pass1Filter);
 
-        _logService.Info("Zwei-Pass-Loudness: starte Messpass.");
-        _logService.Info($"Analysefilter: {pass1Filter}");
+        _logService.Info(LocalizationService.Instance["Log_TwoPassStartingMeasure"]);
+        _logService.Info(LocalizationService.Instance.Format("Log_AnalysisFilterFormat", pass1Filter));
 
         var pass1Result = await _ffmpegService.ExecuteAsync(
             pass1Arguments,
             _logService.Info,
-            value => Report(progress, 12 + value / 100d * 35d, "Analysiere Loudness", "Pass 1 von 2"),
+            value => Report(progress, 12 + value / 100d * 35d, phase, pass1Detail),
             sourceInfo.Duration,
             cancellationToken);
 
         if (pass1Result.IsFailure || pass1Result.Value is null)
         {
-            return Result<LoudnormMeasuredStats?>.Failure(pass1Result.ErrorMessage ?? "Der Loudness-Messpass ist fehlgeschlagen.", pass1Result.Exception);
+            return Result<LoudnormMeasuredStats?>.Failure(pass1Result.ErrorMessage ?? LocalizationService.Instance["Error_LoudnessMeasurementFailed"], pass1Result.Exception);
         }
 
         var stats = TryParseLoudnormStats(pass1Result.Value.StandardError + Environment.NewLine + pass1Result.Value.StandardOutput);
@@ -208,10 +212,10 @@ public sealed class AudioProcessingService
             var suggestion = _fileNameService.SuggestCopyOutput(sourceInfo);
             if (suggestion is null)
             {
-                return Result<OutputPlan>.Failure("Diese Audiospur kann nicht zuverlässig ohne Re-Encoding in ein bekanntes Zielformat extrahiert werden. Wähle stattdessen ein Exportformat wie FLAC oder WAV.");
+                return Result<OutputPlan>.Failure(LocalizationService.Instance["Error_StreamCopyNotPossible"]);
             }
 
-            _logService.Info($"Verlustfreie Extraktion: {suggestion.Reason}");
+            _logService.Info(LocalizationService.Instance.Format("Log_LosslessExtractionFormat", suggestion.Reason));
             var outputPath = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, "extracted", suggestion.Extension);
             return Result<OutputPlan>.Success(new OutputPlan(outputPath, new[] { "-c:a", "copy" }, string.Empty, Array.Empty<string>(), null, false));
         }
@@ -219,7 +223,7 @@ public sealed class AudioProcessingService
         var exportFormat = options.Preset.IsArchiveExport ? ExportFormat.Flac : options.ExportFormat;
         if (options.Preset.IsArchiveExport && options.ExportFormat.Id != ExportFormat.Flac.Id)
         {
-            _logService.Info("Archiv Export erzwingt FLAC, damit die Bearbeitung verlustfrei gespeichert wird.");
+            _logService.Info(LocalizationService.Instance["Log_ArchiveForcesFlac"]);
         }
 
         var suffix = options.Preset.IsArchiveExport
@@ -429,16 +433,16 @@ public sealed class AudioProcessingService
     {
         if (!string.IsNullOrWhiteSpace(plan.FilterGraph))
         {
-            _logService.Info($"Filter: {plan.FilterGraph}");
+            _logService.Info(LocalizationService.Instance.Format("Log_FilterFormat", plan.FilterGraph));
         }
         else
         {
-            _logService.Info("Filter: keine");
+            _logService.Info(LocalizationService.Instance["Log_FilterNone"]);
         }
 
         if (plan.ShouldUseTwoPassLoudness)
         {
-            _logService.Info("Loudness: Zwei-Pass-Modus aktiv.");
+            _logService.Info(LocalizationService.Instance["Log_TwoPassActive"]);
         }
     }
 

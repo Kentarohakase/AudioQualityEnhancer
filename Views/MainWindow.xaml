@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:AudioQualityEnhancer.Services"
         mc:Ignorable="d"
-        Title="Audio Quality Enhancer"
+        Title="{Binding [MainWindow_Title], Source={x:Static loc:LocalizationService.Instance}}"
         Width="1200"
         Height="840"
         MinWidth="980"
@@ -125,17 +126,28 @@
 
         <DockPanel Grid.Row="0" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Audio Quality Enhancer" FontSize="28" FontWeight="SemiBold" />
-                <TextBlock Text="Analyse, schonende Bearbeitung und Export mit FFmpeg" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding [MainWindow_Title], Source={x:Static loc:LocalizationService.Instance}}" FontSize="28" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding [MainWindow_Subtitle], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                 <TextBlock Text="{Binding ToolStatusText}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0" />
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right"
-                       Text="{Binding StatusText}"
-                       Foreground="{StaticResource MutedTextBrush}"
-                       VerticalAlignment="Center"
-                       TextAlignment="Right"
-                       MaxWidth="430"
-                       TextWrapping="Wrap" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Vertical" HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding [Field_Language], Source={x:Static loc:LocalizationService.Instance}}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0" />
+                    <ComboBox ItemsSource="{Binding Languages}"
+                              SelectedItem="{Binding SelectedLanguage}"
+                              DisplayMemberPath="Name"
+                              Width="110" />
+                </StackPanel>
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="{StaticResource MutedTextBrush}"
+                           TextAlignment="Right"
+                           MaxWidth="430"
+                           TextWrapping="Wrap"
+                           Margin="0,8,0,0" />
+            </StackPanel>
         </DockPanel>
 
         <Grid Grid.Row="1">
@@ -149,7 +161,7 @@
                 <StackPanel>
                     <Border Style="{StaticResource SectionBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="Quelle" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBlock Text="{Binding [Section_Source], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
                             <Border BorderBrush="#AFC2BA"
                                     BorderThickness="1.5"
                                     CornerRadius="8"
@@ -160,8 +172,8 @@
                                     DragEnter="MainWindow_OnDragEnter"
                                     Drop="MainWindow_OnDrop">
                                 <StackPanel>
-                                    <TextBlock Text="Datei hier ablegen" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                                    <TextBlock Text="oder über den Button auswählen"
+                                    <TextBlock Text="{Binding [Hint_DropFile], Source={x:Static loc:LocalizationService.Instance}}" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding [Hint_DropFileOrSelect], Source={x:Static loc:LocalizationService.Instance}}"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                Margin="0,4,0,0"
                                                HorizontalAlignment="Center" />
@@ -178,7 +190,7 @@
                                          Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
                                          IsReadOnly="True" />
                                 <Button Grid.Column="2"
-                                        Content="Datei auswählen"
+                                        Content="{Binding [Button_SelectFile], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding SelectFileCommand}" />
                             </Grid>
 
@@ -191,13 +203,13 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
-                                        Content="Original anhören"
+                                        Content="{Binding [Button_PlaySource], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding PlaySourceCommand}" />
                                 <Button Grid.Column="2"
-                                        Content="Ergebnis anhören"
+                                        Content="{Binding [Button_PlayOutput], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding PlayOutputCommand}" />
                                 <Button Grid.Column="4"
-                                        Content="Stop"
+                                        Content="{Binding [Button_StopPreview], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding StopPreviewCommand}" />
                             </Grid>
 
@@ -218,7 +230,7 @@
 
                     <Border Style="{StaticResource SectionBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="Analyse" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBlock Text="{Binding [Section_Analysis], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150" />
@@ -233,24 +245,24 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Codec" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding [Field_Codec], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AudioInfo.CodecDisplay, TargetNullValue='-'}" TextWrapping="Wrap" Margin="0,0,18,8" />
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Container" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
-                                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding AudioInfo.Container, TargetNullValue='-'}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding [Field_Container], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding AudioInfo.ContainerDisplay, TargetNullValue='-'}" TextWrapping="Wrap" Margin="0,0,0,8" />
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Bitrate" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding [Field_BitRate], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AudioInfo.BitRateDisplay, TargetNullValue='-'}" Margin="0,0,18,8" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Sample Rate" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding [Field_SampleRate], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
                                 <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding AudioInfo.SampleRateDisplay, TargetNullValue='-'}" Margin="0,0,0,8" />
 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Kanäle" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding [Field_Channels], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
                                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AudioInfo.ChannelsDisplay, TargetNullValue='-'}" Margin="0,0,18,8" />
-                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Dauer" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding [Field_Duration], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,8" />
                                 <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding AudioInfo.DurationDisplay, TargetNullValue='-'}" Margin="0,0,0,8" />
 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Dateigröße" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding [Field_FileSize], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
                                 <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AudioInfo.FileSizeDisplay, TargetNullValue='-'}" Margin="0,0,18,0" />
-                                <TextBlock Grid.Row="3" Grid.Column="2" Text="Quelle" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding [Field_Source], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" />
                                 <TextBlock Grid.Row="3" Grid.Column="3" Text="{Binding AudioInfo.LossyDisplay, TargetNullValue='-'}" TextWrapping="Wrap" />
                             </Grid>
                         </StackPanel>
@@ -260,7 +272,7 @@
                             Background="{StaticResource WarningBackgroundBrush}"
                             BorderBrush="{StaticResource WarningBorderBrush}">
                         <StackPanel>
-                            <TextBlock Text="Qualitätsgrenzen" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding [Section_QualityLimits], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
                             <TextBlock Text="{Binding QualityNotice}" TextWrapping="Wrap" LineHeight="20" />
                         </StackPanel>
                     </Border>
@@ -271,9 +283,9 @@
                 <StackPanel>
                     <Border Style="{StaticResource SectionBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="Verarbeitung" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBlock Text="{Binding [Section_Processing], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-                            <TextBlock Text="Preset" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding [Field_Preset], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding Presets}"
                                       SelectedItem="{Binding SelectedPreset}"
                                       DisplayMemberPath="Name"
@@ -288,23 +300,23 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0"
-                                          Content="Zwei-Pass-Loudness"
+                                          Content="{Binding [Checkbox_TwoPassLoudness], Source={x:Static loc:LocalizationService.Instance}}"
                                           IsChecked="{Binding UseTwoPassLoudness}"
                                           IsEnabled="{Binding IsLoudnessPreset}"
                                           Margin="0,0,0,8" />
                                 <CheckBox Grid.Row="1"
-                                          Content="Leichte Sprachkompression"
+                                          Content="{Binding [Checkbox_SpeechCompression], Source={x:Static loc:LocalizationService.Instance}}"
                                           IsChecked="{Binding EnableSpeechCompression}"
                                           IsEnabled="{Binding IsSpeechPreset}"
                                           Margin="0,0,0,8" />
                                 <CheckBox Grid.Row="2"
-                                          Content="Leichte Verständlichkeitsanhebung"
+                                          Content="{Binding [Checkbox_SpeechPresenceBoost], Source={x:Static loc:LocalizationService.Instance}}"
                                           IsChecked="{Binding EnableSpeechPresenceBoost}"
                                           IsEnabled="{Binding IsSpeechPreset}"
                                           Margin="0,0,0,8" />
                                 <StackPanel Grid.Row="3">
                                     <DockPanel>
-                                        <TextBlock Text="Rauschfilter" Foreground="{StaticResource MutedTextBrush}" />
+                                        <TextBlock Text="{Binding [Field_NoiseFilter], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" />
                                         <TextBlock DockPanel.Dock="Right"
                                                    Text="{Binding NoiseReductionFloor, StringFormat={}{0} dB}"
                                                    Foreground="{StaticResource MutedTextBrush}" />
@@ -318,14 +330,14 @@
                                 </StackPanel>
                             </Grid>
 
-                            <TextBlock Text="Ausgabeformat" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding [Field_ExportFormat], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding ExportFormats}"
                                       SelectedItem="{Binding SelectedExportFormat}"
                                       DisplayMemberPath="DisplayName"
                                       Margin="0,0,0,8" />
                             <TextBlock Text="{Binding SelectedExportFormat.Description}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,12" />
 
-                            <TextBlock Text="Filterdetails" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding [Field_FilterDetails], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
                             <TextBox Text="{Binding FilterDetailsText, Mode=OneWay}"
                                      IsReadOnly="True"
                                      AcceptsReturn="True"
@@ -339,9 +351,9 @@
 
                     <Border Style="{StaticResource SectionBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="Ausgabe" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBlock Text="{Binding [Section_Output], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-                            <TextBlock Text="Ordner" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding [Field_OutputFolder], Source={x:Static loc:LocalizationService.Instance}}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4" />
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -351,11 +363,11 @@
                                 <TextBox Grid.Column="0"
                                          Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                                 <Button Grid.Column="2"
-                                        Content="Ordner wählen"
+                                        Content="{Binding [Button_SelectFolder], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding SelectOutputFolderCommand}" />
                             </Grid>
 
-                            <CheckBox Content="Logdatei zusätzlich speichern"
+                            <CheckBox Content="{Binding [Checkbox_SaveLog], Source={x:Static loc:LocalizationService.Instance}}"
                                       IsChecked="{Binding SaveLogFile}"
                                       Margin="0,0,0,16" />
 
@@ -379,11 +391,11 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
-                                        Content="Verarbeitung starten"
+                                        Content="{Binding [Button_Start], Source={x:Static loc:LocalizationService.Instance}}"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         Command="{Binding StartCommand}" />
                                 <Button Grid.Column="2"
-                                        Content="Abbrechen"
+                                        Content="{Binding [Button_Cancel], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding CancelCommand}" />
                             </Grid>
                         </StackPanel>
@@ -391,7 +403,7 @@
 
                     <Border Style="{StaticResource SectionBorderStyle}" Margin="0">
                         <StackPanel>
-                            <TextBlock Text="Log" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <TextBlock Text="{Binding [Section_Log], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
                             <TextBox Text="{Binding LogText, Mode=OneWay}"
                                      IsReadOnly="True"
                                      AcceptsReturn="True"
@@ -409,7 +421,7 @@
         </Grid>
 
         <TextBlock Grid.Row="2"
-                   Text="Originaldateien werden nie überschrieben. Für Stream-Copy wird ein kompatibles Containerformat gewählt, sonst wird mit den gewählten Parametern exportiert."
+                   Text="{Binding [Footer_Disclaimer], Source={x:Static loc:LocalizationService.Instance}}"
                    Foreground="{StaticResource MutedTextBrush}"
                    Margin="0,14,0,0"
                    TextWrapping="Wrap" />

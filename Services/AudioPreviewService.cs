@@ -28,7 +28,7 @@ public sealed class AudioPreviewService : IDisposable
     {
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            return Result.Failure("Die Datei für die Vorschau wurde nicht gefunden.");
+            return Result.Failure(LocalizationService.Instance["Error_PreviewFileNotFound"]);
         }
 
         try
@@ -45,7 +45,7 @@ public sealed class AudioPreviewService : IDisposable
         }
         catch (Exception ex)
         {
-            return Result.Failure("Die Datei konnte nicht für die Vorschau geöffnet werden. Das Windows-Wiedergabesystem unterstützt dieses Format möglicherweise nicht.", ex);
+            return Result.Failure(LocalizationService.Instance["Error_PreviewOpenFailed"], ex);
         }
     }
 
@@ -84,8 +84,8 @@ public sealed class AudioPreviewService : IDisposable
     private void OnMediaFailed(object? sender, ExceptionEventArgs e)
     {
         var message = e.ErrorException?.Message is { Length: > 0 } msg
-            ? $"Vorschau fehlgeschlagen: {msg}"
-            : "Vorschau fehlgeschlagen: Das Windows-Wiedergabesystem unterstützt dieses Format nicht.";
+            ? LocalizationService.Instance.Format("Error_PreviewFailedFormat", msg)
+            : LocalizationService.Instance["Error_PreviewFailedGeneric"];
         PlaybackFailed?.Invoke(this, message);
     }
 

@@ -19,7 +19,7 @@ public sealed class FFmpegService
         var status = await _toolDiscoveryService.GetStatusAsync("ffmpeg", cancellationToken);
         return status.IsAvailable
             ? Result.Success()
-            : Result.Failure(status.ErrorMessage ?? "FFmpeg ist nicht verfügbar.");
+            : Result.Failure(status.ErrorMessage ?? LocalizationService.Instance["Error_FFmpegUnavailable"]);
     }
 
     public async Task<Result<ProcessResult>> ExecuteAsync(
@@ -88,7 +88,7 @@ public sealed class FFmpegService
 
         try
         {
-            log?.Invoke($"Starte FFmpeg: {FormatCommand(arguments)}");
+            log?.Invoke(LocalizationService.Instance.Format("Log_FFmpegStartingFormat", FormatCommand(arguments)));
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -108,7 +108,7 @@ public sealed class FFmpegService
                 return Result<ProcessResult>.Success(result);
             }
 
-            return Result<ProcessResult>.Failure($"FFmpeg wurde mit Exit Code {process.ExitCode} beendet. Details stehen im Log.", value: result);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", process.ExitCode), value: result);
         }
         catch (OperationCanceledException)
         {
@@ -120,15 +120,15 @@ public sealed class FFmpegService
                 DateTimeOffset.Now - startedAt,
                 WasCancelled: true);
 
-            return Result<ProcessResult>.Failure("Die Verarbeitung wurde abgebrochen.", value: result);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_ProcessingCancelled"], value: result);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
-            return Result<ProcessResult>.Failure("FFmpeg wurde nicht gefunden. Installiere FFmpeg und stelle sicher, dass ffmpeg.exe im PATH liegt oder neben der App liegt.", ex);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_FFmpegNotFound"], ex);
         }
         catch (Exception ex)
         {
-            return Result<ProcessResult>.Failure("Beim Starten von FFmpeg ist ein unerwarteter Fehler aufgetreten.", ex);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_FFmpegStartFailed"], ex);
         }
     }
 

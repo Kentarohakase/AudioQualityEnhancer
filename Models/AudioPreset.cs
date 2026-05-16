@@ -1,32 +1,44 @@
+using System.ComponentModel;
+using AudioQualityEnhancer.Services;
+
 namespace AudioQualityEnhancer.Models;
 
-public sealed class AudioPreset
+public sealed class AudioPreset : INotifyPropertyChanged
 {
     public AudioPreset(
         string id,
-        string name,
-        string description,
-        string qualityNote,
+        string nameKey,
+        string descriptionKey,
+        string qualityNoteKey,
         bool isCopyOnly = false,
         bool isArchiveExport = false,
         bool isEverydayExport = false)
     {
         Id = id;
-        Name = name;
-        Description = description;
-        QualityNote = qualityNote;
+        NameKey = nameKey;
+        DescriptionKey = descriptionKey;
+        QualityNoteKey = qualityNoteKey;
         IsCopyOnly = isCopyOnly;
         IsArchiveExport = isArchiveExport;
         IsEverydayExport = isEverydayExport;
+        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string Id { get; }
 
-    public string Name { get; }
+    public string NameKey { get; }
 
-    public string Description { get; }
+    public string DescriptionKey { get; }
 
-    public string QualityNote { get; }
+    public string QualityNoteKey { get; }
+
+    public string Name => LocalizationService.Instance[NameKey];
+
+    public string Description => LocalizationService.Instance[DescriptionKey];
+
+    public string QualityNote => LocalizationService.Instance[QualityNoteKey];
 
     public bool IsCopyOnly { get; }
 
@@ -34,48 +46,57 @@ public sealed class AudioPreset
 
     public bool IsEverydayExport { get; }
 
-    public override string ToString()
+    public override string ToString() => Name;
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {
-        return Name;
+        if (e.PropertyName != "Item[]")
+        {
+            return;
+        }
+
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Description)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(QualityNote)));
     }
 
     public static AudioPreset Music { get; } = new(
         "music",
-        "Musik verbessern",
-        "Loudness-Normalisierung auf etwa -14 LUFS mit True Peak Limit -1,5 dB.",
-        "Für Musik wird bewusst keine aggressive Rauschreduzierung aktiviert, damit Dynamik und Klangcharakter möglichst erhalten bleiben.");
+        "Preset_Music_Name",
+        "Preset_Music_Description",
+        "Preset_Music_QualityNote");
 
     public static AudioPreset Speech { get; } = new(
         "speech",
-        "Sprache verbessern",
-        "High-Pass bei 80 Hz, Normalisierung auf etwa -16 LUFS und optional dezente Sprachbearbeitung.",
-        "Für Sprache werden Verständlichkeit und Lautheit priorisiert. Kompression und Präsenzanhebung sind bewusst moderat.");
+        "Preset_Speech_Name",
+        "Preset_Speech_Description",
+        "Preset_Speech_QualityNote");
 
     public static AudioPreset NoiseReduction { get; } = new(
         "noise",
-        "Rauschen reduzieren",
-        "Reduziert Grundrauschen mit afftdn. Die Stärke ist einstellbar.",
-        "Zu starke Rauschreduzierung kann metallisch oder künstlich klingen. Beginne konservativ und prüfe das Ergebnis.");
+        "Preset_Noise_Name",
+        "Preset_Noise_Description",
+        "Preset_Noise_QualityNote");
 
     public static AudioPreset ExtractCopy { get; } = new(
         "copy",
-        "Nur verlustfrei extrahieren",
-        "Extrahiert die erste Audiospur ohne Filter und ohne Re-Encoding, wenn der Codec sinnvoll kopierbar ist.",
-        "Diese Option verbessert den Klang nicht, vermeidet aber zusätzliche Qualitätsverluste.",
+        "Preset_Copy_Name",
+        "Preset_Copy_Description",
+        "Preset_Copy_QualityNote",
         isCopyOnly: true);
 
     public static AudioPreset ArchiveExport { get; } = new(
         "archive",
-        "Archiv Export",
-        "Speichert die bearbeitete Audiospur als FLAC.",
-        "FLAC ist verlustfrei, stellt aber keine bereits verlorenen Details wieder her.",
+        "Preset_Archive_Name",
+        "Preset_Archive_Description",
+        "Preset_Archive_QualityNote",
         isArchiveExport: true);
 
     public static AudioPreset EverydayExport { get; } = new(
         "everyday",
-        "Alltag Export",
-        "Exportiert in ein alltagstaugliches Format mit guter Qualität bei sinnvoller Dateigröße.",
-        "Für Alltagsexporte sind AAC 256k, MP3 320k oder Opus 160k/192k sinnvoll.",
+        "Preset_Everyday_Name",
+        "Preset_Everyday_Description",
+        "Preset_Everyday_QualityNote",
         isEverydayExport: true);
 
     public static IReadOnlyList<AudioPreset> All { get; } = new[]

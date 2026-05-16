@@ -48,7 +48,7 @@ public sealed class ToolDiscoveryService
                 location.Source,
                 false,
                 versionLine,
-                $"{toolName} wurde mit Exit Code {process.ExitCode} beendet.");
+                LocalizationService.Instance.Format("Error_ToolExitCodeFormat", toolName, process.ExitCode));
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
@@ -58,7 +58,7 @@ public sealed class ToolDiscoveryService
                 location.Source,
                 false,
                 null,
-                $"{toolName}.exe wurde nicht gefunden. Installiere FFmpeg oder lege ffmpeg.exe und ffprobe.exe neben die App oder in den Tools-Ordner.");
+                LocalizationService.Instance.Format("Error_ToolNotFoundFormat", toolName));
         }
     }
 

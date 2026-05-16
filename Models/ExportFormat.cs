@@ -1,93 +1,111 @@
+using System.ComponentModel;
+using AudioQualityEnhancer.Services;
+
 namespace AudioQualityEnhancer.Models;
 
-public sealed class ExportFormat
+public sealed class ExportFormat : INotifyPropertyChanged
 {
     public ExportFormat(
         string id,
-        string displayName,
+        string displayNameKey,
         string extension,
-        string description,
+        string descriptionKey,
         IReadOnlyList<string> ffmpegArguments,
         bool isLossless)
     {
         Id = id;
-        DisplayName = displayName;
+        DisplayNameKey = displayNameKey;
         Extension = extension;
-        Description = description;
+        DescriptionKey = descriptionKey;
         FFmpegArguments = ffmpegArguments;
         IsLossless = isLossless;
+        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string Id { get; }
 
-    public string DisplayName { get; }
+    public string DisplayNameKey { get; }
+
+    public string DescriptionKey { get; }
+
+    public string DisplayName => LocalizationService.Instance[DisplayNameKey];
+
+    public string Description => LocalizationService.Instance[DescriptionKey];
 
     public string Extension { get; }
-
-    public string Description { get; }
 
     public IReadOnlyList<string> FFmpegArguments { get; }
 
     public bool IsLossless { get; }
 
-    public override string ToString()
+    public override string ToString() => DisplayName;
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {
-        return DisplayName;
+        if (e.PropertyName != "Item[]")
+        {
+            return;
+        }
+
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayName)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Description)));
     }
 
     public static ExportFormat Wav24 { get; } = new(
         "wav24",
-        "WAV 24 Bit",
+        "ExportFormat_Wav24_Name",
         ".wav",
-        "Unkomprimiertes PCM mit 24 Bit. Sehr groß, aber verlustfrei nach der Bearbeitung.",
+        "ExportFormat_Wav24_Description",
         new[] { "-c:a", "pcm_s24le" },
         isLossless: true);
 
     public static ExportFormat Flac { get; } = new(
         "flac",
-        "FLAC",
+        "ExportFormat_Flac_Name",
         ".flac",
-        "Verlustfreie Kompression. Sinnvoll für Archivierung nach der Bearbeitung.",
+        "ExportFormat_Flac_Description",
         new[] { "-c:a", "flac", "-compression_level", "8" },
         isLossless: true);
 
     public static ExportFormat PremierePro { get; } = new(
         "premiere_pro",
-        "Premiere Pro",
+        "ExportFormat_Premiere_Name",
         ".wav",
-        "Für den Videoschnitt: WAV 24 Bit mit 48 kHz. Verlustfrei nach der Bearbeitung und kompatibel mit Adobe Premiere Pro.",
+        "ExportFormat_Premiere_Description",
         new[] { "-ar", "48000", "-c:a", "pcm_s24le" },
         isLossless: true);
 
     public static ExportFormat Mp3_320 { get; } = new(
         "mp3_320",
-        "MP3 320k",
+        "ExportFormat_Mp3_Name",
         ".mp3",
-        "Breit kompatibel, aber verlustbehaftet.",
+        "ExportFormat_Mp3_Description",
         new[] { "-c:a", "libmp3lame", "-b:a", "320k" },
         isLossless: false);
 
     public static ExportFormat Aac_256 { get; } = new(
         "aac_256",
-        "AAC 256k",
+        "ExportFormat_Aac_Name",
         ".m4a",
-        "Gute Qualität bei moderater Dateigröße.",
+        "ExportFormat_Aac_Description",
         new[] { "-c:a", "aac", "-b:a", "256k" },
         isLossless: false);
 
     public static ExportFormat Opus_160 { get; } = new(
         "opus_160",
-        "Opus 160k",
+        "ExportFormat_Opus160_Name",
         ".opus",
-        "Effizienter Codec für kleine Dateien bei guter Qualität.",
+        "ExportFormat_Opus160_Description",
         new[] { "-c:a", "libopus", "-b:a", "160k", "-vbr", "on" },
         isLossless: false);
 
     public static ExportFormat Opus_192 { get; } = new(
         "opus_192",
-        "Opus 192k",
+        "ExportFormat_Opus192_Name",
         ".opus",
-        "Effizienter Codec mit mehr Reserve für komplexes Material.",
+        "ExportFormat_Opus192_Description",
         new[] { "-c:a", "libopus", "-b:a", "192k", "-vbr", "on" },
         isLossless: false);
 

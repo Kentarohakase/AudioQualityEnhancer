@@ -1,3 +1,6 @@
+using System.Globalization;
+using AudioQualityEnhancer.Services;
+
 namespace AudioQualityEnhancer;
 
 public partial class App : System.Windows.Application
@@ -7,6 +10,16 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        var settings = new SettingsService().Load();
+        try
+        {
+            LocalizationService.Instance.Culture = new CultureInfo(settings.Language);
+        }
+        catch (CultureNotFoundException)
+        {
+            LocalizationService.Instance.Culture = new CultureInfo("de");
+        }
 
         base.OnStartup(e);
     }

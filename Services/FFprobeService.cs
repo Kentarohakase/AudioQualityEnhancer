@@ -23,11 +23,11 @@ public sealed class FFprobeService
             var status = await _toolDiscoveryService.GetStatusAsync("ffprobe", cancellationToken);
             return status.IsAvailable
                 ? Result.Success()
-                : Result.Failure(status.ErrorMessage ?? "FFprobe ist nicht verfügbar.");
+                : Result.Failure(status.ErrorMessage ?? LocalizationService.Instance["Error_FFprobeUnavailable"]);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
-            return Result.Failure("FFprobe wurde nicht gefunden. Installiere FFmpeg und stelle sicher, dass ffprobe.exe im PATH liegt oder neben der App liegt.", ex);
+            return Result.Failure(LocalizationService.Instance["Error_FFprobeNotFound"], ex);
         }
     }
 
@@ -35,58 +35,58 @@ public sealed class FFprobeService
     {
         if (string.IsNullOrWhiteSpace(inputPath))
         {
-            return Result<AudioInfo>.Failure("Bitte wähle zuerst eine Datei aus.");
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_NoFileSelected"]);
         }
 
         if (!File.Exists(inputPath))
         {
-            return Result<AudioInfo>.Failure("Die ausgewählte Datei existiert nicht.");
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_FileNotFound"]);
         }
 
         if (!_fileNameService.IsSupportedInputFile(inputPath))
         {
-            return Result<AudioInfo>.Failure("Dieses Dateiformat wird nicht unterstützt. Unterstützt werden mp3, wav, flac, m4a, aac, ogg, opus, mp4 und mkv.");
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_UnsupportedFormat"]);
         }
 
         try
         {
-            log?.Invoke("Analysiere Quelle mit FFprobe...");
+            log?.Invoke(LocalizationService.Instance["Log_AnalyzingSourceFFprobe"]);
             var args = new[] { "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", inputPath };
             var processResult = await RunProcessAsync(args, cancellationToken);
 
             if (processResult.ExitCode != 0)
             {
-                return Result<AudioInfo>.Failure("FFprobe konnte die Datei nicht analysieren. Prüfe, ob die Datei eine lesbare Audiospur enthält.");
+                return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_FFprobeAnalysisFailed"]);
             }
 
             if (string.IsNullOrWhiteSpace(processResult.StandardOutput))
             {
-                return Result<AudioInfo>.Failure("FFprobe hat keine Analysedaten zurückgegeben.");
+                return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_FFprobeNoData"]);
             }
 
             var audioInfo = ParseAudioInfo(inputPath, processResult.StandardOutput);
             if (audioInfo is null)
             {
-                return Result<AudioInfo>.Failure("In der Datei wurde keine Audiospur gefunden.");
+                return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_NoAudioStream"]);
             }
 
             return Result<AudioInfo>.Success(audioInfo);
         }
         catch (OperationCanceledException)
         {
-            return Result<AudioInfo>.Failure("Analyse wurde abgebrochen.");
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_AnalysisCancelled"]);
         }
         catch (JsonException ex)
         {
-            return Result<AudioInfo>.Failure("FFprobe-Daten konnten nicht gelesen werden.", ex);
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_FFprobeDataUnreadable"], ex);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
-            return Result<AudioInfo>.Failure("FFprobe wurde nicht gefunden. Installiere FFmpeg und stelle sicher, dass ffprobe.exe im PATH liegt oder neben der App liegt.", ex);
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_FFprobeNotFound"], ex);
         }
         catch (Exception ex)
         {
-            return Result<AudioInfo>.Failure("Bei der Analyse ist ein unerwarteter Fehler aufgetreten.", ex);
+            return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_AnalysisFailed"], ex);
         }
     }
 
@@ -118,7 +118,7 @@ public sealed class FFprobeService
         var streamElement = audioStream.Value;
         root.TryGetProperty("format", out var formatElement);
 
-        var codec = TryGetString(streamElement, "codec_name") ?? "Unbekannt";
+        var codec = TryGetString(streamElement, "codec_name") ?? string.Empty;
         var codecLongName = TryGetString(streamElement, "codec_long_name") ?? string.Empty;
         var container = TryGetString(formatElement, "format_name") ?? Path.GetExtension(inputPath).TrimStart('.');
         var bitRate = TryGetLong(streamElement, "bit_rate") ?? TryGetLong(formatElement, "bit_rate");
@@ -136,7 +136,7 @@ public sealed class FFprobeService
             SampleRate = sampleRate,
             Channels = channels,
             Duration = duration,
-            Container = string.IsNullOrWhiteSpace(container) ? "Unbekannt" : container,
+            Container = container,
             FileSizeBytes = fileSize,
             IsLikelyLossy = IsLikelyLossy(codec)
         };
