@@ -27,6 +27,10 @@
   <data name="Button_Start" xml:space="preserve"><value>Verarbeitung starten</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
   <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Erweiterte Analyse</value></data>
+  <data name="Button_OpenOutputFolder" xml:space="preserve"><value>Ordner öffnen</value></data>
+  <data name="Button_OpenLastOutput" xml:space="preserve"><value>Letzte Datei öffnen</value></data>
+  <data name="Button_CopyLog" xml:space="preserve"><value>Log kopieren</value></data>
+  <data name="Button_ClearLog" xml:space="preserve"><value>Log leeren</value></data>
 
   <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
   <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
@@ -72,6 +76,13 @@
   <data name="Status_AdvancedAnalysisRunning" xml:space="preserve"><value>Erweiterte Analyse läuft...</value></data>
   <data name="Status_AdvancedAnalysisDone" xml:space="preserve"><value>Erweiterte Analyse abgeschlossen.</value></data>
   <data name="Status_AdvancedAnalysisFailed" xml:space="preserve"><value>Erweiterte Analyse fehlgeschlagen.</value></data>
+  <data name="Status_OutputFolderOpened" xml:space="preserve"><value>Ausgabeordner geöffnet.</value></data>
+  <data name="Status_OutputFolderMissing" xml:space="preserve"><value>Der Ausgabeordner existiert nicht.</value></data>
+  <data name="Status_OutputFileOpened" xml:space="preserve"><value>Letzte Ausgabedatei geöffnet.</value></data>
+  <data name="Status_OutputFileMissing" xml:space="preserve"><value>Es gibt noch keine Ausgabedatei zum Öffnen.</value></data>
+  <data name="Status_LogCopied" xml:space="preserve"><value>Log wurde in die Zwischenablage kopiert.</value></data>
+  <data name="Status_LogCleared" xml:space="preserve"><value>Log wurde geleert.</value></data>
+  <data name="Status_LogEmpty" xml:space="preserve"><value>Das Log ist leer.</value></data>
 
   <data name="Phase_Ready" xml:space="preserve"><value>Bereit</value></data>
   <data name="Phase_Analysis" xml:space="preserve"><value>Analyse</value></data>
@@ -150,6 +161,8 @@
   <data name="Error_ToolExitCodeFormat" xml:space="preserve"><value>{0} wurde mit Exit Code {1} beendet.</value></data>
   <data name="Error_DiagnosticsFailed" xml:space="preserve"><value>Die erweiterte Audioanalyse konnte nicht ausgeführt werden.</value></data>
   <data name="Error_DiagnosticsUnreadable" xml:space="preserve"><value>Die erweiterten Messwerte konnten nicht aus der FFmpeg-Ausgabe gelesen werden.</value></data>
+  <data name="Error_OpenPathFailedFormat" xml:space="preserve"><value>Der Pfad konnte nicht geöffnet werden: {0}</value></data>
+  <data name="Error_ClipboardFailedFormat" xml:space="preserve"><value>Das Log konnte nicht kopiert werden: {0}</value></data>
 
   <data name="Filter_StreamCopy" xml:space="preserve"><value>Stream copy: -vn -c:a copy</value></data>
   <data name="Filter_NoFilters" xml:space="preserve"><value>Keine Audiofilter. Es wird nur in das gewählte Zielformat exportiert.</value></data>

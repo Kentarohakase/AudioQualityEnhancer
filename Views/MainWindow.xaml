@@ -401,7 +401,21 @@
 
                             <CheckBox Content="{Binding [Checkbox_SaveLog], Source={x:Static loc:LocalizationService.Instance}}"
                                       IsChecked="{Binding SaveLogFile}"
-                                      Margin="0,0,0,16" />
+                                      Margin="0,0,0,12" />
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"
+                                        Content="{Binding [Button_OpenOutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenOutputFolderCommand}" />
+                                <Button Grid.Column="2"
+                                        Content="{Binding [Button_OpenLastOutput], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenLastOutputCommand}" />
+                            </Grid>
 
                             <ProgressBar Minimum="0"
                                          Maximum="100"
@@ -435,7 +449,22 @@
 
                     <Border Style="{StaticResource SectionBorderStyle}" Margin="0">
                         <StackPanel>
-                            <TextBlock Text="{Binding [Section_Log], Source={x:Static loc:LocalizationService.Instance}}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left"
+                                           Text="{Binding [Section_Log], Source={x:Static loc:LocalizationService.Instance}}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                                <StackPanel DockPanel.Dock="Right"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right">
+                                    <Button Content="{Binding [Button_CopyLog], Source={x:Static loc:LocalizationService.Instance}}"
+                                            Command="{Binding CopyLogCommand}"
+                                            Margin="0,0,8,0" />
+                                    <Button Content="{Binding [Button_ClearLog], Source={x:Static loc:LocalizationService.Instance}}"
+                                            Command="{Binding ClearLogCommand}" />
+                                </StackPanel>
+                            </DockPanel>
                             <TextBox Text="{Binding LogText, Mode=OneWay}"
                                      IsReadOnly="True"
                                      AcceptsReturn="True"

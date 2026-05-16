@@ -7,6 +7,7 @@
 - Extended audio analysis with FFmpeg-based loudness, true peak, sample peak, average level and loudness range measurements.
 - Analysis warnings for possible clipping, low headroom, low bit rate, low sample rate, very quiet sources and already loud sources.
 - A dedicated analysis action in the UI so deeper measurements are optional for long files.
+- Quick actions for opening the output folder, opening the latest exported file, copying the log and clearing the log.
 
 ## 0.4.1 - 2026-05-16
 

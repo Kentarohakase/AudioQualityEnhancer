@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -29,6 +30,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _playSourceCommand;
     private readonly RelayCommand _playOutputCommand;
     private readonly RelayCommand _stopPreviewCommand;
+    private readonly RelayCommand _openOutputFolderCommand;
+    private readonly RelayCommand _openLastOutputCommand;
+    private readonly RelayCommand _copyLogCommand;
+    private readonly RelayCommand _clearLogCommand;
 
     private ToolStatus? _ffmpegStatus;
     private ToolStatus? _ffprobeStatus;
@@ -103,6 +108,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
         _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
         _stopPreviewCommand = new RelayCommand(StopPreview);
+        _openOutputFolderCommand = new RelayCommand(OpenOutputFolder, () => Directory.Exists(OutputDirectory));
+        _openLastOutputCommand = new RelayCommand(OpenLastOutput, () => File.Exists(LastOutputPath));
+        _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
+        _clearLogCommand = new RelayCommand(ClearLog, () => !IsBusy && !string.IsNullOrWhiteSpace(LogText));
 
         ApplySettings(_settingsService.Load());
         UpdateQualityNotice();
@@ -181,6 +190,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand PlayOutputCommand => _playOutputCommand;
 
     public ICommand StopPreviewCommand => _stopPreviewCommand;
+
+    public ICommand OpenOutputFolderCommand => _openOutputFolderCommand;
+
+    public ICommand OpenLastOutputCommand => _openLastOutputCommand;
+
+    public ICommand CopyLogCommand => _copyLogCommand;
+
+    public ICommand ClearLogCommand => _clearLogCommand;
 
     public string InputPath
     {
@@ -301,7 +318,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string LogText
     {
         get => _logText;
-        private set => SetProperty(ref _logText, value);
+        private set
+        {
+            if (SetProperty(ref _logText, value))
+            {
+                _copyLogCommand.RaiseCanExecuteChanged();
+                _clearLogCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public string ToolStatusText
@@ -740,6 +764,75 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SetStatus("Status_PreviewStopped");
     }
 
+    private void OpenOutputFolder()
+    {
+        if (!Directory.Exists(OutputDirectory))
+        {
+            SetStatus("Status_OutputFolderMissing");
+            return;
+        }
+
+        OpenPath(OutputDirectory, "Status_OutputFolderOpened");
+    }
+
+    private void OpenLastOutput()
+    {
+        if (!File.Exists(LastOutputPath))
+        {
+            SetStatus("Status_OutputFileMissing");
+            return;
+        }
+
+        OpenPath(LastOutputPath, "Status_OutputFileOpened");
+    }
+
+    private void CopyLog()
+    {
+        if (string.IsNullOrWhiteSpace(LogText))
+        {
+            SetStatus("Status_LogEmpty");
+            return;
+        }
+
+        try
+        {
+            System.Windows.Clipboard.SetText(LogText);
+            SetStatus("Status_LogCopied");
+        }
+        catch (Exception ex)
+        {
+            SetStatusRaw(LocalizationService.Instance.Format("Error_ClipboardFailedFormat", ex.Message));
+        }
+    }
+
+    private void ClearLog()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        _logService.Clear();
+        SetStatus("Status_LogCleared");
+    }
+
+    private void OpenPath(string path, string successStatusKey)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true
+            });
+            SetStatus(successStatusKey);
+        }
+        catch (Exception ex)
+        {
+            SetStatusRaw(LocalizationService.Instance.Format("Error_OpenPathFailedFormat", ex.Message));
+        }
+    }
+
     private void StartPreviewTimer()
     {
         _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
@@ -1029,6 +1122,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _playSourceCommand.RaiseCanExecuteChanged();
         _playOutputCommand.RaiseCanExecuteChanged();
         _stopPreviewCommand.RaiseCanExecuteChanged();
+        _openOutputFolderCommand.RaiseCanExecuteChanged();
+        _openLastOutputCommand.RaiseCanExecuteChanged();
+        _copyLogCommand.RaiseCanExecuteChanged();
+        _clearLogCommand.RaiseCanExecuteChanged();
     }
 
     private static string GetDefaultOutputDirectory()

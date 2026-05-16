@@ -14,6 +14,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
 - Original und Ergebnis direkt anhören
+- Ausgabeordner, letzte Ausgabedatei und Log direkt aus der App öffnen oder kopieren
 - Als WAV, FLAC, MP3, AAC, Opus oder Premiere-Pro-Profil exportieren
 - FFmpeg/FFprobe automatisch im App-Ordner, im `Tools`-Ordner oder im Windows `PATH` finden
 
