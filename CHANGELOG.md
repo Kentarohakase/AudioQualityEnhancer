@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 - 2026-05-16
+
+### Fixed
+
+- Fixed release packaging after adding the automated test project, so the Windows ZIP packages are built from the main app project again.
+
 ## 0.6.0 - 2026-05-16
 
 ### Added
