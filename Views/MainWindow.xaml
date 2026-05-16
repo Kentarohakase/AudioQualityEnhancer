@@ -16,6 +16,7 @@
         Drop="MainWindow_OnDrop"
         Loaded="MainWindow_OnLoaded">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
         <SolidColorBrush x:Key="BorderBrushSoft" Color="#D8DFDA" />
         <SolidColorBrush x:Key="TextBrush" Color="#18211B" />
@@ -199,6 +200,19 @@
                                         Content="Stop"
                                         Command="{Binding StopPreviewCommand}" />
                             </Grid>
+
+                            <StackPanel Margin="0,10,0,0"
+                                        Visibility="{Binding IsPreviewActive, Converter={StaticResource BoolToVis}}">
+                                <Slider Minimum="0"
+                                        Maximum="{Binding PreviewDurationSeconds}"
+                                        Value="{Binding PreviewPositionSeconds, Mode=TwoWay}"
+                                        IsEnabled="{Binding IsPreviewActive}" />
+                                <TextBlock Text="{Binding PreviewTimeText}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

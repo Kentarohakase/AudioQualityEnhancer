@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Threading;
 using AudioQualityEnhancer.Models;
 using AudioQualityEnhancer.Services;
 using Forms = System.Windows.Forms;
@@ -47,6 +49,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _initialized;
     private CancellationTokenSource? _processingCancellation;
 
+    private DispatcherTimer? _previewTimer;
+    private bool _updatingPositionFromTimer;
+    private double _previewPositionSeconds;
+    private double _previewDurationSeconds;
+    private bool _isPreviewActive;
+
     public MainViewModel()
     {
         _fileNameService = new FileNameService();
@@ -59,6 +67,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _logService.LogAdded += OnLogAdded;
         _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
+        _audioPreviewService.PlaybackEnded += OnPlaybackEnded;
 
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
@@ -293,6 +302,46 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public double PreviewPositionSeconds
+    {
+        get => _previewPositionSeconds;
+        set
+        {
+            if (SetProperty(ref _previewPositionSeconds, value))
+            {
+                if (!_updatingPositionFromTimer)
+                {
+                    _audioPreviewService.Position = TimeSpan.FromSeconds(value);
+                }
+
+                OnPropertyChanged(nameof(PreviewTimeText));
+            }
+        }
+    }
+
+    public double PreviewDurationSeconds
+    {
+        get => _previewDurationSeconds;
+        private set => SetProperty(ref _previewDurationSeconds, value);
+    }
+
+    public bool IsPreviewActive
+    {
+        get => _isPreviewActive;
+        private set => SetProperty(ref _isPreviewActive, value);
+    }
+
+    public string PreviewTimeText
+    {
+        get
+        {
+            var pos = TimeSpan.FromSeconds(_previewPositionSeconds);
+            var dur = TimeSpan.FromSeconds(_previewDurationSeconds);
+            var fmt = dur.TotalHours >= 1 ? @"h\:mm\:ss" : @"m\:ss";
+            return $"{pos.ToString(fmt, CultureInfo.InvariantCulture)} / {dur.ToString(fmt, CultureInfo.InvariantCulture)}";
+        }
+    }
+
     public bool IsSpeechPreset => SelectedPreset?.Id == AudioPreset.Speech.Id;
 
     public bool IsNoisePreset => SelectedPreset?.Id == AudioPreset.NoiseReduction.Id;
@@ -342,7 +391,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        _audioPreviewService.Stop();
+        StopPreview();
         InputPath = path;
         LastOutputPath = string.Empty;
 
@@ -431,7 +480,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        _audioPreviewService.Stop();
+        StopPreview();
         _processingCancellation?.Dispose();
         _processingCancellation = new CancellationTokenSource();
         IsBusy = true;
@@ -491,11 +540,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void PlayPreview(string path, string label)
     {
+        StopPreviewTimer();
         var result = _audioPreviewService.Play(path);
         if (result.IsSuccess)
         {
+            IsPreviewActive = true;
+            PreviewDurationSeconds = 0;
+            PreviewPositionSeconds = 0;
             StatusText = $"Vorschau läuft: {label}";
             _logService.Info($"Vorschau gestartet: {path}");
+            StartPreviewTimer();
             return;
         }
 
@@ -510,8 +564,43 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void StopPreview()
     {
+        StopPreviewTimer();
         _audioPreviewService.Stop();
+        IsPreviewActive = false;
+        PreviewPositionSeconds = 0;
+        PreviewDurationSeconds = 0;
         StatusText = "Vorschau gestoppt.";
+    }
+
+    private void StartPreviewTimer()
+    {
+        _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _previewTimer.Tick += OnPreviewTimerTick;
+        _previewTimer.Start();
+    }
+
+    private void StopPreviewTimer()
+    {
+        if (_previewTimer is null)
+        {
+            return;
+        }
+
+        _previewTimer.Stop();
+        _previewTimer.Tick -= OnPreviewTimerTick;
+        _previewTimer = null;
+    }
+
+    private void OnPreviewTimerTick(object? sender, EventArgs e)
+    {
+        if (_audioPreviewService.NaturalDuration.HasValue && PreviewDurationSeconds == 0)
+        {
+            PreviewDurationSeconds = _audioPreviewService.NaturalDuration.Value.TotalSeconds;
+        }
+
+        _updatingPositionFromTimer = true;
+        PreviewPositionSeconds = _audioPreviewService.Position.TotalSeconds;
+        _updatingPositionFromTimer = false;
     }
 
     private void UpdateProcessingProgress(ProcessingProgress progress)
@@ -611,8 +700,22 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnPlaybackFailed(object? sender, string errorMessage)
     {
+        StopPreviewTimer();
+        IsPreviewActive = false;
+        PreviewPositionSeconds = 0;
+        PreviewDurationSeconds = 0;
         StatusText = errorMessage;
         _logService.Error(errorMessage);
+    }
+
+    private void OnPlaybackEnded(object? sender, EventArgs e)
+    {
+        StopPreviewTimer();
+        IsPreviewActive = false;
+        PreviewPositionSeconds = 0;
+        PreviewDurationSeconds = 0;
+        StatusText = "Vorschau beendet.";
+        RaiseCommandStates();
     }
 
     private void RaiseCommandStates()
@@ -652,6 +755,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public void Dispose()
     {
         _audioPreviewService.PlaybackFailed -= OnPlaybackFailed;
+        _audioPreviewService.PlaybackEnded -= OnPlaybackEnded;
+        StopPreviewTimer();
         _processingCancellation?.Dispose();
         _audioPreviewService.Dispose();
     }
