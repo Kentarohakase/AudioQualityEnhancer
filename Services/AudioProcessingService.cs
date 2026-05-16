@@ -222,7 +222,11 @@ public sealed class AudioProcessingService
             _logService.Info("Archiv Export erzwingt FLAC, damit die Bearbeitung verlustfrei gespeichert wird.");
         }
 
-        var suffix = options.Preset.IsArchiveExport ? "archive_flac" : options.Preset.Id;
+        var suffix = options.Preset.IsArchiveExport
+            ? "archive_flac"
+            : exportFormat.Id == ExportFormat.PremierePro.Id
+                ? $"{options.Preset.Id}_premiere_pro"
+                : options.Preset.Id;
         var outputPathForTranscode = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, suffix, exportFormat.Extension);
         var filterPlan = BuildFilterPlan(options);
 

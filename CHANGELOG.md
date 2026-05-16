@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1 - 2026-05-16
+
+### Added
+
+- Added a Premiere Pro export profile.
+- Premiere Pro exports use WAV 24 Bit at 48 kHz for editing-friendly compatibility.
+
+### Changed
+
+- Rewrote the README to be shorter, clearer, and less technical.
+- Premiere Pro output names now include `premiere_pro`.
+
 ## 0.2.0 - 2026-05-16
 
 ### Added

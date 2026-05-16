@@ -1,8 +1,14 @@
-# AudioQualityEnhancer 0.2.0
+# AudioQualityEnhancer 0.2.1
 
 Release date: 2026-05-16
 
 ## Highlights
+
+- New Premiere Pro export profile.
+- Premiere Pro export creates WAV 24 Bit / 48 kHz for editing workflows.
+- README was rewritten to be shorter and easier to read.
+
+## Also included from 0.2.0
 
 - Music and speech presets can now use two-pass `loudnorm`.
 - The app shows where FFmpeg and FFprobe were found.
@@ -22,13 +28,13 @@ The application searches for tools in this order:
 Create a portable ZIP without FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.0
+.\scripts\package-release.ps1 -Version 0.2.1
 ```
 
 Create a portable ZIP with FFmpeg and FFprobe copied into `Tools/`:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.2.1 -IncludeFFmpeg
 ```
 
 The bundled package uses the suffix `win-x64-with-ffmpeg`.

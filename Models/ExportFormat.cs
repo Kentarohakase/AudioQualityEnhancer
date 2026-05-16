@@ -51,6 +51,14 @@ public sealed class ExportFormat
         new[] { "-c:a", "flac", "-compression_level", "8" },
         isLossless: true);
 
+    public static ExportFormat PremierePro { get; } = new(
+        "premiere_pro",
+        "Premiere Pro",
+        ".wav",
+        "Für den Videoschnitt: WAV 24 Bit mit 48 kHz. Verlustfrei nach der Bearbeitung und kompatibel mit Adobe Premiere Pro.",
+        new[] { "-ar", "48000", "-c:a", "pcm_s24le" },
+        isLossless: true);
+
     public static ExportFormat Mp3_320 { get; } = new(
         "mp3_320",
         "MP3 320k",
@@ -87,6 +95,7 @@ public sealed class ExportFormat
     {
         Wav24,
         Flac,
+        PremierePro,
         Mp3_320,
         Aac_256,
         Opus_160,

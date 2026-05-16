@@ -1,236 +1,139 @@
 # AudioQualityEnhancer
 
-AudioQualityEnhancer ist ein Windows Desktop Tool für die Analyse, schonende Bearbeitung und den Export von Audio mit FFmpeg und FFprobe. Die App ist in C# mit WPF, MVVM und .NET 10 gebaut.
+AudioQualityEnhancer ist ein kleines Windows-Tool, das Audiodateien analysiert und mit FFmpeg sauber aufbereitet. Es ist für einfache Fälle gedacht: Datei reinziehen, Profil wählen, exportieren.
 
-Das Tool macht keine falschen Qualitätsversprechen: Es kann Audio normalisieren, filtern, entrauschen und in sinnvolle Zielformate exportieren. Es kann aber keine Informationen zurückholen, die durch schlechte Aufnahme, Clipping oder verlustbehaftete Kompression bereits zerstört wurden.
+Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störende Bereiche reduzieren. Es kann aber keine Details zurückholen, die durch schlechte Aufnahme, Clipping oder MP3-Kompression schon verloren sind.
 
-## Features
+## Was kann die App?
 
 - Audio- und Videodateien mit Audiospur öffnen
-- Drag and Drop und Dateiauswahl
-- FFprobe-Analyse als JSON
-- Anzeige von Codec, Bitrate, Sample Rate, Kanälen, Dauer, Container und Dateigröße
-- Hinweis, ob die Quelle wahrscheinlich verlustbehaftet ist
-- Presets für Musik, Sprache, Rauschreduzierung, verlustfreie Extraktion, Archiv und Alltag
-- Optionale Zwei-Pass-Loudness-Normalisierung für Musik und Sprache
-- Ausgabe als WAV 24 Bit, FLAC, MP3 320k, AAC 256k, Opus 160k oder Opus 192k
-- Vorher/Nachher-Vorschau für Original und erzeugte Datei
-- Sichtbare Filterdetails und Prozessphasen
-- Tool-Erkennung für FFmpeg und FFprobe im App-Header
-- Stream-Copy für verlustfreie Extraktion, wenn der Quellcodec sinnvoll kopierbar ist
-- Keine direkte Überschreibung der Originaldatei
-- Automatisch eindeutige Ausgabedateinamen
-- Temporäre Ausgabedatei mit sauberem Move erst nach erfolgreichem FFmpeg-Lauf
-- Async-Prozessausführung ohne UI-Freeze
-- Sichtbares UI-Log und optional gespeicherte Logdatei
-- FFmpeg-stderr wird geloggt, aber nicht automatisch als Fehler gewertet
-- Erfolg oder Fehler wird über den Exit Code geprüft
-- Portable ZIP-Erstellung per PowerShell-Skript
+- Datei per Button oder Drag and Drop auswählen
+- Codec, Bitrate, Sample Rate, Kanäle, Dauer und Dateigröße anzeigen
+- Musik oder Sprache per Preset verbessern
+- Rauschen vorsichtig reduzieren
+- Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
+- Original und Ergebnis direkt anhören
+- Als WAV, FLAC, MP3, AAC, Opus oder Premiere-Pro-Profil exportieren
+- FFmpeg/FFprobe automatisch im App-Ordner, im `Tools`-Ordner oder im Windows `PATH` finden
 
-## Was das Tool nicht kann
+## Was kann die App nicht?
 
-Dieses Tool kann Audio verbessern, normalisieren und restaurieren, aber keine Informationen zurückholen, die durch schlechte Aufnahme oder verlustbehaftete Kompression bereits zerstört wurden.
+- Aus einer schlechten Aufnahme keine perfekte Studioaufnahme machen
+- Aus MP3 durch FLAC wieder echte verlorene Qualität herstellen
+- Clipping oder stark zerstörtes Material vollständig reparieren
+- Mehrere Audiospuren aus Videos manuell auswählen
 
-Eine MP3-Datei wird durch Export nach FLAC nicht besser. FLAC ist trotzdem sinnvoll, wenn eine bereits bearbeitete Datei ohne weitere Exportverluste archiviert werden soll.
+## Unterstützte Dateien
 
-## Voraussetzungen
+Eingabe:
 
-- Windows
-- .NET 10 SDK zum Bauen
-- FFmpeg und FFprobe
-- Optional: GitHub CLI, wenn das Repository direkt per `gh` erstellt und gepusht werden soll
+- MP3
+- WAV
+- FLAC
+- M4A / AAC
+- OGG
+- Opus
+- MP4
+- MKV
 
-## FFmpeg und FFprobe installieren
+Bei Videodateien wird aktuell die erste Audiospur verwendet.
 
-Variante 1: Installation über Winget:
+## Profile
+
+### Musik verbessern
+
+Normalisiert Musik auf eine sinnvolle Lautheit, ohne sie unnötig hart zu komprimieren.
+
+### Sprache verbessern
+
+Filtert tiefe Störgeräusche, hebt Sprache bei Bedarf leicht an und normalisiert sie für bessere Verständlichkeit.
+
+### Rauschen reduzieren
+
+Reduziert Grundrauschen mit vorsichtigen Standardwerten. Zu starke Rauschreduzierung kann künstlich klingen.
+
+### Nur verlustfrei extrahieren
+
+Kopiert die Audiospur ohne Bearbeitung, wenn der Codec und Container dazu passen.
+
+### Archiv Export
+
+Speichert als FLAC. Das ist gut zum Aufbewahren nach der Bearbeitung, macht eine MP3 aber nicht besser als vorher.
+
+### Alltag Export
+
+Für fertige Dateien mit guter Qualität und vernünftiger Dateigröße.
+
+## Ausgabeformate
+
+- WAV 24 Bit
+- FLAC
+- MP3 320k
+- AAC 256k
+- Opus 160k
+- Opus 192k
+- Premiere Pro
+
+Das Premiere-Pro-Profil exportiert als `WAV 24 Bit / 48 kHz`. Das ist groß, aber verlustfrei und für den Videoschnitt deutlich besser geeignet als MP3.
+
+## FFmpeg installieren
+
+Am einfachsten mit Winget:
 
 ```powershell
 winget install Gyan.FFmpeg
 ```
 
-Variante 2: Manuell installieren:
-
-1. FFmpeg für Windows herunterladen.
-2. `ffmpeg.exe` und `ffprobe.exe` in einen Ordner entpacken.
-3. Den `bin`-Ordner zur Windows `PATH` Umgebungsvariable hinzufügen.
-4. Neues Terminal öffnen und prüfen:
+Danach prüfen:
 
 ```powershell
 ffmpeg -version
 ffprobe -version
 ```
 
-Portable Variante:
+Portable Nutzung geht auch:
 
-- `ffmpeg.exe` und `ffprobe.exe` neben `AudioQualityEnhancer.exe` legen.
-- Oder beide Dateien in den Unterordner `Tools/` legen.
+1. EXE entpacken.
+2. `ffmpeg.exe` und `ffprobe.exe` in den Ordner `Tools` legen.
+3. App starten.
 
-Suchreihenfolge der App:
+Die App sucht FFmpeg in dieser Reihenfolge:
 
-1. App-Ordner
-2. `Tools/`
-3. Windows `PATH`
+1. neben `AudioQualityEnhancer.exe`
+2. im Ordner `Tools`
+3. im Windows `PATH`
 
-FFmpeg-Binaries werden bewusst nicht in Git committed.
-
-## Build
+## Start aus dem Quellcode
 
 ```powershell
 dotnet build
-```
-
-## Start
-
-```powershell
 dotnet run
 ```
 
-## Release EXE erstellen
-
-Einzelne EXE:
-
-```powershell
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish/win-x64
-```
+## Release bauen
 
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.0
+.\scripts\package-release.ps1 -Version 0.2.1
 ```
 
-Portable ZIP mit FFmpeg und FFprobe im `Tools/`-Ordner:
+Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.2.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.2.1 -IncludeFFmpeg
 ```
 
-Die Pakete werden in `artifacts/` erstellt. Pakete mit gebündeltem FFmpeg tragen den Suffix `win-x64-with-ffmpeg`.
+Die fertigen ZIP-Dateien liegen danach in `artifacts`.
 
-## Nutzung
+## Sicherheit
 
-1. Audio- oder Videodatei auswählen oder per Drag and Drop ablegen.
-2. Analyse prüfen.
-3. Preset wählen.
-4. Ausgabeformat und Ausgabeordner wählen.
-5. Optional Original anhören.
-6. Verarbeitung starten.
-7. Fortschritt, Prozessphase und FFmpeg-Log im UI beobachten.
-8. Ergebnis anhören.
-
-Unterstützte Eingaben:
-
-- `mp3`
-- `wav`
-- `flac`
-- `m4a`
-- `aac`
-- `ogg`
-- `opus`
-- `mp4`
-- `mkv`
-
-Bei Videodateien wird nur die erste Audiospur verarbeitet.
-
-## Presets
-
-### Musik verbessern
-
-Normalisiert Musik ungefähr auf `-14 LUFS`, `TP=-1.5 dB`, `LRA=11`. Standardmäßig wird ein Zwei-Pass-Loudness-Workflow genutzt, damit das Ziel genauer getroffen wird.
-
-### Sprache verbessern
-
-Setzt einen High-Pass bei 80 Hz und normalisiert ungefähr auf `-16 LUFS`, `TP=-1.5 dB`, `LRA=11`. Optional können leichte Kompression und eine dezente Anhebung im Präsenzbereich aktiviert werden. Auch hier kann Zwei-Pass-Loudness genutzt werden.
-
-### Rauschen reduzieren
-
-Verwendet `afftdn` mit einstellbarem Noise Floor. Zu starke Rauschreduzierung kann metallisch oder künstlich klingen.
-
-### Nur verlustfrei extrahieren
-
-Extrahiert die erste Audiospur ohne Bearbeitung mit `-c:a copy`, wenn ein passender Container sinnvoll bestimmt werden kann.
-
-### Archiv Export
-
-Exportiert als FLAC. FLAC ist verlustfrei, stellt aber keine bereits verlorenen Details wieder her.
-
-### Alltag Export
-
-Für alltagstaugliche Dateien sind AAC 256k, MP3 320k oder Opus 160k/192k vorgesehen.
-
-## Exportformate
-
-- WAV 24 Bit: `-c:a pcm_s24le`
-- FLAC: `-c:a flac -compression_level 8`
-- MP3 320k: `-c:a libmp3lame -b:a 320k`
-- AAC 256k: `-c:a aac -b:a 256k`
-- Opus 160k: `-c:a libopus -b:a 160k -vbr on`
-- Opus 192k: `-c:a libopus -b:a 192k -vbr on`
-
-## Projektstruktur
-
-```text
-AudioQualityEnhancer/
-  .github/workflows/
-    release.yml
-  Models/
-  Services/
-  Tools/
-    README.md
-  ViewModels/
-  Views/
-  scripts/
-    package-release.ps1
-  App.xaml
-  App.xaml.cs
-  AudioQualityEnhancer.csproj
-  CHANGELOG.md
-  LICENSE
-  README.md
-  RELEASE_NOTES.md
-```
-
-## Sicherheit und Dateien
-
-- Originaldateien werden nie überschrieben.
-- Wenn ein Zielname bereits existiert, wird automatisch ein neuer Name erzeugt.
-- Während der Verarbeitung wird eine temporäre Datei erzeugt und erst nach erfolgreichem FFmpeg-Lauf verschoben.
-- Logs speichern keine absichtlich gesetzten Tokens, API Keys oder Passwörter.
-- Es werden keine Zugangsdaten gespeichert.
-- Build Outputs, Logs, temporäre Dateien, erzeugte Audiodateien, Release-Artefakte und FFmpeg-Binaries sind per `.gitignore` ausgeschlossen.
-
-## GitHub Repository
-
-Geplantes Repository:
-
-```text
-https://github.com/Kentarohakase/AudioQualityEnhancer
-```
-
-Wenn GitHub CLI funktioniert:
-
-```powershell
-gh repo create Kentarohakase/AudioQualityEnhancer --public --source=. --remote=origin --push
-```
-
-Manuell:
-
-```powershell
-git branch -M main
-git remote add origin https://github.com/Kentarohakase/AudioQualityEnhancer.git
-git push -u origin main
-```
+- Die Originaldatei wird nicht überschrieben.
+- Wenn eine Zieldatei schon existiert, wird automatisch ein neuer Name erzeugt.
+- Temporäre Dateien werden nur während der Verarbeitung genutzt.
+- Logs sollen bei normalen Fehlern helfen, speichern aber keine Zugangsdaten.
+- FFmpeg-Binaries und erzeugte Audiodateien werden nicht committed.
 
 ## Lizenz
 
-Dieses Projekt steht unter der MIT-Lizenz. Details stehen in `LICENSE`.
-
-## Bekannte Grenzen
-
-- FFmpeg-Filter können hörbare Artefakte erzeugen, besonders bei starker Rauschreduzierung.
-- Zwei-Pass-Loudness trifft Zielwerte genauer, macht aber keine verlorenen Details wiederherstellbar.
-- Die Vorschau nutzt das Windows-Wiedergabesystem. Je nach System werden nicht alle Codecs gleich gut unterstützt.
-- Es wird die erste Audiospur verarbeitet. Mehrspur-Auswahl ist nicht eingebaut.
-- Videobilder werden nicht exportiert.
-- Clipping, stark beschädigte Aufnahmen und verlorene Codec-Details können nicht vollständig repariert werden.
-- Die Qualität hängt stark von Quelle, Codec, Aufnahmezustand und gewähltem Exportformat ab.
+MIT License. Details stehen in `LICENSE`.
