@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2026-05-16
 
 ### Added
 
@@ -17,7 +17,7 @@
 - Removed an unnecessary localization event subscription from `ToolStatus`.
 - Audio preview now closes the underlying media player on playback errors and detaches media events during cleanup.
 - README release examples now use the current version number.
-- Local `.claude/` agent settings are ignored by Git.
+- Local workspace settings are ignored by Git.
 
 ## 0.4.0 - 2026-05-16
 
