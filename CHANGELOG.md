@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0 - 2026-05-16
+
+### Added
+
+- Persistent user settings: preset, export format, output directory, log toggle, speech options, two-pass-loudness and noise floor are stored in `%APPDATA%\AudioQualityEnhancer\settings.json` and restored on the next start.
+- English UI in addition to German. A language switcher in the header changes the displayed language live without restart; the choice is persisted.
+- `LocalizationService` exposing strings through an indexer and raising `Item[]` PropertyChanged when the culture changes, so every WPF binding re-renders.
+- Strings resource files (`Resources/Strings.resx` / `Strings.en.resx`) covering window UI text, status messages, log lines, preset and export-format descriptions, audio-info display strings and all service-level error messages.
+
+### Changed
+
+- `AudioPreset`, `ExportFormat`, `AudioInfo` and the new `LanguageOption` implement `INotifyPropertyChanged` and store resource keys instead of literal strings; display properties resolve via `LocalizationService` at read time.
+- `AudioInfo.Container` and `AudioInfo.Codec` are now empty when unknown; the view binds to new `ContainerDisplay` / `CodecDisplay` which produce the localized "Unknown".
+- Service error/log strings (FFmpeg, FFprobe, AudioProcessing, ToolDiscovery, AudioPreview) come from resources, so errors appear in the user's currently selected language.
+- App startup loads the saved language from `settings.json` and applies it before the main window is created; corrupt or missing settings fall back to defaults without crashing.
+
 ## 0.3.0 - 2026-05-16
 
 ### Added
