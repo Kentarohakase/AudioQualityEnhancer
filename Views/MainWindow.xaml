@@ -67,6 +67,15 @@
             <Setter Property="BorderBrush" Value="{DynamicResource WarningBorderBrush}" />
         </Style>
 
+        <Style x:Key="SuggestionItemStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource SurfaceSoftBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSoftBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
         <Style TargetType="Button">
             <Setter Property="MinHeight" Value="34" />
             <Setter Property="Padding" Value="14,7" />
@@ -778,6 +787,77 @@
                                 <TextBlock Text="&#xE713;" Style="{StaticResource SectionIconStyle}" />
                                 <TextBlock Text="{Binding [Section_Processing], Source={x:Static loc:LocalizationService.Instance}}"
                                            Style="{StaticResource SectionHeaderStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding HasProfileAdvice, Converter={StaticResource BoolToVis}}"
+                                        Margin="0,0,0,14">
+                                <TextBlock Text="{Binding [Section_ProfileAdvice], Source={x:Static loc:LocalizationService.Instance}}"
+                                           FontWeight="SemiBold"
+                                           FontSize="13"
+                                           Margin="0,0,0,8" />
+                                <ItemsControl ItemsSource="{Binding ProfileAdvice.Suggestions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource SuggestionItemStyle}">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="10" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Row="0"
+                                                               Grid.Column="0"
+                                                               Text="{Binding Title}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="13"
+                                                               TextWrapping="Wrap" />
+                                                    <Button Grid.Row="0"
+                                                            Grid.Column="2"
+                                                            Content="{Binding [Button_ApplySuggestion], Source={x:Static loc:LocalizationService.Instance}}"
+                                                            Command="{Binding DataContext.ApplyProfileSuggestionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            MinHeight="30"
+                                                            Padding="10,5" />
+                                                    <TextBlock Grid.Row="1"
+                                                               Grid.Column="0"
+                                                               Grid.ColumnSpan="3"
+                                                               Text="{Binding TargetDisplay}"
+                                                               Foreground="{DynamicResource AccentBrush}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,5,0,0" />
+                                                    <TextBlock Grid.Row="2"
+                                                               Grid.Column="0"
+                                                               Grid.ColumnSpan="3"
+                                                               Text="{Binding Reason}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,4,0,0" />
+                                                    <TextBlock Grid.Row="3"
+                                                               Grid.Column="0"
+                                                               Grid.ColumnSpan="3"
+                                                               Text="{Binding Note}"
+                                                               Foreground="{DynamicResource SubtleTextBrush}"
+                                                               FontSize="11"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,4,0,0" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding ProfileAdvice.Note}"
+                                           Visibility="{Binding ProfileAdvice.HasNote, Converter={StaticResource BoolToVis}}"
+                                           Style="{StaticResource LabelStyle}"
+                                           TextWrapping="Wrap" />
                             </StackPanel>
 
                             <TextBlock Text="{Binding [Field_Preset], Source={x:Static loc:LocalizationService.Instance}}"

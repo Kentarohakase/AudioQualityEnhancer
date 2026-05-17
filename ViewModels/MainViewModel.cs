@@ -22,6 +22,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly FFprobeService _ffprobeService;
     private readonly AudioDiagnosticsService _audioDiagnosticsService;
     private readonly AudioAnalysisInsightService _audioAnalysisInsightService;
+    private readonly AudioProfileAdvisorService _audioProfileAdvisorService;
     private readonly AudioProcessingService _audioProcessingService;
     private readonly AudioValidationService _audioValidationService;
     private readonly QualityReportService _qualityReportService;
@@ -42,6 +43,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _openLastReportCommand;
     private readonly RelayCommand _copyLogCommand;
     private readonly RelayCommand _clearLogCommand;
+    private readonly RelayCommand<AudioProfileSuggestion> _applyProfileSuggestionCommand;
 
     private ToolStatus? _ffmpegStatus;
     private ToolStatus? _ffprobeStatus;
@@ -50,6 +52,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
     private AudioAnalysisReport? _analysisReport;
+    private AudioProfileAdvice? _profileAdvice;
     private AudioComparisonReport? _comparisonReport;
     private BatchProcessingItem? _selectedBatchItem;
     private AudioStreamInfo? _selectedAudioStream;
@@ -103,6 +106,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
         _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
         _audioAnalysisInsightService = new AudioAnalysisInsightService();
+        _audioProfileAdvisorService = new AudioProfileAdvisorService(_fileNameService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
         _audioValidationService = new AudioValidationService(_ffprobeService, _audioDiagnosticsService, _logService);
         _qualityReportService = new QualityReportService();
@@ -141,6 +145,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _openLastReportCommand = new RelayCommand(OpenLastReport, () => File.Exists(LastReportPath));
         _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
         _clearLogCommand = new RelayCommand(ClearLog, () => !IsBusy && !string.IsNullOrWhiteSpace(LogText));
+        _applyProfileSuggestionCommand = new RelayCommand<AudioProfileSuggestion>(ApplyProfileSuggestion, suggestion => !IsBusy && suggestion is not null);
 
         ApplySettings(_settingsService.Load());
         UpdateQualityNotice();
@@ -259,6 +264,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand ClearLogCommand => _clearLogCommand;
 
+    public ICommand ApplyProfileSuggestionCommand => _applyProfileSuggestionCommand;
+
     public string InputPath
     {
         get => _inputPath;
@@ -294,6 +301,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 OnPropertyChanged(nameof(HasMultipleAudioStreams));
                 UpdateAnalysisWarnings();
                 UpdateAnalysisReport();
+                UpdateProfileAdvice();
                 UpdateQualityNotice();
                 UpdateFilterDetails();
             }
@@ -309,6 +317,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 UpdateAnalysisWarnings();
                 UpdateAnalysisReport();
+                UpdateProfileAdvice();
                 UpdateQualityNotice();
             }
         }
@@ -327,6 +336,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasAnalysisReport => AnalysisReport is not null;
+
+    public AudioProfileAdvice? ProfileAdvice
+    {
+        get => _profileAdvice;
+        private set
+        {
+            if (SetProperty(ref _profileAdvice, value))
+            {
+                OnPropertyChanged(nameof(HasProfileAdvice));
+            }
+        }
+    }
+
+    public bool HasProfileAdvice => ProfileAdvice?.HasSuggestions == true;
 
     public AudioComparisonReport? ComparisonReport
     {
@@ -1412,6 +1435,27 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             : _audioAnalysisInsightService.BuildReport(AudioInfo, AudioDiagnostics);
     }
 
+    private void UpdateProfileAdvice()
+    {
+        ProfileAdvice = _audioProfileAdvisorService.BuildAdvice(AudioInfo, AudioDiagnostics);
+    }
+
+    private void ApplyProfileSuggestion(AudioProfileSuggestion? suggestion)
+    {
+        if (suggestion is null)
+        {
+            return;
+        }
+
+        SelectedPreset = suggestion.Preset;
+        if (suggestion.ExportFormat is not null)
+        {
+            SelectedExportFormat = suggestion.ExportFormat;
+        }
+
+        SetStatus("Status_ProfileAdviceAppliedFormat", suggestion.Title);
+    }
+
     private void UpdateFilterDetails()
     {
         if (SelectedPreset is null || SelectedExportFormat is null)
@@ -1594,6 +1638,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         UpdateAnalysisWarnings();
         UpdateAnalysisReport();
+        UpdateProfileAdvice();
         if (SelectedBatchItem is not null)
         {
             SelectedBatchItem.SetAnalysisReport(AnalysisReport);
@@ -1685,6 +1730,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _openLastReportCommand.RaiseCanExecuteChanged();
         _copyLogCommand.RaiseCanExecuteChanged();
         _clearLogCommand.RaiseCanExecuteChanged();
+        _applyProfileSuggestionCommand.RaiseCanExecuteChanged();
     }
 
     private static string GetDefaultOutputDirectory()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0 - 2026-05-17
+
+### Added
+
+- Added recommended settings based on source analysis, with clear preset/export suggestions that can be applied manually.
+- Added guidance for speech-like sources, video sources, stream-copy candidates, low-headroom material and compact everyday exports.
+
 ## 0.10.1 - 2026-05-17
 
 ### Fixed

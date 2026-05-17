@@ -11,6 +11,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Audiospur bei Videoquellen auswählen, wenn mehrere Spuren vorhanden sind
 - Codec, Bitrate, Sample Rate, Kanäle, Dauer und Dateigröße anzeigen
 - Lautheit, Peak-Werte und mögliche technische Probleme optional genauer messen
+- passende Presets und Ausgabeformate anhand der Analyse vorschlagen
 - Musik oder Sprache per Preset verbessern
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
@@ -48,6 +49,12 @@ Bei Videodateien wird die erste Audiospur vorausgewählt. Wenn mehrere Audiospur
 Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, wenig Headroom oder sehr leises Material.
 
 Die App bewertet diese Daten zusätzlich mit einem einfachen Score, technischen Hinweisen und Empfehlungen. Das hilft bei der Wahl eines sinnvollen Presets. Der Score bewertet technische Auffälligkeiten, nicht subjektive Klangqualität, und verspricht keine Wiederherstellung verlorener Details.
+
+## Empfohlene Einstellungen
+
+Nach der Analyse schlägt die App passende Presets und Ausgabeformate vor. Die Vorschläge basieren auf technischen Hinweisen wie Bitrate, Sample Rate, Kanalzahl, Container, Headroom und Peak-Werten. Sie werden nicht automatisch angewendet; du kannst einen Vorschlag bewusst übernehmen.
+
+Die Beratung erkennt Musik oder Sprache nicht sicher. Sie erklärt nur, welche Einstellung aufgrund der Messwerte wahrscheinlich sinnvoll ist.
 
 ## Batch-Verarbeitung
 
@@ -141,13 +148,13 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofi
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.9.0
+.\scripts\package-release.ps1 -Version 0.11.0
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.9.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.11.0 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.

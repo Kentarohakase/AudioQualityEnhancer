@@ -41,6 +41,7 @@
   <data name="Button_OpenLastReport" xml:space="preserve"><value>Bericht öffnen</value></data>
   <data name="Button_CopyLog" xml:space="preserve"><value>Log kopieren</value></data>
   <data name="Button_ClearLog" xml:space="preserve"><value>Log leeren</value></data>
+  <data name="Button_ApplySuggestion" xml:space="preserve"><value>Übernehmen</value></data>
 
   <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
   <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
@@ -81,6 +82,7 @@
   <data name="Field_AudioTrack" xml:space="preserve"><value>Audiospur</value></data>
   <data name="Section_AnalysisFindings" xml:space="preserve"><value>Auffälligkeiten</value></data>
   <data name="Section_AnalysisRecommendations" xml:space="preserve"><value>Empfehlungen</value></data>
+  <data name="Section_ProfileAdvice" xml:space="preserve"><value>Empfohlene Einstellungen</value></data>
   <data name="Hint_AdvancedAnalysis" xml:space="preserve"><value>Misst Lautheit und Peaks mit FFmpeg. Das kann bei langen Dateien etwas dauern.</value></data>
   <data name="Hint_AudioTrack" xml:space="preserve"><value>Bei Videoquellen wird nur diese Audiospur verarbeitet.</value></data>
 
@@ -127,6 +129,7 @@
   <data name="Status_BatchItemRemoved" xml:space="preserve"><value>Datei aus der Warteschlange entfernt.</value></data>
   <data name="Status_AudioStreamSelectedFormat" xml:space="preserve"><value>Audiospur ausgewaehlt: {0}</value></data>
   <data name="Status_BatchFinishedCleared" xml:space="preserve"><value>Abgeschlossene Einträge entfernt.</value></data>
+  <data name="Status_ProfileAdviceAppliedFormat" xml:space="preserve"><value>Empfehlung übernommen: {0}</value></data>
 
   <data name="BatchStatus_Pending" xml:space="preserve"><value>Wartet</value></data>
   <data name="BatchStatus_Analyzing" xml:space="preserve"><value>Analyse</value></data>
@@ -291,6 +294,28 @@
   <data name="AnalysisRecommendation_VeryQuiet" xml:space="preserve"><value>Nutze Normalisierung vorsichtig und prüfe nachher, ob Rauschen störend lauter geworden ist.</value></data>
   <data name="AnalysisRecommendation_AlreadyLoud" xml:space="preserve"><value>Vermeide zusätzliche Kompression. Ein verlustfreier Export bewahrt das Ergebnis, repariert aber keine vorhandene Überbearbeitung.</value></data>
   <data name="AnalysisRecommendation_AdvancedAnalysisRecommended" xml:space="preserve"><value>Starte die erweiterte Analyse, bevor du bei kritischem Material über stärkere Bearbeitung entscheidest.</value></data>
+
+  <data name="ProfileAdvice_TargetFormat" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="ProfileAdvice_TargetStreamCopyFormat" xml:space="preserve"><value>{0} → kompatibler Container automatisch</value></data>
+  <data name="ProfileAdvice_AdvancedAnalysisNote" xml:space="preserve"><value>Loudness- und Peak-Empfehlungen werden genauer, wenn vorher die erweiterte Analyse ausgeführt wurde.</value></data>
+  <data name="ProfileAdvice_Speech_Title" xml:space="preserve"><value>Sprache vorsichtig verständlicher machen</value></data>
+  <data name="ProfileAdvice_Speech_Reason" xml:space="preserve"><value>Mono, niedrige Bitrate oder niedrige Sample Rate sprechen eher für eine Sprachquelle oder begrenztes Material.</value></data>
+  <data name="ProfileAdvice_Speech_Note" xml:space="preserve"><value>Die Empfehlung verbessert Lautheit und Verständlichkeit, ersetzt aber keine verlorenen Aufnahme-Details.</value></data>
+  <data name="ProfileAdvice_LosslessHeadroom_Title" xml:space="preserve"><value>Schonend bearbeiten und verlustfrei speichern</value></data>
+  <data name="ProfileAdvice_LosslessHeadroom_Reason" xml:space="preserve"><value>Peak-Werte nahe 0 dBFS brauchen vorsichtige Normalisierung und Reserve gegen neues Clipping.</value></data>
+  <data name="ProfileAdvice_LosslessHeadroom_Note" xml:space="preserve"><value>FLAC vermeidet zusätzliche Exportverluste, repariert aber kein vorhandenes Clipping.</value></data>
+  <data name="ProfileAdvice_StreamCopy_Title" xml:space="preserve"><value>Audiospur ohne Re-Encoding extrahieren</value></data>
+  <data name="ProfileAdvice_StreamCopy_Reason" xml:space="preserve"><value>Der Codec passt zu einem bekannten Zielformat und kann ohne neue Kompression kopiert werden.</value></data>
+  <data name="ProfileAdvice_StreamCopy_Note" xml:space="preserve"><value>Das ist ideal, wenn du die Spur nur aus dem Container holen möchtest.</value></data>
+  <data name="ProfileAdvice_Everyday_Title" xml:space="preserve"><value>Kompakter Alltags-Export</value></data>
+  <data name="ProfileAdvice_Everyday_Reason" xml:space="preserve"><value>Die Quelle zeigt keine auffälligen Warnungen; AAC 256k ist ein guter Kompromiss aus Qualität und Größe.</value></data>
+  <data name="ProfileAdvice_Everyday_Note" xml:space="preserve"><value>Für weitere Bearbeitung bleibt FLAC oder WAV die bessere Zwischenstufe.</value></data>
+  <data name="ProfileAdvice_Premiere_Title" xml:space="preserve"><value>Für Premiere Pro vorbereiten</value></data>
+  <data name="ProfileAdvice_Premiere_Reason" xml:space="preserve"><value>Videoquellen lassen sich für den Schnitt am zuverlässigsten als WAV 24 Bit mit 48 kHz vorbereiten.</value></data>
+  <data name="ProfileAdvice_Premiere_Note" xml:space="preserve"><value>Die Datei wird größer, bleibt nach der Bearbeitung aber schnittfreundlich und verlustfrei.</value></data>
+  <data name="ProfileAdvice_MusicFlac_Title" xml:space="preserve"><value>Schonender Standardstart</value></data>
+  <data name="ProfileAdvice_MusicFlac_Reason" xml:space="preserve"><value>Musik verbessern mit FLAC ist ein sicherer Ausgangspunkt, wenn das Material nicht eindeutig einzuordnen ist.</value></data>
+  <data name="ProfileAdvice_MusicFlac_Note" xml:space="preserve"><value>Das normalisiert vorsichtig und bewahrt das bearbeitete Ergebnis ohne zusätzliche Zielkompression.</value></data>
 
   <data name="ValidationStatus_Passed" xml:space="preserve"><value>Bestanden</value></data>
   <data name="ValidationStatus_Warning" xml:space="preserve"><value>Mit Warnung</value></data>

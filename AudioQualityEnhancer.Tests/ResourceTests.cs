@@ -72,6 +72,10 @@ public sealed partial class ResourceTests
         values.AddRange(report.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
         values.AddRange(report.Recommendations.Select(r => r.Text));
 
+        var profileAdvice = new AudioProfileAdvisorService(new FileNameService()).BuildAdvice(reportInfo, diagnostics: null);
+        values.Add(profileAdvice.Note);
+        values.AddRange(profileAdvice.Suggestions.SelectMany(s => new[] { s.Title, s.TargetDisplay, s.Reason, s.Note }));
+
         using var outputInfo = new AudioInfo
         {
             Codec = "flac",
