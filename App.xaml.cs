@@ -1,4 +1,5 @@
 using System.Globalization;
+using AudioQualityEnhancer.Models;
 using AudioQualityEnhancer.Services;
 
 namespace AudioQualityEnhancer;
@@ -14,6 +15,9 @@ public partial class App : System.Windows.Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         var settings = SettingsService.Load();
+
+        ThemeService.Instance.Apply(ThemeService.Parse(settings.Theme));
+
         try
         {
             LocalizationService.Instance.Culture = new CultureInfo(settings.Language);

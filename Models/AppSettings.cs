@@ -4,6 +4,8 @@ public sealed record AppSettings
 {
     public string Language { get; init; } = "de";
 
+    public string Theme { get; init; } = "Light";
+
     public string PresetId { get; init; } = "music";
 
     public string ExportFormatId { get; init; } = "flac";

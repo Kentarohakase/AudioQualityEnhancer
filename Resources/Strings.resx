@@ -56,6 +56,9 @@
   <data name="Field_NoiseFilter" xml:space="preserve"><value>Rauschfilter</value></data>
   <data name="Field_OutputFolder" xml:space="preserve"><value>Ordner</value></data>
   <data name="Field_Language" xml:space="preserve"><value>Sprache</value></data>
+  <data name="Field_Theme" xml:space="preserve"><value>Design</value></data>
+  <data name="Theme_Light" xml:space="preserve"><value>Hell</value></data>
+  <data name="Theme_Dark" xml:space="preserve"><value>Dunkel</value></data>
   <data name="Field_Loudness" xml:space="preserve"><value>Lautheit</value></data>
   <data name="Field_TruePeak" xml:space="preserve"><value>True Peak</value></data>
   <data name="Field_MaxPeak" xml:space="preserve"><value>Sample Peak</value></data>

@@ -64,6 +64,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _filterDetailsText = string.Empty;
     private string _batchSummaryText;
     private LanguageOption _selectedLanguage = LanguageOption.German;
+    private ThemeOption _selectedTheme = ThemeOption.Light;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -121,6 +122,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
         Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
+        Themes = new ObservableCollection<ThemeOption>(ThemeOption.All);
         BatchItems = new ObservableCollection<BatchProcessingItem>();
         BatchItems.CollectionChanged += OnBatchItemsChanged;
 
@@ -148,6 +150,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void ApplySettings(AppSettings settings)
     {
         SelectedLanguage = LanguageOption.All.FirstOrDefault(l => l.Code == settings.Language) ?? LanguageOption.German;
+        SelectedTheme = ThemeOption.All.FirstOrDefault(t => t.Theme == ThemeService.Parse(settings.Theme)) ?? ThemeOption.Light;
         SelectedPreset = AudioPreset.All.FirstOrDefault(p => p.Id == settings.PresetId) ?? AudioPreset.Music;
         SelectedExportFormat = ExportFormat.All.FirstOrDefault(f => f.Id == settings.ExportFormatId) ?? ExportFormat.Flac;
         OutputDirectory = !string.IsNullOrWhiteSpace(settings.OutputDirectory) && Directory.Exists(settings.OutputDirectory)
@@ -166,6 +169,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var settings = new AppSettings
         {
             Language = SelectedLanguage?.Code ?? LanguageOption.German.Code,
+            Theme = (SelectedTheme?.Theme ?? AppTheme.Light).ToString(),
             PresetId = SelectedPreset?.Id ?? AudioPreset.Music.Id,
             ExportFormatId = SelectedExportFormat?.Id ?? ExportFormat.Flac.Id,
             OutputDirectory = OutputDirectory,
@@ -202,6 +206,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _selectedLanguage, value))
             {
                 LocalizationService.Instance.Culture = new CultureInfo(value.Code);
+            }
+        }
+    }
+
+    public ObservableCollection<ThemeOption> Themes { get; }
+
+    public ThemeOption SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            if (SetProperty(ref _selectedTheme, value))
+            {
+                ThemeService.Instance.Apply(value.Theme);
             }
         }
     }

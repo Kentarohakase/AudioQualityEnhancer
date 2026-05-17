@@ -1,14 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.10.0 - 2026-05-17
 
 ### Added
 
+- Dark mode: a theme toggle in the header switches the UI between Light and Dark; the choice persists in `settings.json` and is restored on the next start.
+- New theme system with two resource dictionaries (`Resources/Themes/LightTheme.xaml` and `DarkTheme.xaml`); all UI brushes are now `DynamicResource`-bound for live switching without restart.
+- `ThemeService` singleton with `Apply()` and `Current`, applied at app startup before the main window is created.
+- `ThemeOption` model (analog to `LanguageOption`) bound to a `Themes` collection in `MainViewModel`.
 - Added release and smoke-test documentation for repeatable manual verification.
 - Added a repository hygiene test for public source text.
 
 ### Changed
 
+- Reworked main window layout into a cleaner card-based dashboard: each section now has an icon header, larger corner radius, more breathing room and a consistent typography scale (label / value / section-header styles).
+- Header redesigned as a slim app bar with title, tool status, theme toggle and language switcher; the status text moved to a bottom row for less clutter.
+- All previously inline hex color values are centralized in the theme dictionaries; DataGrid, ProgressBar, ComboBox, TextBox, Buttons and severity badges follow the active theme.
+- Severity badges (analysis findings, result validation findings) now use pill-shaped backgrounds with theme-aware foreground/background combinations.
 - Expanded `.gitignore` for local workspace, coverage and test output files.
 
 ## 0.9.0 - 2026-05-17
