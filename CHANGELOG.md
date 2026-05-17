@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1 - 2026-05-17
+
+### Fixed
+
+- Fixed ComboBox text and dropdown colors in dark mode so selected values and menu entries stay readable.
+
 ## 0.10.0 - 2026-05-17
 
 ### Added
