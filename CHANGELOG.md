@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Added release and smoke-test documentation for repeatable manual verification.
+- Added a repository hygiene test for public source text.
+
+### Changed
+
+- Expanded `.gitignore` for local workspace, coverage and test output files.
+
 ## 0.9.0 - 2026-05-17
 
 ### Added
