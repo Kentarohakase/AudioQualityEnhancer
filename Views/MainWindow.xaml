@@ -685,7 +685,8 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding AnalysisReport.StatusText}"
                                                    FontSize="15"
-                                                   FontWeight="SemiBold" />
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}" />
                                         <TextBlock Text="{Binding AnalysisReport.Summary}"
                                                    Foreground="{DynamicResource MutedTextBrush}"
                                                    FontSize="13"
@@ -697,6 +698,7 @@
                                 <TextBlock Text="{Binding [Section_AnalysisFindings], Source={x:Static loc:LocalizationService.Instance}}"
                                            FontWeight="SemiBold"
                                            FontSize="13"
+                                           Foreground="{DynamicResource TextBrush}"
                                            Margin="0,14,0,6" />
                                 <ItemsControl ItemsSource="{Binding AnalysisReport.Findings}">
                                     <ItemsControl.ItemTemplate>
@@ -706,7 +708,11 @@
                                                     <TextBlock Text="{Binding SeverityDisplay}" Style="{StaticResource InsightSeverityBadgeTextStyle}" />
                                                 </Border>
                                                 <StackPanel>
-                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextBrush}"
+                                                               TextWrapping="Wrap" />
                                                     <TextBlock Text="{Binding Message}"
                                                                Foreground="{DynamicResource MutedTextBrush}"
                                                                FontSize="12"
@@ -722,6 +728,7 @@
                                     <TextBlock Text="{Binding [Section_AnalysisRecommendations], Source={x:Static loc:LocalizationService.Instance}}"
                                                FontWeight="SemiBold"
                                                FontSize="13"
+                                               Foreground="{DynamicResource TextBrush}"
                                                Margin="0,6,0,6" />
                                     <ItemsControl ItemsSource="{Binding AnalysisReport.Recommendations}">
                                         <ItemsControl.ItemTemplate>
@@ -794,6 +801,7 @@
                                 <TextBlock Text="{Binding [Section_ProfileAdvice], Source={x:Static loc:LocalizationService.Instance}}"
                                            FontWeight="SemiBold"
                                            FontSize="13"
+                                           Foreground="{DynamicResource TextBrush}"
                                            Margin="0,0,0,8" />
                                 <ItemsControl ItemsSource="{Binding ProfileAdvice.Suggestions}">
                                     <ItemsControl.ItemTemplate>
@@ -816,6 +824,7 @@
                                                                Text="{Binding Title}"
                                                                FontWeight="SemiBold"
                                                                FontSize="13"
+                                                               Foreground="{DynamicResource TextBrush}"
                                                                TextWrapping="Wrap" />
                                                     <Button Grid.Row="0"
                                                             Grid.Column="2"
@@ -1038,7 +1047,8 @@
                             <StackPanel Margin="0,0,0,12">
                                 <TextBlock Text="{Binding ComparisonReport.StatusText}"
                                            FontSize="14"
-                                           FontWeight="SemiBold" />
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextBrush}" />
                                 <TextBlock Text="{Binding ComparisonReport.Summary}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13"
@@ -1053,6 +1063,7 @@
                             <TextBlock Text="{Binding [Section_ResultFindings], Source={x:Static loc:LocalizationService.Instance}}"
                                        FontWeight="SemiBold"
                                        FontSize="13"
+                                       Foreground="{DynamicResource TextBrush}"
                                        Margin="0,0,0,6" />
                             <ItemsControl ItemsSource="{Binding ComparisonReport.Findings}">
                                 <ItemsControl.ItemTemplate>
@@ -1062,7 +1073,11 @@
                                                 <TextBlock Text="{Binding SeverityDisplay}" Style="{StaticResource InsightSeverityBadgeTextStyle}" />
                                             </Border>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextBrush}"
+                                                           TextWrapping="Wrap" />
                                                 <TextBlock Text="{Binding Message}"
                                                            Foreground="{DynamicResource MutedTextBrush}"
                                                            FontSize="12"
@@ -1077,6 +1092,7 @@
                             <TextBlock Text="{Binding [Section_ResultMetrics], Source={x:Static loc:LocalizationService.Instance}}"
                                        FontWeight="SemiBold"
                                        FontSize="13"
+                                       Foreground="{DynamicResource TextBrush}"
                                        Margin="0,4,0,6" />
                             <DataGrid ItemsSource="{Binding ComparisonReport.Metrics}"
                                       AutoGenerateColumns="False"

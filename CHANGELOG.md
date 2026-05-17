@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.1 - 2026-05-17
+
+### Fixed
+
+- Fixed dark-mode text color for recommendation cards, analysis findings and result-check headings.
+
 ## 0.11.0 - 2026-05-17
 
 ### Added
