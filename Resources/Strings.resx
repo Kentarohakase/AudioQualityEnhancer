@@ -30,6 +30,8 @@
   <data name="Button_SelectFiles" xml:space="preserve"><value>Dateien hinzufügen</value></data>
   <data name="Button_RemoveSelectedFile" xml:space="preserve"><value>Ausgewählte entfernen</value></data>
   <data name="Button_ClearFinishedFiles" xml:space="preserve"><value>Fertige entfernen</value></data>
+  <data name="Button_RetrySelectedFile" xml:space="preserve"><value>Ausgewählte erneut versuchen</value></data>
+  <data name="Button_RetryFailedFiles" xml:space="preserve"><value>Fehler erneut versuchen</value></data>
   <data name="Button_StopPreview" xml:space="preserve"><value>Stop</value></data>
   <data name="Button_SelectFolder" xml:space="preserve"><value>Ordner wählen</value></data>
   <data name="Button_Start" xml:space="preserve"><value>Verarbeitung starten</value></data>
@@ -37,6 +39,8 @@
   <data name="Button_StartQueue" xml:space="preserve"><value>Warteschlange starten</value></data>
   <data name="Button_AdvancedAnalysis" xml:space="preserve"><value>Erweiterte Analyse</value></data>
   <data name="Button_OpenOutputFolder" xml:space="preserve"><value>Ordner öffnen</value></data>
+  <data name="Button_OpenSelectedOutput" xml:space="preserve"><value>Ausgabe öffnen</value></data>
+  <data name="Button_OpenSelectedOutputFolder" xml:space="preserve"><value>Ausgabeordner öffnen</value></data>
   <data name="Button_OpenLastOutput" xml:space="preserve"><value>Letzte Datei öffnen</value></data>
   <data name="Button_OpenLastReport" xml:space="preserve"><value>Bericht öffnen</value></data>
   <data name="Button_CopyLog" xml:space="preserve"><value>Log kopieren</value></data>
@@ -58,6 +62,7 @@
   <data name="Field_OutputFolder" xml:space="preserve"><value>Ordner</value></data>
   <data name="Field_Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="Field_Theme" xml:space="preserve"><value>Design</value></data>
+  <data name="Field_Filter" xml:space="preserve"><value>Filter</value></data>
   <data name="Theme_Light" xml:space="preserve"><value>Hell</value></data>
   <data name="Theme_Dark" xml:space="preserve"><value>Dunkel</value></data>
   <data name="Field_Loudness" xml:space="preserve"><value>Lautheit</value></data>
@@ -112,6 +117,10 @@
   <data name="Status_AdvancedAnalysisFailed" xml:space="preserve"><value>Erweiterte Analyse fehlgeschlagen.</value></data>
   <data name="Status_OutputFolderOpened" xml:space="preserve"><value>Ausgabeordner geöffnet.</value></data>
   <data name="Status_OutputFolderMissing" xml:space="preserve"><value>Der Ausgabeordner existiert nicht.</value></data>
+  <data name="Status_SelectedOutputFolderOpened" xml:space="preserve"><value>Ausgabeordner der ausgewählten Datei geöffnet.</value></data>
+  <data name="Status_SelectedOutputFolderMissing" xml:space="preserve"><value>Die ausgewählte Datei hat noch keinen Ausgabeordner.</value></data>
+  <data name="Status_SelectedOutputFileOpened" xml:space="preserve"><value>Ausgabedatei der ausgewählten Datei geöffnet.</value></data>
+  <data name="Status_SelectedOutputFileMissing" xml:space="preserve"><value>Die ausgewählte Datei hat noch keine Ausgabedatei.</value></data>
   <data name="Status_OutputFileOpened" xml:space="preserve"><value>Letzte Ausgabedatei geöffnet.</value></data>
   <data name="Status_OutputFileMissing" xml:space="preserve"><value>Es gibt noch keine Ausgabedatei zum Öffnen.</value></data>
   <data name="Status_ReportFileOpened" xml:space="preserve"><value>Ergebnisbericht geöffnet.</value></data>
@@ -129,7 +138,18 @@
   <data name="Status_BatchItemRemoved" xml:space="preserve"><value>Datei aus der Warteschlange entfernt.</value></data>
   <data name="Status_AudioStreamSelectedFormat" xml:space="preserve"><value>Audiospur ausgewaehlt: {0}</value></data>
   <data name="Status_BatchFinishedCleared" xml:space="preserve"><value>Abgeschlossene Einträge entfernt.</value></data>
+  <data name="Status_BatchItemRetryReady" xml:space="preserve"><value>Ausgewählter Eintrag ist wieder bereit.</value></data>
+  <data name="Status_BatchRetryReadyFormat" xml:space="preserve"><value>Einträge für erneuten Versuch vorbereitet: {0}.</value></data>
+  <data name="Status_BatchNoRetryableFiles" xml:space="preserve"><value>Es gibt keine fehlgeschlagenen oder abgebrochenen Einträge.</value></data>
   <data name="Status_ProfileAdviceAppliedFormat" xml:space="preserve"><value>Empfehlung übernommen: {0}</value></data>
+
+  <data name="BatchFilter_All" xml:space="preserve"><value>Alle</value></data>
+  <data name="BatchFilter_Ready" xml:space="preserve"><value>Bereit</value></data>
+  <data name="BatchFilter_Processing" xml:space="preserve"><value>In Arbeit</value></data>
+  <data name="BatchFilter_Done" xml:space="preserve"><value>Fertig</value></data>
+  <data name="BatchFilter_Warnings" xml:space="preserve"><value>Mit Warnungen</value></data>
+  <data name="BatchFilter_Failed" xml:space="preserve"><value>Fehlgeschlagen</value></data>
+  <data name="BatchFilter_Cancelled" xml:space="preserve"><value>Abgebrochen</value></data>
 
   <data name="BatchStatus_Pending" xml:space="preserve"><value>Wartet</value></data>
   <data name="BatchStatus_Analyzing" xml:space="preserve"><value>Analyse</value></data>

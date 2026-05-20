@@ -54,6 +54,57 @@ public sealed class BatchQueueService
         return items.Where(item => item.IsFinished).ToArray();
     }
 
+    public IReadOnlyList<BatchProcessingItem> GetRetryableItems(IEnumerable<BatchProcessingItem> items)
+    {
+        return items.Where(CanRetry).ToArray();
+    }
+
+    public IReadOnlyList<BatchProcessingItem> GetItemsByFilter(
+        IEnumerable<BatchProcessingItem> items,
+        BatchQueueFilter filter)
+    {
+        return items.Where(item => MatchesFilter(item, filter)).ToArray();
+    }
+
+    public bool CanRetry(BatchProcessingItem? item)
+    {
+        return item?.Status is BatchProcessingStatus.Failed or BatchProcessingStatus.Cancelled;
+    }
+
+    public bool ResetForRetry(BatchProcessingItem item)
+    {
+        if (!CanRetry(item))
+        {
+            return false;
+        }
+
+        item.OutputPath = string.Empty;
+        item.ErrorMessage = string.Empty;
+        item.Progress = 0;
+        item.SetOutputInfo(null);
+        item.SetOutputDiagnostics(null);
+        item.SetComparisonReport(null);
+        item.Status = item.AudioInfo is null
+            ? BatchProcessingStatus.Pending
+            : BatchProcessingStatus.Ready;
+        return true;
+    }
+
+    public bool MatchesFilter(BatchProcessingItem item, BatchQueueFilter filter)
+    {
+        return filter switch
+        {
+            BatchQueueFilter.All => true,
+            BatchQueueFilter.Ready => item.Status == BatchProcessingStatus.Ready,
+            BatchQueueFilter.Processing => item.Status is BatchProcessingStatus.Analyzing or BatchProcessingStatus.Processing,
+            BatchQueueFilter.Done => item.Status == BatchProcessingStatus.Done,
+            BatchQueueFilter.Warnings => item.Status == BatchProcessingStatus.Done && item.HasComparisonWarnings,
+            BatchQueueFilter.Failed => item.Status == BatchProcessingStatus.Failed,
+            BatchQueueFilter.Cancelled => item.Status == BatchProcessingStatus.Cancelled,
+            _ => true
+        };
+    }
+
     public BatchQueueSummary BuildSummary(IEnumerable<BatchProcessingItem> items)
     {
         var snapshot = items.ToArray();

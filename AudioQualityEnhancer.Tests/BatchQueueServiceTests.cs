@@ -118,6 +118,136 @@ public sealed class BatchQueueServiceTests
     }
 
     [Fact]
+    public void GetItemsByFilter_ReturnsStatusSpecificEntries()
+    {
+        var items = new[]
+        {
+            new BatchProcessingItem(@"C:\audio\ready.mp3") { Status = BatchProcessingStatus.Ready },
+            new BatchProcessingItem(@"C:\audio\analyzing.mp3") { Status = BatchProcessingStatus.Analyzing },
+            new BatchProcessingItem(@"C:\audio\processing.mp3") { Status = BatchProcessingStatus.Processing },
+            new BatchProcessingItem(@"C:\audio\done.mp3") { Status = BatchProcessingStatus.Done },
+            new BatchProcessingItem(@"C:\audio\warning.mp3") { Status = BatchProcessingStatus.Done },
+            new BatchProcessingItem(@"C:\audio\failed.mp3") { Status = BatchProcessingStatus.Failed },
+            new BatchProcessingItem(@"C:\audio\cancelled.mp3") { Status = BatchProcessingStatus.Cancelled }
+        };
+
+        try
+        {
+            items[4].SetComparisonReport(CreateComparisonReport(AudioComparisonStatus.Warning));
+            var service = new BatchQueueService(new FileNameService());
+
+            Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Ready));
+            Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Processing).Count);
+            Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Done).Count);
+            Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Warnings));
+            Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Failed));
+            Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Cancelled));
+            Assert.Equal(items.Length, service.GetItemsByFilter(items, BatchQueueFilter.All).Count);
+        }
+        finally
+        {
+            foreach (var item in items)
+            {
+                item.Dispose();
+            }
+        }
+    }
+
+    [Fact]
+    public void ResetForRetry_ClearsProcessingResultAndKeepsAnalysis()
+    {
+        using var item = new BatchProcessingItem(@"C:\audio\track.mp3")
+        {
+            Status = BatchProcessingStatus.Failed,
+            OutputPath = @"C:\audio\track_music.flac",
+            ErrorMessage = "failed",
+            Progress = 42
+        };
+        var stream = new AudioStreamInfo(1, 0, "mp3", "MP3", 128_000, 44_100, 2, TimeSpan.FromSeconds(20), string.Empty, string.Empty, string.Empty);
+        var sourceInfo = new AudioInfo
+        {
+            SourcePath = item.SourcePath,
+            Codec = "mp3",
+            BitRate = 128_000,
+            SampleRate = 44_100,
+            Channels = 2,
+            AudioStreams = new[] { stream },
+            SelectedAudioStreamIndex = stream.StreamIndex,
+            IsLikelyLossy = true
+        };
+        item.SetAudioInfo(sourceInfo);
+        item.SetAudioDiagnostics(new AudioDiagnostics { MeanVolumeDb = -18 });
+        item.SetAnalysisReport(new AudioAnalysisReport(90, AudioAnalysisStatus.Good, "good", "summary", Array.Empty<AudioAnalysisFinding>(), Array.Empty<AudioAnalysisRecommendation>()));
+        item.SetOutputInfo(new AudioInfo { SourcePath = item.OutputPath, Codec = "flac" });
+        item.SetOutputDiagnostics(new AudioDiagnostics { MeanVolumeDb = -16 });
+        item.SetComparisonReport(CreateComparisonReport(AudioComparisonStatus.Critical));
+        var service = new BatchQueueService(new FileNameService());
+
+        var reset = service.ResetForRetry(item);
+
+        Assert.True(reset);
+        Assert.Equal(BatchProcessingStatus.Ready, item.Status);
+        Assert.Equal(0, item.Progress);
+        Assert.Equal(string.Empty, item.ErrorMessage);
+        Assert.Equal(string.Empty, item.OutputPath);
+        Assert.NotNull(item.AudioInfo);
+        Assert.NotNull(item.AudioDiagnostics);
+        Assert.NotNull(item.AnalysisReport);
+        Assert.Null(item.OutputInfo);
+        Assert.Null(item.OutputDiagnostics);
+        Assert.Null(item.ComparisonReport);
+    }
+
+    [Fact]
+    public void ResetForRetry_MarksUnanalyzedFailedItemAsPending()
+    {
+        using var item = new BatchProcessingItem(@"C:\audio\broken.mp3")
+        {
+            Status = BatchProcessingStatus.Failed,
+            ErrorMessage = "analysis failed",
+            Progress = 12
+        };
+        var service = new BatchQueueService(new FileNameService());
+
+        var reset = service.ResetForRetry(item);
+
+        Assert.True(reset);
+        Assert.Equal(BatchProcessingStatus.Pending, item.Status);
+        Assert.Equal(string.Empty, item.ErrorMessage);
+        Assert.Equal(0, item.Progress);
+    }
+
+    [Fact]
+    public void GetRetryableItems_ReturnsFailedAndCancelledOnly()
+    {
+        var items = new[]
+        {
+            new BatchProcessingItem(@"C:\audio\ready.mp3") { Status = BatchProcessingStatus.Ready },
+            new BatchProcessingItem(@"C:\audio\done.mp3") { Status = BatchProcessingStatus.Done },
+            new BatchProcessingItem(@"C:\audio\failed.mp3") { Status = BatchProcessingStatus.Failed },
+            new BatchProcessingItem(@"C:\audio\cancelled.mp3") { Status = BatchProcessingStatus.Cancelled }
+        };
+
+        try
+        {
+            var service = new BatchQueueService(new FileNameService());
+
+            var retryable = service.GetRetryableItems(items);
+
+            Assert.Equal(2, retryable.Count);
+            Assert.Contains(retryable, item => item.Status == BatchProcessingStatus.Failed);
+            Assert.Contains(retryable, item => item.Status == BatchProcessingStatus.Cancelled);
+        }
+        finally
+        {
+            foreach (var item in items)
+            {
+                item.Dispose();
+            }
+        }
+    }
+
+    [Fact]
     public void CalculateOverallProgress_CombinesCompletedItemsAndCurrentProgress()
     {
         var progress = BatchQueueService.CalculateOverallProgress(itemIndex: 1, totalItems: 4, itemProgress: 50);
@@ -188,5 +318,19 @@ public sealed class BatchQueueServiceTests
         var path = Path.Combine(directory, fileName);
         File.WriteAllText(path, "test");
         return path;
+    }
+
+    private static AudioComparisonReport CreateComparisonReport(AudioComparisonStatus status)
+    {
+        return new AudioComparisonReport(
+            status,
+            status.ToString(),
+            "summary",
+            @"C:\audio\output.flac",
+            outputInfo: null,
+            outputDiagnostics: null,
+            Array.Empty<AudioComparisonFinding>(),
+            Array.Empty<AudioComparisonMetric>(),
+            outputDiagnosticsSkipped: false);
     }
 }

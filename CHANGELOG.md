@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added batch review filters for ready, running, finished, warning, failed and cancelled queue entries.
+- Added retry actions for selected failed/cancelled entries and all failed/cancelled entries.
+- Added quick actions for opening the selected output file or its output folder.
+
 ## 0.11.1 - 2026-05-17
 
 ### Fixed

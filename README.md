@@ -62,6 +62,8 @@ Du kannst mehrere Dateien per Button oder Drag and Drop hinzufügen. Die App ana
 
 Wenn eine Datei fehlschlägt, läuft die Warteschlange weiter. Abbrechen stoppt nur die laufende Verarbeitung; noch offene Dateien bleiben in der Liste.
 
+Nach einem Batch-Lauf kannst du die Warteschlange nach Status filtern, Einträge mit Warnungen oder Fehlern schneller finden und fehlgeschlagene oder abgebrochene Dateien erneut vorbereiten. Für die ausgewählte Datei lassen sich die erzeugte Ausgabedatei und ihr Ausgabeordner direkt öffnen.
+
 ## Ergebnisprüfung
 
 Nach einem Export prüft die App die erzeugte Datei noch einmal. Sie vergleicht technische Werte wie Dauer, Codec, Sample Rate, Lautheit und Peaks mit der Quelle. Dadurch sieht man schneller, ob der Export plausibel ist oder ob zum Beispiel Clipping, wenig Headroom oder eine auffällige Dauerabweichung entstanden ist.

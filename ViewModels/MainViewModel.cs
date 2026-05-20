@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using AudioQualityEnhancer.Models;
@@ -35,10 +36,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _cancelCommand;
     private readonly RelayCommand _removeSelectedFileCommand;
     private readonly RelayCommand _clearFinishedFilesCommand;
+    private readonly AsyncRelayCommand _retrySelectedFileCommand;
+    private readonly AsyncRelayCommand _retryFailedFilesCommand;
     private readonly RelayCommand _playSourceCommand;
     private readonly RelayCommand _playOutputCommand;
     private readonly RelayCommand _stopPreviewCommand;
     private readonly RelayCommand _openOutputFolderCommand;
+    private readonly RelayCommand _openSelectedOutputCommand;
+    private readonly RelayCommand _openSelectedOutputFolderCommand;
     private readonly RelayCommand _openLastOutputCommand;
     private readonly RelayCommand _openLastReportCommand;
     private readonly RelayCommand _copyLogCommand;
@@ -55,6 +60,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private AudioProfileAdvice? _profileAdvice;
     private AudioComparisonReport? _comparisonReport;
     private BatchProcessingItem? _selectedBatchItem;
+    private BatchQueueFilterOption _selectedBatchFilter = BatchQueueFilterOption.AllItems;
     private AudioStreamInfo? _selectedAudioStream;
     private AudioPreset? _selectedPreset;
     private ExportFormat? _selectedExportFormat;
@@ -127,8 +133,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
         Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
         Themes = new ObservableCollection<ThemeOption>(ThemeOption.All);
+        BatchFilters = new ObservableCollection<BatchQueueFilterOption>(BatchQueueFilterOption.All);
         BatchItems = new ObservableCollection<BatchProcessingItem>();
         BatchItems.CollectionChanged += OnBatchItemsChanged;
+        BatchItemsView = CollectionViewSource.GetDefaultView(BatchItems);
+        BatchItemsView.Filter = FilterBatchItem;
 
         _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
         _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics);
@@ -137,10 +146,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
         _removeSelectedFileCommand = new RelayCommand(RemoveSelectedFile, () => !IsBusy && SelectedBatchItem is not null);
         _clearFinishedFilesCommand = new RelayCommand(ClearFinishedFiles, () => !IsBusy && _batchQueueService.GetFinishedItems(BatchItems).Count > 0);
+        _retrySelectedFileCommand = new AsyncRelayCommand(RetrySelectedFileAsync, CanRetrySelectedFile);
+        _retryFailedFilesCommand = new AsyncRelayCommand(RetryFailedFilesAsync, CanRetryFailedFiles);
         _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
         _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
         _stopPreviewCommand = new RelayCommand(StopPreview);
         _openOutputFolderCommand = new RelayCommand(OpenOutputFolder, () => Directory.Exists(OutputDirectory));
+        _openSelectedOutputCommand = new RelayCommand(OpenSelectedOutput, CanOpenSelectedOutput);
+        _openSelectedOutputFolderCommand = new RelayCommand(OpenSelectedOutputFolder, CanOpenSelectedOutputFolder);
         _openLastOutputCommand = new RelayCommand(OpenLastOutput, () => File.Exists(LastOutputPath));
         _openLastReportCommand = new RelayCommand(OpenLastReport, () => File.Exists(LastReportPath));
         _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
@@ -196,7 +209,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ObservableCollection<LanguageOption> Languages { get; }
 
+    public ObservableCollection<BatchQueueFilterOption> BatchFilters { get; }
+
     public ObservableCollection<BatchProcessingItem> BatchItems { get; }
+
+    public ICollectionView BatchItemsView { get; }
 
     public LanguageOption SelectedLanguage
     {
@@ -248,6 +265,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand ClearFinishedFilesCommand => _clearFinishedFilesCommand;
 
+    public ICommand RetrySelectedFileCommand => _retrySelectedFileCommand;
+
+    public ICommand RetryFailedFilesCommand => _retryFailedFilesCommand;
+
     public ICommand PlaySourceCommand => _playSourceCommand;
 
     public ICommand PlayOutputCommand => _playOutputCommand;
@@ -255,6 +276,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand StopPreviewCommand => _stopPreviewCommand;
 
     public ICommand OpenOutputFolderCommand => _openOutputFolderCommand;
+
+    public ICommand OpenSelectedOutputCommand => _openSelectedOutputCommand;
+
+    public ICommand OpenSelectedOutputFolderCommand => _openSelectedOutputFolderCommand;
 
     public ICommand OpenLastOutputCommand => _openLastOutputCommand;
 
@@ -374,6 +399,27 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 SyncSelectedBatchItem();
                 RaiseCommandStates();
+            }
+        }
+    }
+
+    public BatchQueueFilterOption SelectedBatchFilter
+    {
+        get => _selectedBatchFilter;
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            if (SetProperty(ref _selectedBatchFilter, value))
+            {
+                BatchItemsView.Refresh();
+                if (SelectedBatchItem is not null && !BatchItemsView.Contains(SelectedBatchItem))
+                {
+                    SelectedBatchItem = BatchItemsView.Cast<BatchProcessingItem>().FirstOrDefault();
+                }
             }
         }
     }
@@ -1161,6 +1207,79 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SetStatus("Status_BatchFinishedCleared");
     }
 
+    private async Task RetrySelectedFileAsync()
+    {
+        var item = SelectedBatchItem;
+        if (item is null)
+        {
+            return;
+        }
+
+        var preparedCount = await PrepareRetryItemsAsync(new[] { item });
+        if (preparedCount > 0)
+        {
+            SetStatus("Status_BatchItemRetryReady");
+        }
+    }
+
+    private async Task RetryFailedFilesAsync()
+    {
+        var items = _batchQueueService.GetRetryableItems(BatchItems);
+        if (items.Count == 0)
+        {
+            SetStatus("Status_BatchNoRetryableFiles");
+            return;
+        }
+
+        var preparedCount = await PrepareRetryItemsAsync(items);
+        SetStatus("Status_BatchRetryReadyFormat", preparedCount);
+    }
+
+    private async Task<int> PrepareRetryItemsAsync(IReadOnlyList<BatchProcessingItem> items)
+    {
+        var preparedItems = new List<BatchProcessingItem>();
+        foreach (var item in items)
+        {
+            if (_batchQueueService.ResetForRetry(item))
+            {
+                preparedItems.Add(item);
+            }
+        }
+
+        if (preparedItems.Count == 0)
+        {
+            return 0;
+        }
+
+        SelectedBatchItem = preparedItems[0];
+        var needsAnalysis = preparedItems.Where(item => item.AudioInfo is null).ToArray();
+        if (needsAnalysis.Length > 0)
+        {
+            IsBusy = true;
+            try
+            {
+                foreach (var item in needsAnalysis)
+                {
+                    await AnalyzeBatchItemAsync(item, CancellationToken.None);
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        BatchItemsView.Refresh();
+        if (SelectedBatchItem is not null && !BatchItemsView.Contains(SelectedBatchItem))
+        {
+            SelectedBatchItem = BatchItemsView.Cast<BatchProcessingItem>().FirstOrDefault();
+        }
+
+        UpdateBatchSummary();
+        RaiseCommandStates();
+        return preparedItems.Count;
+    }
+
     private void PlaySourcePreview() =>
         PlayPreview(InputPath, "Button_PlaySource");
 
@@ -1213,6 +1332,34 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         OpenPath(OutputDirectory, "Status_OutputFolderOpened");
+    }
+
+    private void OpenSelectedOutput()
+    {
+        var outputPath = SelectedBatchItem?.OutputPath;
+        if (string.IsNullOrWhiteSpace(outputPath) || !File.Exists(outputPath))
+        {
+            SetStatus("Status_SelectedOutputFileMissing");
+            return;
+        }
+
+        OpenPath(outputPath, "Status_SelectedOutputFileOpened");
+    }
+
+    private void OpenSelectedOutputFolder()
+    {
+        var outputPath = SelectedBatchItem?.OutputPath;
+        var directory = string.IsNullOrWhiteSpace(outputPath)
+            ? null
+            : Path.GetDirectoryName(outputPath);
+
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        {
+            SetStatus("Status_SelectedOutputFolderMissing");
+            return;
+        }
+
+        OpenPath(directory, "Status_SelectedOutputFolderOpened");
     }
 
     private void OpenLastOutput()
@@ -1340,6 +1487,33 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                SelectedBatchItem?.AudioInfo is not null &&
                !string.IsNullOrWhiteSpace(SelectedBatchItem.SourcePath) &&
                File.Exists(SelectedBatchItem.SourcePath);
+    }
+
+    private bool CanRetrySelectedFile()
+    {
+        return !IsBusy && _batchQueueService.CanRetry(SelectedBatchItem);
+    }
+
+    private bool CanRetryFailedFiles()
+    {
+        return !IsBusy && _batchQueueService.GetRetryableItems(BatchItems).Count > 0;
+    }
+
+    private bool CanOpenSelectedOutput()
+    {
+        return !IsBusy && File.Exists(SelectedBatchItem?.OutputPath);
+    }
+
+    private bool CanOpenSelectedOutputFolder()
+    {
+        var outputPath = SelectedBatchItem?.OutputPath;
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            return false;
+        }
+
+        var directory = Path.GetDirectoryName(outputPath);
+        return !IsBusy && !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory);
     }
 
     private void ApplyPresetDefaults(AudioPreset preset)
@@ -1527,12 +1701,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void OnBatchItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HasBatchItems));
+        BatchItemsView.Refresh();
         UpdateBatchSummary();
         RaiseCommandStates();
     }
 
     private void OnBatchItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (BatchViewNeedsRefresh(e.PropertyName))
+        {
+            BatchItemsView.Refresh();
+        }
+
         UpdateBatchSummary();
         RaiseCommandStates();
 
@@ -1540,6 +1720,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             OnPropertyChanged(nameof(SelectedBatchItem));
         }
+    }
+
+    private bool FilterBatchItem(object item)
+    {
+        return item is BatchProcessingItem batchItem &&
+               _batchQueueService.MatchesFilter(batchItem, SelectedBatchFilter.Filter);
+    }
+
+    private static bool BatchViewNeedsRefresh(string? propertyName)
+    {
+        return propertyName is null or
+            nameof(BatchProcessingItem.Status) or
+            nameof(BatchProcessingItem.HasComparisonWarnings) or
+            nameof(BatchProcessingItem.ComparisonReport);
     }
 
     private void SyncSelectedBatchItem()
@@ -1722,10 +1916,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _cancelCommand.RaiseCanExecuteChanged();
         _removeSelectedFileCommand.RaiseCanExecuteChanged();
         _clearFinishedFilesCommand.RaiseCanExecuteChanged();
+        _retrySelectedFileCommand.RaiseCanExecuteChanged();
+        _retryFailedFilesCommand.RaiseCanExecuteChanged();
         _playSourceCommand.RaiseCanExecuteChanged();
         _playOutputCommand.RaiseCanExecuteChanged();
         _stopPreviewCommand.RaiseCanExecuteChanged();
         _openOutputFolderCommand.RaiseCanExecuteChanged();
+        _openSelectedOutputCommand.RaiseCanExecuteChanged();
+        _openSelectedOutputFolderCommand.RaiseCanExecuteChanged();
         _openLastOutputCommand.RaiseCanExecuteChanged();
         _openLastReportCommand.RaiseCanExecuteChanged();
         _copyLogCommand.RaiseCanExecuteChanged();

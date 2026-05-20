@@ -362,6 +362,20 @@
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
 
+        <Style x:Key="BatchDataGridRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasComparisonWarnings}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BatchProcessingStatus.Failed}">
+                    <Setter Property="Background" Value="{DynamicResource CriticalBackgroundBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BatchProcessingStatus.Cancelled}">
+                    <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="InsightSeverityBadgeStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource InfoBadgeBackgroundBrush}" />
             <Setter Property="CornerRadius" Value="10" />
@@ -510,6 +524,9 @@
                                     <ColumnDefinition Width="8" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="170" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
                                         Content="{Binding [Button_SelectFiles], Source={x:Static loc:LocalizationService.Instance}}"
@@ -520,13 +537,39 @@
                                 <Button Grid.Column="4"
                                         Content="{Binding [Button_ClearFinishedFiles], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding ClearFinishedFilesCommand}" />
+                                <TextBlock Grid.Column="6"
+                                           Text="{Binding [Field_Filter], Source={x:Static loc:LocalizationService.Instance}}"
+                                           Style="{StaticResource LabelStyle}"
+                                           VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="8"
+                                          ItemsSource="{Binding BatchFilters}"
+                                          SelectedItem="{Binding SelectedBatchFilter, Mode=TwoWay}"
+                                          DisplayMemberPath="DisplayName" />
                             </Grid>
 
                             <TextBlock Text="{Binding BatchSummaryText}"
                                        Style="{StaticResource LabelStyle}"
                                        Margin="0,0,0,8" />
 
-                            <DataGrid ItemsSource="{Binding BatchItems}"
+                            <WrapPanel Margin="0,0,0,10">
+                                <Button Content="{Binding [Button_RetrySelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding RetrySelectedFileCommand}"
+                                        Margin="0,0,8,8" />
+                                <Button Content="{Binding [Button_RetryFailedFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding RetryFailedFilesCommand}"
+                                        Margin="0,0,8,8" />
+                                <Button Content="{Binding [Button_OpenSelectedOutput], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenSelectedOutputCommand}"
+                                        Margin="0,0,8,8" />
+                                <Button Content="{Binding [Button_OpenSelectedOutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenSelectedOutputFolderCommand}"
+                                        Margin="0,0,8,8" />
+                                <Button Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenLastReportCommand}"
+                                        Margin="0,0,8,8" />
+                            </WrapPanel>
+
+                            <DataGrid ItemsSource="{Binding BatchItemsView}"
                                       SelectedItem="{Binding SelectedBatchItem, Mode=TwoWay}"
                                       AutoGenerateColumns="False"
                                       CanUserAddRows="False"
@@ -537,6 +580,7 @@
                                       SelectionMode="Single"
                                       MinHeight="160"
                                       MaxHeight="230"
+                                      RowStyle="{StaticResource BatchDataGridRowStyle}"
                                       Margin="0,0,0,10">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{Binding [Field_File], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding FileName}" Width="*" />
