@@ -43,6 +43,7 @@
   <data name="Button_OpenSelectedOutputFolder" xml:space="preserve"><value>Ausgabeordner öffnen</value></data>
   <data name="Button_OpenLastOutput" xml:space="preserve"><value>Letzte Datei öffnen</value></data>
   <data name="Button_OpenLastReport" xml:space="preserve"><value>Bericht öffnen</value></data>
+  <data name="Button_OpenLastReportFolder" xml:space="preserve"><value>Berichtsordner öffnen</value></data>
   <data name="Button_CopyLog" xml:space="preserve"><value>Log kopieren</value></data>
   <data name="Button_ClearLog" xml:space="preserve"><value>Log leeren</value></data>
   <data name="Button_ApplySuggestion" xml:space="preserve"><value>Übernehmen</value></data>
@@ -125,6 +126,8 @@
   <data name="Status_OutputFileMissing" xml:space="preserve"><value>Es gibt noch keine Ausgabedatei zum Öffnen.</value></data>
   <data name="Status_ReportFileOpened" xml:space="preserve"><value>Ergebnisbericht geöffnet.</value></data>
   <data name="Status_ReportFileMissing" xml:space="preserve"><value>Es gibt noch keinen Ergebnisbericht zum Öffnen.</value></data>
+  <data name="Status_ReportFolderOpened" xml:space="preserve"><value>Berichtsordner geöffnet.</value></data>
+  <data name="Status_ReportFolderMissing" xml:space="preserve"><value>Es gibt noch keinen Berichtsordner zum Öffnen.</value></data>
   <data name="Status_ResultValidationRunning" xml:space="preserve"><value>Ergebnisprüfung läuft...</value></data>
   <data name="Status_ResultValidationFailed" xml:space="preserve"><value>Ergebnisprüfung fehlgeschlagen.</value></data>
   <data name="Status_LogCopied" xml:space="preserve"><value>Log wurde in die Zwischenablage kopiert.</value></data>

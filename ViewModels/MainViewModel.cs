@@ -46,6 +46,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _openSelectedOutputFolderCommand;
     private readonly RelayCommand _openLastOutputCommand;
     private readonly RelayCommand _openLastReportCommand;
+    private readonly RelayCommand _openLastReportFolderCommand;
     private readonly RelayCommand _copyLogCommand;
     private readonly RelayCommand _clearLogCommand;
     private readonly RelayCommand<AudioProfileSuggestion> _applyProfileSuggestionCommand;
@@ -156,6 +157,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _openSelectedOutputFolderCommand = new RelayCommand(OpenSelectedOutputFolder, CanOpenSelectedOutputFolder);
         _openLastOutputCommand = new RelayCommand(OpenLastOutput, () => File.Exists(LastOutputPath));
         _openLastReportCommand = new RelayCommand(OpenLastReport, () => File.Exists(LastReportPath));
+        _openLastReportFolderCommand = new RelayCommand(OpenLastReportFolder, CanOpenLastReportFolder);
         _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
         _clearLogCommand = new RelayCommand(ClearLog, () => !IsBusy && !string.IsNullOrWhiteSpace(LogText));
         _applyProfileSuggestionCommand = new RelayCommand<AudioProfileSuggestion>(ApplyProfileSuggestion, suggestion => !IsBusy && suggestion is not null);
@@ -284,6 +286,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand OpenLastOutputCommand => _openLastOutputCommand;
 
     public ICommand OpenLastReportCommand => _openLastReportCommand;
+
+    public ICommand OpenLastReportFolderCommand => _openLastReportFolderCommand;
 
     public ICommand CopyLogCommand => _copyLogCommand;
 
@@ -418,7 +422,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 BatchItemsView.Refresh();
                 if (SelectedBatchItem is not null && !BatchItemsView.Contains(SelectedBatchItem))
                 {
-                    SelectedBatchItem = BatchItemsView.Cast<BatchProcessingItem>().FirstOrDefault();
+                    SelectVisibleBatchItem(0);
                 }
             }
         }
@@ -561,6 +565,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _lastReportPath, value))
             {
                 OnPropertyChanged(nameof(HasReportFile));
+                OnPropertyChanged(nameof(HasReportFolder));
                 RaiseCommandStates();
             }
         }
@@ -699,6 +704,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public bool HasOutputPreview => File.Exists(LastOutputPath);
 
     public bool HasReportFile => File.Exists(LastReportPath);
+
+    public bool HasReportFolder => GetExistingDirectoryForFile(LastReportPath) is not null;
 
     public async Task InitializeAsync()
     {
@@ -1155,8 +1162,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (result.IsSuccess && result.Value is not null)
         {
-            LastReportPath = result.Value;
-            _logService.Info(LocalizationService.Instance.Format("Log_ReportSavedFormat", result.Value));
+            if (File.Exists(result.Value))
+            {
+                LastReportPath = result.Value;
+                _logService.Info(LocalizationService.Instance.Format("Log_ReportSavedFormat", result.Value));
+                return;
+            }
+
+            _logService.Warning(LocalizationService.Instance["Error_ReportSaveFailed"]);
             return;
         }
 
@@ -1171,17 +1184,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        var index = BatchItems.IndexOf(item);
+        var index = GetVisibleIndex(item);
+        var removedOutputPath = item.OutputPath;
         RemoveBatchItem(item);
 
-        if (BatchItems.Count == 0)
+        if (PathsEqual(LastOutputPath, removedOutputPath))
         {
-            SelectedBatchItem = null;
+            LastOutputPath = string.Empty;
         }
-        else
-        {
-            SelectedBatchItem = BatchItems[Math.Clamp(index, 0, BatchItems.Count - 1)];
-        }
+
+        SelectVisibleBatchItem(index);
 
         SetStatus("Status_BatchItemRemoved");
     }
@@ -1196,12 +1208,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var items = _batchQueueService.GetFinishedItems(BatchItems);
         foreach (var item in items)
         {
+            var removedOutputPath = item.OutputPath;
             RemoveBatchItem(item);
+            if (PathsEqual(LastOutputPath, removedOutputPath))
+            {
+                LastOutputPath = string.Empty;
+            }
         }
 
-        if (SelectedBatchItem is null || !BatchItems.Contains(SelectedBatchItem))
+        if (SelectedBatchItem is null || !BatchItems.Contains(SelectedBatchItem) || !BatchItemsView.Contains(SelectedBatchItem))
         {
-            SelectedBatchItem = BatchItems.FirstOrDefault();
+            SelectVisibleBatchItem(0);
         }
 
         SetStatus("Status_BatchFinishedCleared");
@@ -1240,8 +1257,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var preparedItems = new List<BatchProcessingItem>();
         foreach (var item in items)
         {
+            var previousOutputPath = item.OutputPath;
+            var wasSelected = ReferenceEquals(item, SelectedBatchItem);
             if (_batchQueueService.ResetForRetry(item))
             {
+                if (PathsEqual(LastOutputPath, previousOutputPath))
+                {
+                    LastOutputPath = string.Empty;
+                }
+
+                if (wasSelected)
+                {
+                    ComparisonReport = null;
+                    ProgressValue = item.Progress;
+                }
+
                 preparedItems.Add(item);
             }
         }
@@ -1272,7 +1302,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         BatchItemsView.Refresh();
         if (SelectedBatchItem is not null && !BatchItemsView.Contains(SelectedBatchItem))
         {
-            SelectedBatchItem = BatchItemsView.Cast<BatchProcessingItem>().FirstOrDefault();
+            SelectVisibleBatchItem(0);
+        }
+        else
+        {
+            SyncSelectedBatchItem();
         }
 
         UpdateBatchSummary();
@@ -1382,6 +1416,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         OpenPath(LastReportPath, "Status_ReportFileOpened");
+    }
+
+    private void OpenLastReportFolder()
+    {
+        var directory = GetExistingDirectoryForFile(LastReportPath);
+        if (directory is null)
+        {
+            SetStatus("Status_ReportFolderMissing");
+            return;
+        }
+
+        OpenPath(directory, "Status_ReportFolderOpened");
     }
 
     private void CopyLog()
@@ -1514,6 +1560,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         var directory = Path.GetDirectoryName(outputPath);
         return !IsBusy && !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory);
+    }
+
+    private bool CanOpenLastReportFolder()
+    {
+        return !IsBusy && HasReportFolder;
     }
 
     private void ApplyPresetDefaults(AudioPreset preset)
@@ -1711,6 +1762,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         if (BatchViewNeedsRefresh(e.PropertyName))
         {
             BatchItemsView.Refresh();
+            if (SelectedBatchItem is not null && !BatchItemsView.Contains(SelectedBatchItem))
+            {
+                SelectVisibleBatchItem(0);
+            }
         }
 
         UpdateBatchSummary();
@@ -1734,6 +1789,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             nameof(BatchProcessingItem.Status) or
             nameof(BatchProcessingItem.HasComparisonWarnings) or
             nameof(BatchProcessingItem.ComparisonReport);
+    }
+
+    private int GetVisibleIndex(BatchProcessingItem item)
+    {
+        var visibleItems = BatchItemsView.Cast<BatchProcessingItem>().ToArray();
+        var index = Array.IndexOf(visibleItems, item);
+        return index < 0 ? 0 : index;
+    }
+
+    private void SelectVisibleBatchItem(int preferredIndex)
+    {
+        SelectedBatchItem = _batchQueueService.FindNextVisibleItem(
+            BatchItems,
+            SelectedBatchFilter.Filter,
+            preferredIndex);
     }
 
     private void SyncSelectedBatchItem()
@@ -1926,6 +1996,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _openSelectedOutputFolderCommand.RaiseCanExecuteChanged();
         _openLastOutputCommand.RaiseCanExecuteChanged();
         _openLastReportCommand.RaiseCanExecuteChanged();
+        _openLastReportFolderCommand.RaiseCanExecuteChanged();
         _copyLogCommand.RaiseCanExecuteChanged();
         _clearLogCommand.RaiseCanExecuteChanged();
         _applyProfileSuggestionCommand.RaiseCanExecuteChanged();
@@ -1935,6 +2006,39 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var music = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
         return Directory.Exists(music) ? music : Environment.CurrentDirectory;
+    }
+
+    private static string? GetExistingDirectoryForFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var directory = Path.GetDirectoryName(path);
+        return string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory)
+            ? null
+            : directory;
+    }
+
+    private static bool PathsEqual(string left, string right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

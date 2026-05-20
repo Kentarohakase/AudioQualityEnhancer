@@ -248,6 +248,40 @@ public sealed class BatchQueueServiceTests
     }
 
     [Fact]
+    public void FindNextVisibleItem_UsesFilteredItemsAndPreferredIndex()
+    {
+        var items = new[]
+        {
+            new BatchProcessingItem(@"C:\audio\done-one.mp3") { Status = BatchProcessingStatus.Done },
+            new BatchProcessingItem(@"C:\audio\ready.mp3") { Status = BatchProcessingStatus.Ready },
+            new BatchProcessingItem(@"C:\audio\done-two.mp3") { Status = BatchProcessingStatus.Done },
+            new BatchProcessingItem(@"C:\audio\failed.mp3") { Status = BatchProcessingStatus.Failed }
+        };
+
+        try
+        {
+            var service = new BatchQueueService(new FileNameService());
+
+            var firstDone = service.FindNextVisibleItem(items, BatchQueueFilter.Done, preferredIndex: 0);
+            var secondDone = service.FindNextVisibleItem(items, BatchQueueFilter.Done, preferredIndex: 1);
+            var clampedDone = service.FindNextVisibleItem(items, BatchQueueFilter.Done, preferredIndex: 99);
+            var noWarnings = service.FindNextVisibleItem(items, BatchQueueFilter.Warnings, preferredIndex: 0);
+
+            Assert.Same(items[0], firstDone);
+            Assert.Same(items[2], secondDone);
+            Assert.Same(items[2], clampedDone);
+            Assert.Null(noWarnings);
+        }
+        finally
+        {
+            foreach (var item in items)
+            {
+                item.Dispose();
+            }
+        }
+    }
+
+    [Fact]
     public void CalculateOverallProgress_CombinesCompletedItemsAndCurrentProgress()
     {
         var progress = BatchQueueService.CalculateOverallProgress(itemIndex: 1, totalItems: 4, itemProgress: 50);

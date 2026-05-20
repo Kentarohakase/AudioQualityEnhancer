@@ -44,6 +44,11 @@ function Test-ZipEntries {
             }
         }
 
+        $noticeEntry = $zip.Entries | Where-Object { $_.FullName.Replace("/", "\") -eq "THIRD_PARTY_NOTICES.md" } | Select-Object -First 1
+        if ($null -eq $noticeEntry -or $noticeEntry.Length -le 0) {
+            throw "THIRD_PARTY_NOTICES.md is missing or empty in $(Split-Path -Leaf $ZipPath)."
+        }
+
         if ($ValidateVersionFile) {
             $versionEntry = $zip.Entries | Where-Object { $_.FullName.Replace("/", "\") -eq "Tools\FFMPEG_VERSION.txt" } | Select-Object -First 1
             if ($null -eq $versionEntry) {

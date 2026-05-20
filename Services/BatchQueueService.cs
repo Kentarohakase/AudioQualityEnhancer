@@ -105,6 +105,20 @@ public sealed class BatchQueueService
         };
     }
 
+    public BatchProcessingItem? FindNextVisibleItem(
+        IEnumerable<BatchProcessingItem> items,
+        BatchQueueFilter filter,
+        int preferredIndex)
+    {
+        var visibleItems = GetItemsByFilter(items, filter);
+        if (visibleItems.Count == 0)
+        {
+            return null;
+        }
+
+        return visibleItems[Math.Clamp(preferredIndex, 0, visibleItems.Count - 1)];
+    }
+
     public BatchQueueSummary BuildSummary(IEnumerable<BatchProcessingItem> items)
     {
         var snapshot = items.ToArray();

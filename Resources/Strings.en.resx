@@ -43,6 +43,7 @@
   <data name="Button_OpenSelectedOutputFolder" xml:space="preserve"><value>Open output folder</value></data>
   <data name="Button_OpenLastOutput" xml:space="preserve"><value>Open last file</value></data>
   <data name="Button_OpenLastReport" xml:space="preserve"><value>Open report</value></data>
+  <data name="Button_OpenLastReportFolder" xml:space="preserve"><value>Open report folder</value></data>
   <data name="Button_CopyLog" xml:space="preserve"><value>Copy log</value></data>
   <data name="Button_ClearLog" xml:space="preserve"><value>Clear log</value></data>
   <data name="Button_ApplySuggestion" xml:space="preserve"><value>Apply</value></data>
@@ -125,6 +126,8 @@
   <data name="Status_OutputFileMissing" xml:space="preserve"><value>There is no output file to open yet.</value></data>
   <data name="Status_ReportFileOpened" xml:space="preserve"><value>Result report opened.</value></data>
   <data name="Status_ReportFileMissing" xml:space="preserve"><value>There is no result report to open yet.</value></data>
+  <data name="Status_ReportFolderOpened" xml:space="preserve"><value>Report folder opened.</value></data>
+  <data name="Status_ReportFolderMissing" xml:space="preserve"><value>There is no report folder to open yet.</value></data>
   <data name="Status_ResultValidationRunning" xml:space="preserve"><value>Checking result...</value></data>
   <data name="Status_ResultValidationFailed" xml:space="preserve"><value>Result check failed.</value></data>
   <data name="Status_LogCopied" xml:space="preserve"><value>Log copied to clipboard.</value></data>

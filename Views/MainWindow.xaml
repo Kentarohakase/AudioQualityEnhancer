@@ -567,6 +567,9 @@
                                 <Button Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding OpenLastReportCommand}"
                                         Margin="0,0,8,8" />
+                                <Button Content="{Binding [Button_OpenLastReportFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenLastReportFolderCommand}"
+                                        Margin="0,0,8,8" />
                             </WrapPanel>
 
                             <DataGrid ItemsSource="{Binding BatchItemsView}"
@@ -1022,6 +1025,8 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="8" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
                                         Content="{Binding [Button_OpenOutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
@@ -1032,6 +1037,9 @@
                                 <Button Grid.Column="4"
                                         Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding OpenLastReportCommand}" />
+                                <Button Grid.Column="6"
+                                        Content="{Binding [Button_OpenLastReportFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding OpenLastReportFolderCommand}" />
                             </Grid>
 
                             <DockPanel Margin="0,0,0,4">

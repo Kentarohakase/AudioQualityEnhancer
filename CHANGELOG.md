@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.2 - 2026-05-20
+
+### Added
+
+- Added a quick action for opening the folder of the latest result report.
+
+### Fixed
+
+- Improved batch retry cleanup so stale output and result-check details are cleared from the selected file.
+- Improved filtered queue selection after retrying or removing entries.
+- Strengthened release package verification for empty third-party notices.
+
 ## 0.12.1 - 2026-05-20
 
 ### Added
