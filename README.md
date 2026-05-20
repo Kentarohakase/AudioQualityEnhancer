@@ -150,16 +150,20 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofi
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.11.0
+.\scripts\package-release.ps1 -Version 0.12.0
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.11.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.12.0 -IncludeFFmpeg
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.
+
+## Third-party software
+
+AudioQualityEnhancer nutzt FFmpeg und FFprobe als externe Programme. Die Tools gehören zum FFmpeg-Projekt und unterliegen ihren eigenen Lizenzbedingungen. Details stehen in `THIRD_PARTY_NOTICES.md`.
 
 ## Sicherheit
 

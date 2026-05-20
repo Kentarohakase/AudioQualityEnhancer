@@ -21,6 +21,8 @@ Diese Checkliste hilft dabei, Releases gleichbleibend sauber zu erstellen.
 - Beide ZIP-Dateien pruefen:
   - `AudioQualityEnhancer-<version>-win-x64.zip`
   - `AudioQualityEnhancer-<version>-win-x64-with-ffmpeg.zip`
+- Beide ZIP-Dateien muessen `THIRD_PARTY_NOTICES.md` enthalten.
+- Das ZIP mit FFmpeg muss `Tools/FFMPEG_VERSION.txt`, `Tools/ffmpeg.exe` und `Tools/ffprobe.exe` enthalten.
 
 ## Nach dem Release
 

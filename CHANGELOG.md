@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.12.0 - 2026-05-20
 
 ### Added
 
 - Added batch review filters for ready, running, finished, warning, failed and cancelled queue entries.
 - Added retry actions for selected failed/cancelled entries and all failed/cancelled entries.
 - Added quick actions for opening the selected output file or its output folder.
+- Added third-party notices for FFmpeg/FFprobe and included those notices in release packages.
 
 ## 0.11.1 - 2026-05-17
 

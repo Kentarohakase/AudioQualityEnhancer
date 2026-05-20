@@ -55,6 +55,7 @@ Copy-Item -LiteralPath (Join-Path $publishDir "AudioQualityEnhancer.exe") -Desti
 Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "CHANGELOG.md") -Destination $stageDir
+Copy-Item -LiteralPath (Join-Path $root "THIRD_PARTY_NOTICES.md") -Destination $stageDir
 Copy-Item -LiteralPath (Join-Path $root "Tools\README.md") -Destination (Join-Path $stageDir "Tools\README.md")
 
 if ($IncludeFFmpeg) {
@@ -63,6 +64,33 @@ if ($IncludeFFmpeg) {
 
     Copy-Item -LiteralPath $ffmpeg.Source -Destination (Join-Path $stageDir "Tools\ffmpeg.exe")
     Copy-Item -LiteralPath $ffprobe.Source -Destination (Join-Path $stageDir "Tools\ffprobe.exe")
+
+    $versionFile = Join-Path $stageDir "Tools\FFMPEG_VERSION.txt"
+    $packageDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $ffmpegVersion = & $ffmpeg.Source -version
+    $ffprobeVersion = & $ffprobe.Source -version
+
+    @(
+        "FFmpeg/FFprobe bundle information"
+        "Package version: $Version"
+        "Package date (UTC): $packageDate"
+        ""
+        "This package contains ffmpeg.exe and ffprobe.exe as external command-line tools."
+        "FFmpeg project: https://ffmpeg.org/"
+        "License information: https://ffmpeg.org/legal.html"
+        "Source code: https://ffmpeg.org/download.html"
+        "Git mirror: https://github.com/FFmpeg/FFmpeg"
+        ""
+        "ffmpeg -version"
+        "---------------"
+        $ffmpegVersion
+        ""
+        "ffprobe -version"
+        "----------------"
+        $ffprobeVersion
+    ) |
+        Where-Object { $_ -notmatch "[A-Za-z]:\\" } |
+        Set-Content -LiteralPath $versionFile -Encoding UTF8
 }
 
 Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $zipPath -Force
