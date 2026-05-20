@@ -7,6 +7,7 @@ Diese Checkliste hilft dabei, Releases gleichbleibend sauber zu erstellen.
 - `dotnet build .\AudioQualityEnhancer.slnx -c Release`
 - `dotnet test .\AudioQualityEnhancer.slnx -c Release --no-build`
 - `.\scripts\package-release.ps1 -Version <version>`
+- `.\scripts\verify-release-package.ps1 -Version <version>`
 - Changelog auf die neue Version setzen.
 - README-Beispiele auf die neue Version aktualisieren.
 - Release Notes kurz, neutral und produktbezogen formulieren.
@@ -23,6 +24,7 @@ Diese Checkliste hilft dabei, Releases gleichbleibend sauber zu erstellen.
   - `AudioQualityEnhancer-<version>-win-x64-with-ffmpeg.zip`
 - Beide ZIP-Dateien muessen `THIRD_PARTY_NOTICES.md` enthalten.
 - Das ZIP mit FFmpeg muss `Tools/FFMPEG_VERSION.txt`, `Tools/ffmpeg.exe` und `Tools/ffprobe.exe` enthalten.
+- Nach dem Workflow kann das heruntergeladene Paket erneut mit `.\scripts\verify-release-package.ps1 -Version <version> -RequireFFmpegPackage` geprueft werden.
 
 ## Nach dem Release
 

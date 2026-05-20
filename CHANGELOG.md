@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.1 - 2026-05-20
+
+### Added
+
+- Added a release package verification script for checking required files, third-party notices and bundled FFmpeg metadata in ZIP packages.
+
 ## 0.12.0 - 2026-05-20
 
 ### Added
