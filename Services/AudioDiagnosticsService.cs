@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 using AudioQualityEnhancer.Models;
 
@@ -9,10 +7,17 @@ namespace AudioQualityEnhancer.Services;
 public sealed partial class AudioDiagnosticsService
 {
     private readonly ToolDiscoveryService _toolDiscoveryService;
+    private readonly IProcessRunner _processRunner;
 
     public AudioDiagnosticsService(ToolDiscoveryService toolDiscoveryService)
+        : this(toolDiscoveryService, new ProcessRunner())
+    {
+    }
+
+    internal AudioDiagnosticsService(ToolDiscoveryService toolDiscoveryService, IProcessRunner processRunner)
     {
         _toolDiscoveryService = toolDiscoveryService;
+        _processRunner = processRunner;
     }
 
     public async Task<Result<AudioDiagnostics>> AnalyzeAsync(
@@ -69,80 +74,23 @@ public sealed partial class AudioDiagnosticsService
         CancellationToken cancellationToken,
         AudioStreamInfo? audioStream)
     {
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo
-        {
-            FileName = _toolDiscoveryService.ResolveExecutable("ffmpeg"),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        foreach (var argument in BuildArguments(inputPath, audioStream))
-        {
-            process.StartInfo.ArgumentList.Add(argument);
-        }
-
-        var stdout = new StringBuilder();
-        var stderr = new StringBuilder();
-        var outputClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var errorClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var startedAt = DateTimeOffset.Now;
-
-        process.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data is null)
-            {
-                outputClosed.TrySetResult();
-                return;
-            }
-
-            lock (stdout)
-            {
-                stdout.AppendLine(e.Data);
-            }
-        };
-
-        process.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data is null)
-            {
-                errorClosed.TrySetResult();
-                return;
-            }
-
-            lock (stderr)
-            {
-                stderr.AppendLine(e.Data);
-            }
-
-            TryReportProgress(e.Data, totalDuration, progress);
-        };
-
         try
         {
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+            var result = await _processRunner.RunAsync(
+                new ProcessRunOptions(
+                    _toolDiscoveryService.ResolveExecutable("ffmpeg"),
+                    BuildArguments(inputPath, audioStream),
+                    StandardErrorLine: line => TryReportProgress(line, totalDuration, progress)),
+                cancellationToken);
 
-            await process.WaitForExitAsync(cancellationToken);
-            await Task.WhenAll(outputClosed.Task, errorClosed.Task);
+            if (result.WasCancelled)
+            {
+                return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_AnalysisCancelled"], value: result);
+            }
 
-            var result = new ProcessResult(
-                process.ExitCode,
-                stdout.ToString(),
-                stderr.ToString(),
-                DateTimeOffset.Now - startedAt);
-
-            return process.ExitCode == 0
+            return result.ExitCode == 0
                 ? Result<ProcessResult>.Success(result)
-                : Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", process.ExitCode), value: result);
-        }
-        catch (OperationCanceledException)
-        {
-            TryKill(process);
-            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_AnalysisCancelled"]);
+                : Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", result.ExitCode), value: result);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
@@ -244,21 +192,6 @@ public sealed partial class AudioDiagnosticsService
         if (TimeSpan.TryParse(raw, CultureInfo.InvariantCulture, out var elapsed))
         {
             progress(Math.Clamp(elapsed.TotalSeconds / totalDuration.Value.TotalSeconds * 100d, 0, 99.5));
-        }
-    }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-            {
-                process.Kill(entireProcessTree: true);
-            }
-        }
-        catch
-        {
-            // Best effort cleanup after cancellation.
         }
     }
 

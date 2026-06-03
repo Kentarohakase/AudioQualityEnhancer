@@ -20,6 +20,9 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Format
+        run: dotnet format .\AudioQualityEnhancer.slnx --verify-no-changes
+
       - name: Build
         run: dotnet build .\AudioQualityEnhancer.slnx -c Release
 

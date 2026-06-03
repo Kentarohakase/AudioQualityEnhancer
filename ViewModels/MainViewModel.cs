@@ -1,12 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Threading;
 using AudioQualityEnhancer.Models;
 using AudioQualityEnhancer.Services;
 using Forms = System.Windows.Forms;
@@ -18,7 +16,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly FileNameService _fileNameService;
     private readonly LogService _logService;
     private readonly ToolDiscoveryService _toolDiscoveryService;
-    private readonly AudioPreviewService _audioPreviewService;
+    private readonly AudioPreviewController _audioPreviewController;
     private readonly FFmpegService _ffmpegService;
     private readonly FFprobeService _ffprobeService;
     private readonly AudioDiagnosticsService _audioDiagnosticsService;
@@ -28,7 +26,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioValidationService _audioValidationService;
     private readonly QualityReportService _qualityReportService;
     private readonly BatchQueueService _batchQueueService;
+    private readonly BatchQueueViewService _batchQueueViewService;
     private readonly SettingsService _settingsService;
+    private readonly ShellInteractionService _shellInteractionService;
     private readonly AsyncRelayCommand _selectFileCommand;
     private readonly AsyncRelayCommand _analyzeDiagnosticsCommand;
     private readonly RelayCommand _selectOutputFolderCommand;
@@ -92,7 +92,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private CancellationTokenSource? _diagnosticsCancellation;
     private bool _hasAnalysisWarnings;
 
-    private DispatcherTimer? _previewTimer;
     private bool _updatingPositionFromTimer;
     private double _previewPositionSeconds;
     private double _previewDurationSeconds;
@@ -108,17 +107,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _fileNameService = new FileNameService();
         _logService = new LogService();
         _toolDiscoveryService = new ToolDiscoveryService();
-        _audioPreviewService = new AudioPreviewService();
-        _ffmpegService = new FFmpegService(_toolDiscoveryService);
-        _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService);
-        _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService);
+        var processRunner = new ProcessRunner();
+        _audioPreviewController = new AudioPreviewController(new AudioPreviewService());
+        _ffmpegService = new FFmpegService(_toolDiscoveryService, processRunner);
+        _ffprobeService = new FFprobeService(_fileNameService, _toolDiscoveryService, processRunner);
+        _audioDiagnosticsService = new AudioDiagnosticsService(_toolDiscoveryService, processRunner);
         _audioAnalysisInsightService = new AudioAnalysisInsightService();
         _audioProfileAdvisorService = new AudioProfileAdvisorService(_fileNameService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
         _audioValidationService = new AudioValidationService(_ffprobeService, _audioDiagnosticsService, _logService);
         _qualityReportService = new QualityReportService();
         _batchQueueService = new BatchQueueService(_fileNameService);
+        _batchQueueViewService = new BatchQueueViewService(_batchQueueService);
         _settingsService = App.SettingsService;
+        _shellInteractionService = new ShellInteractionService();
 
         _statusText = LocalizationService.Instance["Status_Ready"];
         _toolStatusText = LocalizationService.Instance["Tools_Checking"];
@@ -126,8 +128,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _batchSummaryText = LocalizationService.Instance["BatchSummary_Empty"];
 
         _logService.LogAdded += OnLogAdded;
-        _audioPreviewService.PlaybackFailed += OnPlaybackFailed;
-        _audioPreviewService.PlaybackEnded += OnPlaybackEnded;
+        _audioPreviewController.Tick += OnPreviewTimerTick;
+        _audioPreviewController.PlaybackFailed += OnPlaybackFailed;
+        _audioPreviewController.PlaybackEnded += OnPlaybackEnded;
         LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
 
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
@@ -664,7 +667,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 if (!_updatingPositionFromTimer)
                 {
-                    _audioPreviewService.Position = TimeSpan.FromSeconds(value);
+                    _audioPreviewController.Position = TimeSpan.FromSeconds(value);
                 }
 
                 OnPropertyChanged(nameof(PreviewTimeText));
@@ -1322,8 +1325,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void PlayPreview(string path, string labelKey)
     {
-        StopPreviewTimer();
-        var result = _audioPreviewService.Play(path);
+        var result = _audioPreviewController.Play(path);
         if (result.IsSuccess)
         {
             _activePreviewLabelKey = labelKey;
@@ -1332,7 +1334,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             PreviewPositionSeconds = 0;
             SetStatus("Status_PreviewPlayingFormat", LocalizationService.Instance[labelKey]);
             _logService.Info(LocalizationService.Instance.Format("Log_PreviewStartedFormat", path));
-            StartPreviewTimer();
             return;
         }
 
@@ -1348,8 +1349,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void StopPreview()
     {
-        StopPreviewTimer();
-        _audioPreviewService.Stop();
+        _audioPreviewController.Stop();
         IsPreviewActive = false;
         _activePreviewLabelKey = null;
         PreviewPositionSeconds = 0;
@@ -1438,14 +1438,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        try
+        var result = _shellInteractionService.CopyText(LogText);
+        if (result.IsSuccess)
         {
-            System.Windows.Clipboard.SetText(LogText);
             SetStatus("Status_LogCopied");
         }
-        catch (Exception ex)
+        else
         {
-            SetStatusRaw(LocalizationService.Instance.Format("Error_ClipboardFailedFormat", ex.Message));
+            SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Status_LogEmpty"]);
         }
     }
 
@@ -1462,49 +1462,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OpenPath(string path, string successStatusKey)
     {
-        try
+        var result = _shellInteractionService.OpenPath(path);
+        if (result.IsSuccess)
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true
-            });
             SetStatus(successStatusKey);
-        }
-        catch (Exception ex)
-        {
-            SetStatusRaw(LocalizationService.Instance.Format("Error_OpenPathFailedFormat", ex.Message));
-        }
-    }
-
-    private void StartPreviewTimer()
-    {
-        _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
-        _previewTimer.Tick += OnPreviewTimerTick;
-        _previewTimer.Start();
-    }
-
-    private void StopPreviewTimer()
-    {
-        if (_previewTimer is null)
-        {
             return;
         }
 
-        _previewTimer.Stop();
-        _previewTimer.Tick -= OnPreviewTimerTick;
-        _previewTimer = null;
+        SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance.Format("Error_OpenPathFailedFormat", string.Empty));
     }
 
     private void OnPreviewTimerTick(object? sender, EventArgs e)
     {
-        if (_audioPreviewService.NaturalDuration.HasValue && PreviewDurationSeconds == 0)
+        if (_audioPreviewController.NaturalDuration.HasValue && PreviewDurationSeconds == 0)
         {
-            PreviewDurationSeconds = _audioPreviewService.NaturalDuration.Value.TotalSeconds;
+            PreviewDurationSeconds = _audioPreviewController.NaturalDuration.Value.TotalSeconds;
         }
 
         _updatingPositionFromTimer = true;
-        PreviewPositionSeconds = _audioPreviewService.Position.TotalSeconds;
+        PreviewPositionSeconds = _audioPreviewController.Position.TotalSeconds;
         _updatingPositionFromTimer = false;
     }
 
@@ -1780,7 +1756,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool FilterBatchItem(object item)
     {
         return item is BatchProcessingItem batchItem &&
-               _batchQueueService.MatchesFilter(batchItem, SelectedBatchFilter.Filter);
+               _batchQueueViewService.MatchesFilter(batchItem, SelectedBatchFilter.Filter);
     }
 
     private static bool BatchViewNeedsRefresh(string? propertyName)
@@ -1800,7 +1776,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void SelectVisibleBatchItem(int preferredIndex)
     {
-        SelectedBatchItem = _batchQueueService.FindNextVisibleItem(
+        SelectedBatchItem = _batchQueueViewService.FindNextVisibleItem(
             BatchItems,
             SelectedBatchFilter.Filter,
             preferredIndex);
@@ -1833,23 +1809,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void UpdateBatchSummary()
     {
-        var summary = _batchQueueService.BuildSummary(BatchItems);
-        BatchSummaryText = summary.HasItems
-            ? LocalizationService.Instance.Format(
-                "BatchSummary_Format",
-                summary.Total,
-                summary.Ready,
-                summary.Processing,
-                summary.Done,
-                summary.DoneWithWarnings,
-                summary.Failed,
-                summary.Cancelled)
-            : LocalizationService.Instance["BatchSummary_Empty"];
+        BatchSummaryText = _batchQueueViewService.BuildSummaryText(BatchItems);
     }
 
     private int CountStatus(BatchProcessingStatus status)
     {
-        return BatchItems.Count(item => item.Status == status);
+        return _batchQueueViewService.CountStatus(BatchItems, status);
     }
 
     private void OnLogAdded(object? sender, string line)
@@ -1867,7 +1832,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnPlaybackFailed(object? sender, string errorMessage)
     {
-        StopPreviewTimer();
         IsPreviewActive = false;
         PreviewPositionSeconds = 0;
         PreviewDurationSeconds = 0;
@@ -1878,7 +1842,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnPlaybackEnded(object? sender, EventArgs e)
     {
-        StopPreviewTimer();
         IsPreviewActive = false;
         _activePreviewLabelKey = null;
         PreviewPositionSeconds = 0;
@@ -2060,14 +2023,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
-        _audioPreviewService.PlaybackFailed -= OnPlaybackFailed;
-        _audioPreviewService.PlaybackEnded -= OnPlaybackEnded;
+        _audioPreviewController.Tick -= OnPreviewTimerTick;
+        _audioPreviewController.PlaybackFailed -= OnPlaybackFailed;
+        _audioPreviewController.PlaybackEnded -= OnPlaybackEnded;
         BatchItems.CollectionChanged -= OnBatchItemsChanged;
         LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
-        StopPreviewTimer();
         _processingCancellation?.Dispose();
         _diagnosticsCancellation?.Dispose();
-        _audioPreviewService.Dispose();
+        _audioPreviewController.Dispose();
         foreach (var item in BatchItems)
         {
             item.PropertyChanged -= OnBatchItemPropertyChanged;

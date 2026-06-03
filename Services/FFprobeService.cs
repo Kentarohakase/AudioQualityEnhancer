@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using AudioQualityEnhancer.Models;
@@ -9,11 +8,21 @@ public sealed class FFprobeService
 {
     private readonly FileNameService _fileNameService;
     private readonly ToolDiscoveryService _toolDiscoveryService;
+    private readonly IProcessRunner _processRunner;
 
     public FFprobeService(FileNameService fileNameService, ToolDiscoveryService toolDiscoveryService)
+        : this(fileNameService, toolDiscoveryService, new ProcessRunner())
+    {
+    }
+
+    internal FFprobeService(
+        FileNameService fileNameService,
+        ToolDiscoveryService toolDiscoveryService,
+        IProcessRunner processRunner)
     {
         _fileNameService = fileNameService;
         _toolDiscoveryService = toolDiscoveryService;
+        _processRunner = processRunner;
     }
 
     public async Task<Result> CheckAvailabilityAsync(CancellationToken cancellationToken)
@@ -53,6 +62,11 @@ public sealed class FFprobeService
             log?.Invoke(LocalizationService.Instance["Log_AnalyzingSourceFFprobe"]);
             var args = new[] { "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", inputPath };
             var processResult = await RunProcessAsync(args, cancellationToken);
+
+            if (processResult.WasCancelled)
+            {
+                return Result<AudioInfo>.Failure(LocalizationService.Instance["Error_AnalysisCancelled"]);
+            }
 
             if (processResult.ExitCode != 0)
             {
@@ -176,54 +190,9 @@ public sealed class FFprobeService
 
     private async Task<ProcessResult> RunProcessAsync(IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo
-        {
-            FileName = _toolDiscoveryService.ResolveExecutable("ffprobe"),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        foreach (var argument in arguments)
-        {
-            process.StartInfo.ArgumentList.Add(argument);
-        }
-
-        var startedAt = DateTimeOffset.Now;
-        process.Start();
-
-        var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-
-        try
-        {
-            await process.WaitForExitAsync(cancellationToken);
-            var stdout = await stdoutTask;
-            var stderr = await stderrTask;
-            return new ProcessResult(process.ExitCode, stdout, stderr, DateTimeOffset.Now - startedAt);
-        }
-        catch (OperationCanceledException)
-        {
-            TryKill(process);
-            throw;
-        }
-    }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-            {
-                process.Kill(entireProcessTree: true);
-            }
-        }
-        catch
-        {
-            // Best effort cleanup after cancellation.
-        }
+        return await _processRunner.RunAsync(
+            new ProcessRunOptions(_toolDiscoveryService.ResolveExecutable("ffprobe"), arguments),
+            cancellationToken);
     }
 
     private static string? TryGetString(JsonElement element, string propertyName)

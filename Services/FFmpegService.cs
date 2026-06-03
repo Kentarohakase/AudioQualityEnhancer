@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 using AudioQualityEnhancer.Models;
 
 namespace AudioQualityEnhancer.Services;
@@ -8,10 +6,17 @@ namespace AudioQualityEnhancer.Services;
 public sealed class FFmpegService
 {
     private readonly ToolDiscoveryService _toolDiscoveryService;
+    private readonly IProcessRunner _processRunner;
 
     public FFmpegService(ToolDiscoveryService toolDiscoveryService)
+        : this(toolDiscoveryService, new ProcessRunner())
+    {
+    }
+
+    internal FFmpegService(ToolDiscoveryService toolDiscoveryService, IProcessRunner processRunner)
     {
         _toolDiscoveryService = toolDiscoveryService;
+        _processRunner = processRunner;
     }
 
     public async Task<Result> CheckAvailabilityAsync(CancellationToken cancellationToken)
@@ -29,98 +34,39 @@ public sealed class FFmpegService
         TimeSpan? totalDuration,
         CancellationToken cancellationToken)
     {
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo
-        {
-            FileName = _toolDiscoveryService.ResolveExecutable("ffmpeg"),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        foreach (var argument in arguments)
-        {
-            process.StartInfo.ArgumentList.Add(argument);
-        }
-
-        var stdout = new StringBuilder();
-        var stderr = new StringBuilder();
-        var outputClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var errorClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var startedAt = DateTimeOffset.Now;
-
-        process.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data is null)
-            {
-                outputClosed.TrySetResult();
-                return;
-            }
-
-            lock (stdout)
-            {
-                stdout.AppendLine(e.Data);
-            }
-
-            if (!TryReportProgressFromProgressLine(e.Data, totalDuration, progress) && !IsProgressMetadataLine(e.Data))
-            {
-                log?.Invoke(e.Data);
-            }
-        };
-
-        process.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data is null)
-            {
-                errorClosed.TrySetResult();
-                return;
-            }
-
-            lock (stderr)
-            {
-                stderr.AppendLine(e.Data);
-            }
-
-            log?.Invoke(e.Data);
-            TryReportProgressFromFFmpegText(e.Data, totalDuration, progress);
-        };
-
         try
         {
             log?.Invoke(LocalizationService.Instance.Format("Log_FFmpegStartingFormat", FormatCommand(arguments)));
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+            var result = await _processRunner.RunAsync(
+                new ProcessRunOptions(
+                    _toolDiscoveryService.ResolveExecutable("ffmpeg"),
+                    arguments,
+                    line =>
+                    {
+                        if (!TryReportProgressFromProgressLine(line, totalDuration, progress) && !IsProgressMetadataLine(line))
+                        {
+                            log?.Invoke(line);
+                        }
+                    },
+                    line =>
+                    {
+                        log?.Invoke(line);
+                        TryReportProgressFromFFmpegText(line, totalDuration, progress);
+                    }),
+                cancellationToken);
 
-            await process.WaitForExitAsync(cancellationToken);
-            await Task.WhenAll(outputClosed.Task, errorClosed.Task);
+            if (result.WasCancelled)
+            {
+                return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_ProcessingCancelled"], value: result);
+            }
 
-            var result = new ProcessResult(
-                process.ExitCode,
-                stdout.ToString(),
-                stderr.ToString(),
-                DateTimeOffset.Now - startedAt);
-
-            if (process.ExitCode == 0)
+            if (result.ExitCode == 0)
             {
                 progress?.Invoke(100);
                 return Result<ProcessResult>.Success(result);
             }
 
-            return Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", process.ExitCode), value: result);
-        }
-        catch (OperationCanceledException)
-        {
-            TryKill(process);
-            var result = new ProcessResult(
-                process.HasExited ? process.ExitCode : -1,
-                stdout.ToString(),
-                stderr.ToString(),
-                DateTimeOffset.Now - startedAt,
-                WasCancelled: true);
-
-            return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_ProcessingCancelled"], value: result);
+            return Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", result.ExitCode), value: result);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
@@ -221,18 +167,4 @@ public sealed class FFmpegService
         progress(percent);
     }
 
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-            {
-                process.Kill(entireProcessTree: true);
-            }
-        }
-        catch
-        {
-            // Best effort cleanup after cancellation.
-        }
-    }
 }

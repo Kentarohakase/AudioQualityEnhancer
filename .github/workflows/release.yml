@@ -58,6 +58,10 @@ jobs:
         shell: pwsh
         run: .\scripts\package-release.ps1 -Version "${{ steps.vars.outputs.version }}" -IncludeFFmpeg
 
+      - name: Verify packages
+        shell: pwsh
+        run: .\scripts\verify-release-package.ps1 -Version "${{ steps.vars.outputs.version }}" -RequireFFmpegPackage
+
       - name: Upload assets to GitHub Release
         if: github.event_name == 'release'
         shell: pwsh

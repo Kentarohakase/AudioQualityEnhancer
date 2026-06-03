@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.12.3 - 2026-06-03
+
+### Added
+
+- Added a shared process runner for FFmpeg, FFprobe and diagnostics execution with focused cancellation and output-capture tests.
+- Added CI format verification and release package verification in the GitHub workflows.
+
+### Changed
+
+- Enabled stricter Release build quality checks with .NET analyzers, code-style enforcement and warnings-as-errors.
+- Moved preview playback state, shell interactions and batch queue view helpers out of the main view model to improve maintainability without changing the UI behavior.
+- Formatted WPF assembly metadata so `dotnet format --verify-no-changes` can run cleanly in CI.
+
 ## 0.12.2 - 2026-05-20
 
 ### Added
