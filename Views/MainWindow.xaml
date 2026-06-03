@@ -621,15 +621,25 @@
                                     <ColumnDefinition Width="8" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"
                                         Content="{Binding [Button_PlaySource], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding PlaySourceCommand}" />
                                 <Button Grid.Column="2"
+                                        Content="{Binding [Button_RenderProcessedPreview], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding RenderProcessedPreviewCommand}" />
+                                <Button Grid.Column="4"
+                                        Content="{Binding [Button_PlayProcessedPreview], Source={x:Static loc:LocalizationService.Instance}}"
+                                        Command="{Binding PlayProcessedPreviewCommand}" />
+                                <Button Grid.Column="6"
                                         Content="{Binding [Button_PlayOutput], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding PlayOutputCommand}" />
-                                <Button Grid.Column="4"
+                                <Button Grid.Column="8"
                                         Content="{Binding [Button_StopPreview], Source={x:Static loc:LocalizationService.Instance}}"
                                         Command="{Binding StopPreviewCommand}" />
                             </Grid>

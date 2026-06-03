@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using AudioQualityEnhancer.Models;
 
@@ -30,7 +29,7 @@ public sealed class AudioProcessingService
             return LocalizationService.Instance["Filter_StreamCopy"];
         }
 
-        var filterPlan = BuildFilterPlan(options);
+        var filterPlan = AudioFilterPlanner.BuildPlan(options);
         if (!filterPlan.HasFilters)
         {
             return LocalizationService.Instance["Filter_NoFilters"];
@@ -38,8 +37,8 @@ public sealed class AudioProcessingService
 
         if (filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness)
         {
-            var pass1 = BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, null, printJson: true);
-            var pass2 = BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, LoudnormMeasuredStats.Placeholder, printJson: false);
+            var pass1 = AudioFilterPlanner.BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, null, printJson: true);
+            var pass2 = AudioFilterPlanner.BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, LoudnormMeasuredStats.Placeholder, printJson: false);
             return $"Pass 1: {pass1}{Environment.NewLine}Pass 2: {pass2}";
         }
 
@@ -116,7 +115,7 @@ public sealed class AudioProcessingService
 
             if (pass1Result.Value is not null)
             {
-                filterGraph = BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, pass1Result.Value, printJson: false);
+                filterGraph = AudioFilterPlanner.BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, pass1Result.Value, printJson: false);
                 _logService.Info(LocalizationService.Instance["Log_TwoPassMeasurementsApplied"]);
             }
             else
@@ -186,7 +185,7 @@ public sealed class AudioProcessingService
         var pass1Detail = LocalizationService.Instance["Phase_Pass1of2"];
         Report(progress, 12, phase, pass1Detail);
 
-        var pass1Filter = BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, null, printJson: true);
+        var pass1Filter = AudioFilterPlanner.BuildLoudnormFilter(plan.PreLoudnessFilters, plan.LoudnessSettings!, null, printJson: true);
         var pass1Arguments = BuildLoudnessAnalysisArguments(inputPath, pass1Filter, audioStream);
 
         _logService.Info(LocalizationService.Instance["Log_TwoPassStartingMeasure"]);
@@ -235,7 +234,7 @@ public sealed class AudioProcessingService
                 ? $"{options.Preset.Id}_premiere_pro"
                 : options.Preset.Id;
         var outputPathForTranscode = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, suffix, exportFormat.Extension);
-        var filterPlan = BuildFilterPlan(options);
+        var filterPlan = AudioFilterPlanner.BuildPlan(options);
 
         return Result<OutputPlan>.Success(new OutputPlan(
             outputPathForTranscode,
@@ -244,74 +243,6 @@ public sealed class AudioProcessingService
             filterPlan.PreLoudnessFilters,
             filterPlan.LoudnessSettings,
             filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness));
-    }
-
-    private static FilterPlan BuildFilterPlan(ProcessingOptions options)
-    {
-        if (options.Preset.Id == AudioPreset.Music.Id)
-        {
-            var loudness = new LoudnessSettings("-14", "-1.5", "11");
-            return new FilterPlan(
-                BuildLoudnormFilter(Array.Empty<string>(), loudness, null, printJson: false),
-                Array.Empty<string>(),
-                loudness);
-        }
-
-        if (options.Preset.Id == AudioPreset.Speech.Id)
-        {
-            var preFilters = new List<string>
-            {
-                "highpass=f=80"
-            };
-
-            if (options.EnableSpeechPresenceBoost)
-            {
-                preFilters.Add("equalizer=f=3500:t=q:w=1:g=2");
-            }
-
-            if (options.EnableSpeechCompression)
-            {
-                preFilters.Add("acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250");
-            }
-
-            var loudness = new LoudnessSettings("-16", "-1.5", "11");
-            return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
-        }
-
-        if (options.Preset.Id == AudioPreset.PodcastVoice.Id)
-        {
-            var preFilters = new[]
-            {
-                "highpass=f=80",
-                "equalizer=f=180:t=q:w=1:g=-2",
-                "equalizer=f=3500:t=q:w=1:g=2",
-                "deesser=i=0.25:m=0.5:f=0.5",
-                "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250"
-            };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9");
-            return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
-        }
-
-        if (options.Preset.Id == AudioPreset.NoisySpeechCleanup.Id)
-        {
-            var preFilters = new[]
-            {
-                "highpass=f=90",
-                "afftdn=nf=-25",
-                "deesser=i=0.25:m=0.5:f=0.5",
-                "acompressor=threshold=-20dB:ratio=2:attack=20:release=250"
-            };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9");
-            return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
-        }
-
-        if (options.Preset.Id == AudioPreset.NoiseReduction.Id)
-        {
-            var value = Math.Clamp(options.NoiseReductionFloor, -35, -20);
-            return new FilterPlan(string.Create(CultureInfo.InvariantCulture, $"afftdn=nf={value}"), Array.Empty<string>(), null);
-        }
-
-        return new FilterPlan(string.Empty, Array.Empty<string>(), null);
     }
 
     private static IReadOnlyList<string> BuildRenderArguments(
@@ -383,32 +314,6 @@ public sealed class AudioProcessingService
         }
 
         return sourceInfo.SelectedAudioStream ?? sourceInfo.AudioStreams.First();
-    }
-
-    private static string BuildLoudnormFilter(
-        IReadOnlyList<string> preFilters,
-        LoudnessSettings settings,
-        LoudnormMeasuredStats? stats,
-        bool printJson)
-    {
-        var filters = new List<string>(preFilters);
-        var loudnorm = string.Create(
-            CultureInfo.InvariantCulture,
-            $"loudnorm=I={settings.IntegratedLufs}:TP={settings.TruePeakDb}:LRA={settings.LoudnessRange}");
-
-        if (stats is not null)
-        {
-            loudnorm += string.Create(
-                CultureInfo.InvariantCulture,
-                $":measured_I={stats.InputIntegrated}:measured_TP={stats.InputTruePeak}:measured_LRA={stats.InputLoudnessRange}:measured_thresh={stats.InputThreshold}:offset={stats.TargetOffset}:linear=true:print_format=summary");
-        }
-        else if (printJson)
-        {
-            loudnorm += ":print_format=json";
-        }
-
-        filters.Add(loudnorm);
-        return string.Join(",", filters);
     }
 
     private static LoudnormMeasuredStats? TryParseLoudnormStats(string output)
@@ -524,23 +429,4 @@ public sealed class AudioProcessingService
         LoudnessSettings? LoudnessSettings,
         bool ShouldUseTwoPassLoudness);
 
-    private sealed record FilterPlan(
-        string FilterGraph,
-        IReadOnlyList<string> PreLoudnessFilters,
-        LoudnessSettings? LoudnessSettings)
-    {
-        public bool HasFilters => !string.IsNullOrWhiteSpace(FilterGraph);
-    }
-
-    private sealed record LoudnessSettings(string IntegratedLufs, string TruePeakDb, string LoudnessRange);
-
-    private sealed record LoudnormMeasuredStats(
-        string InputIntegrated,
-        string InputTruePeak,
-        string InputLoudnessRange,
-        string InputThreshold,
-        string TargetOffset)
-    {
-        public static LoudnormMeasuredStats Placeholder { get; } = new("measured_I", "measured_TP", "measured_LRA", "measured_thresh", "offset");
-    }
 }

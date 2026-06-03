@@ -28,6 +28,15 @@ public sealed partial class ResourceTests
         var values = new List<string>
         {
             new FileNameService().BuildOpenDialogFilter(),
+            LocalizationService.Instance["Button_RenderProcessedPreview"],
+            LocalizationService.Instance["Button_PlayProcessedPreview"],
+            LocalizationService.Instance["Status_ProcessedPreviewRendering"],
+            LocalizationService.Instance.Format("Status_ProcessedPreviewReadyFormat", "preview.wav"),
+            LocalizationService.Instance.Format("Log_ProcessedPreviewStartingFormat", 20),
+            LocalizationService.Instance.Format("Log_ProcessedPreviewReadyFormat", "preview.wav"),
+            LocalizationService.Instance["Error_ProcessedPreviewNoFilters"],
+            LocalizationService.Instance["Error_ProcessedPreviewFailed"],
+            LocalizationService.Instance["Error_ProcessedPreviewMissingOutput"],
             AudioPreset.Music.Name,
             AudioPreset.Music.Description,
             AudioPreset.Music.QualityNote,

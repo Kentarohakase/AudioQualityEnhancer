@@ -14,6 +14,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - passende Presets und Ausgabeformate anhand der Analyse vorschlagen
 - Musik oder Sprache per Preset verbessern
 - Podcast- und Voiceover-Spuren mit eigenen Sprach-Presets aufbereiten
+- das gewählte Preset als kurze A/B-Vorschau rendern und vor dem Export anhören
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
 - Original und Ergebnis direkt anhören

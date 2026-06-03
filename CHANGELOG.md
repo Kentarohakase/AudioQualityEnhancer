@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a processed preset preview that renders a temporary 20-second WAV so the original and current preset can be compared before export.
+
 ## 0.12.4 - 2026-06-04
 
 ### Added

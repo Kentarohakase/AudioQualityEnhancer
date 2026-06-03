@@ -32,6 +32,8 @@
   <data name="Button_RetryFailedFiles" xml:space="preserve"><value>Retry failed</value></data>
   <data name="Button_PlaySource" xml:space="preserve"><value>Play original</value></data>
   <data name="Button_PlayOutput" xml:space="preserve"><value>Play result</value></data>
+  <data name="Button_RenderProcessedPreview" xml:space="preserve"><value>Render preset preview</value></data>
+  <data name="Button_PlayProcessedPreview" xml:space="preserve"><value>Play preset preview</value></data>
   <data name="Button_StopPreview" xml:space="preserve"><value>Stop</value></data>
   <data name="Button_SelectFolder" xml:space="preserve"><value>Choose folder</value></data>
   <data name="Button_Start" xml:space="preserve"><value>Start processing</value></data>
@@ -113,6 +115,8 @@
   <data name="Status_PreviewStopped" xml:space="preserve"><value>Preview stopped.</value></data>
   <data name="Status_PreviewEnded" xml:space="preserve"><value>Preview ended.</value></data>
   <data name="Status_PreviewFailed" xml:space="preserve"><value>Preview failed.</value></data>
+  <data name="Status_ProcessedPreviewRendering" xml:space="preserve"><value>Rendering preset preview...</value></data>
+  <data name="Status_ProcessedPreviewReadyFormat" xml:space="preserve"><value>Preset preview ready: {0}</value></data>
   <data name="Status_AdvancedAnalysisRunning" xml:space="preserve"><value>Advanced analysis running...</value></data>
   <data name="Status_AdvancedAnalysisDone" xml:space="preserve"><value>Advanced analysis complete.</value></data>
   <data name="Status_AdvancedAnalysisFailed" xml:space="preserve"><value>Advanced analysis failed.</value></data>
@@ -183,6 +187,8 @@
   <data name="Phase_Pass2of2" xml:space="preserve"><value>Pass 2 of 2</value></data>
 
   <data name="Log_PreviewStartedFormat" xml:space="preserve"><value>Preview started: {0}</value></data>
+  <data name="Log_ProcessedPreviewStartingFormat" xml:space="preserve"><value>Rendering preset preview ({0:0} seconds).</value></data>
+  <data name="Log_ProcessedPreviewReadyFormat" xml:space="preserve"><value>Preset preview ready: {0}</value></data>
   <data name="Log_StartingProcessing" xml:space="preserve"><value>Starting processing.</value></data>
   <data name="Log_BatchAddedFilesFormat" xml:space="preserve"><value>{0} file(s) added to the queue.</value></data>
   <data name="Log_BatchSkippedFormat" xml:space="preserve"><value>Skipped file: {0}</value></data>
@@ -253,6 +259,9 @@
   <data name="Error_PreviewOpenFailed" xml:space="preserve"><value>The file could not be opened for preview. The Windows playback system may not support this format.</value></data>
   <data name="Error_PreviewFailedFormat" xml:space="preserve"><value>Preview failed: {0}</value></data>
   <data name="Error_PreviewFailedGeneric" xml:space="preserve"><value>Preview failed: the Windows playback system does not support this format.</value></data>
+  <data name="Error_ProcessedPreviewNoFilters" xml:space="preserve"><value>This preset does not have a processed preview.</value></data>
+  <data name="Error_ProcessedPreviewFailed" xml:space="preserve"><value>The processed preview could not be rendered.</value></data>
+  <data name="Error_ProcessedPreviewMissingOutput" xml:space="preserve"><value>The processed preview was not created.</value></data>
   <data name="Error_ToolNotFoundFormat" xml:space="preserve"><value>{0}.exe was not found. Install FFmpeg or place ffmpeg.exe and ffprobe.exe next to the app or inside the Tools folder.</value></data>
   <data name="Error_ToolExitCodeFormat" xml:space="preserve"><value>{0} exited with code {1}.</value></data>
   <data name="Error_DiagnosticsFailed" xml:space="preserve"><value>The advanced audio analysis could not be run.</value></data>

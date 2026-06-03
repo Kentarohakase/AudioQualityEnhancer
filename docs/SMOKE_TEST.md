@@ -15,6 +15,7 @@ Diese Tests sind fuer echte Medien-Dateien gedacht und werden nicht automatisier
 - Sprachdatei laden, Sprache-Preset verwenden und Ergebnis anhoeren.
 - Podcast- oder Voiceover-Datei laden, Podcast Voice verwenden und auf klare, nicht scharfe Sprache pruefen.
 - Rauschige Sprachaufnahme laden, Noisy Speech Cleanup verwenden und auf natuerliche Stimme ohne metallische Artefakte pruefen.
+- Preset-Vorschau rendern, Original und Preset-Vorschau nacheinander anhoeren und pruefen, ob die Vorschau nach Presetwechsel neu gerendert werden muss.
 - Rauschreduzierung mit vorsichtigem Wert testen.
 
 ## Videoquellen

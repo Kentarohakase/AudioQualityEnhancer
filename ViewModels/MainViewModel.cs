@@ -23,6 +23,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioAnalysisInsightService _audioAnalysisInsightService;
     private readonly AudioProfileAdvisorService _audioProfileAdvisorService;
     private readonly AudioProcessingService _audioProcessingService;
+    private readonly AudioProcessedPreviewService _audioProcessedPreviewService;
     private readonly AudioValidationService _audioValidationService;
     private readonly QualityReportService _qualityReportService;
     private readonly BatchQueueService _batchQueueService;
@@ -40,6 +41,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncRelayCommand _retryFailedFilesCommand;
     private readonly RelayCommand _playSourceCommand;
     private readonly RelayCommand _playOutputCommand;
+    private readonly AsyncRelayCommand _renderProcessedPreviewCommand;
+    private readonly RelayCommand _playProcessedPreviewCommand;
     private readonly RelayCommand _stopPreviewCommand;
     private readonly RelayCommand _openOutputFolderCommand;
     private readonly RelayCommand _openSelectedOutputCommand;
@@ -97,6 +100,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private double _previewDurationSeconds;
     private bool _isPreviewActive;
     private string? _activePreviewLabelKey;
+    private string _processedPreviewPath = string.Empty;
+    private string _processedPreviewCacheKey = string.Empty;
+    private bool _isProcessedPreviewRendering;
     private string? _statusTextResourceKey = "Status_Ready";
     private object?[] _statusTextArguments = Array.Empty<object?>();
     private string? _processingPhaseResourceKey = "Phase_Ready";
@@ -115,6 +121,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _audioAnalysisInsightService = new AudioAnalysisInsightService();
         _audioProfileAdvisorService = new AudioProfileAdvisorService(_fileNameService);
         _audioProcessingService = new AudioProcessingService(_ffmpegService, _ffprobeService, _fileNameService, _logService);
+        _audioProcessedPreviewService = new AudioProcessedPreviewService(_ffmpegService);
         _audioValidationService = new AudioValidationService(_ffprobeService, _audioDiagnosticsService, _logService);
         _qualityReportService = new QualityReportService();
         _batchQueueService = new BatchQueueService(_fileNameService);
@@ -154,6 +161,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _retryFailedFilesCommand = new AsyncRelayCommand(RetryFailedFilesAsync, CanRetryFailedFiles);
         _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
         _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
+        _renderProcessedPreviewCommand = new AsyncRelayCommand(RenderProcessedPreviewAsync, CanRenderProcessedPreview);
+        _playProcessedPreviewCommand = new RelayCommand(PlayProcessedPreview, CanPlayProcessedPreview);
         _stopPreviewCommand = new RelayCommand(StopPreview);
         _openOutputFolderCommand = new RelayCommand(OpenOutputFolder, () => Directory.Exists(OutputDirectory));
         _openSelectedOutputCommand = new RelayCommand(OpenSelectedOutput, CanOpenSelectedOutput);
@@ -278,6 +287,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand PlayOutputCommand => _playOutputCommand;
 
+    public ICommand RenderProcessedPreviewCommand => _renderProcessedPreviewCommand;
+
+    public ICommand PlayProcessedPreviewCommand => _playProcessedPreviewCommand;
+
     public ICommand StopPreviewCommand => _stopPreviewCommand;
 
     public ICommand OpenOutputFolderCommand => _openOutputFolderCommand;
@@ -305,6 +318,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (SetProperty(ref _inputPath, value))
             {
+                InvalidateProcessedPreview();
                 RaiseCommandStates();
             }
         }
@@ -336,6 +350,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 UpdateProfileAdvice();
                 UpdateQualityNotice();
                 UpdateFilterDetails();
+                InvalidateProcessedPreview();
             }
         }
     }
@@ -440,9 +455,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         get => _selectedAudioStream;
         set
         {
-            if (SetProperty(ref _selectedAudioStream, value) && !_syncingSelectedBatchItem)
+            if (SetProperty(ref _selectedAudioStream, value))
             {
-                SelectAudioStreamForCurrentItem(value);
+                InvalidateProcessedPreview();
+                if (!_syncingSelectedBatchItem)
+                {
+                    SelectAudioStreamForCurrentItem(value);
+                }
+
+                RaiseCommandStates();
             }
         }
     }
@@ -467,6 +488,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 OnPropertyChanged(nameof(IsLoudnessPreset));
                 UpdateQualityNotice();
                 UpdateFilterDetails();
+                InvalidateProcessedPreview();
                 RaiseCommandStates();
             }
         }
@@ -618,6 +640,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _enableSpeechCompression, value))
             {
                 UpdateFilterDetails();
+                InvalidateProcessedPreview();
+                RaiseCommandStates();
             }
         }
     }
@@ -630,6 +654,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _enableSpeechPresenceBoost, value))
             {
                 UpdateFilterDetails();
+                InvalidateProcessedPreview();
+                RaiseCommandStates();
             }
         }
     }
@@ -654,6 +680,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (SetProperty(ref _noiseReductionFloor, value))
             {
                 UpdateFilterDetails();
+                InvalidateProcessedPreview();
+                RaiseCommandStates();
             }
         }
     }
@@ -709,6 +737,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SelectedPreset?.Id == AudioPreset.NoisySpeechCleanup.Id;
 
     public bool HasOutputPreview => File.Exists(LastOutputPath);
+
+    public bool HasProcessedPreview => File.Exists(_processedPreviewPath);
 
     public bool HasReportFile => File.Exists(LastReportPath);
 
@@ -1327,6 +1357,63 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private void PlayOutputPreview() =>
         PlayPreview(LastOutputPath, "Button_PlayOutput");
 
+    private void PlayProcessedPreview() =>
+        PlayPreview(_processedPreviewPath, "Button_PlayProcessedPreview");
+
+    private async Task RenderProcessedPreviewAsync()
+    {
+        if (!CanRenderProcessedPreview())
+        {
+            return;
+        }
+
+        StopPreview();
+        var options = BuildOptionsForItem(SelectedBatchItem);
+        var cacheKey = AudioProcessedPreviewService.BuildCacheKey(options);
+        if (File.Exists(_processedPreviewPath) && string.Equals(_processedPreviewCacheKey, cacheKey, StringComparison.Ordinal))
+        {
+            SetStatus("Status_ProcessedPreviewReadyFormat", Path.GetFileName(_processedPreviewPath));
+            return;
+        }
+
+        InvalidateProcessedPreview();
+        _isProcessedPreviewRendering = true;
+        RaiseCommandStates();
+
+        try
+        {
+            SetStatus("Status_ProcessedPreviewRendering");
+            var result = await _audioProcessedPreviewService.RenderAsync(
+                options,
+                _logService.Info,
+                null,
+                CancellationToken.None);
+
+            if (result.IsFailure || result.Value is null)
+            {
+                SetStatusRaw(result.ErrorMessage ?? LocalizationService.Instance["Error_ProcessedPreviewFailed"]);
+                _logService.Error(StatusText);
+                if (result.Exception is not null)
+                {
+                    _logService.Error($"{result.Exception.GetType().Name}: {result.Exception.Message}");
+                }
+
+                return;
+            }
+
+            _processedPreviewPath = result.Value.OutputPath;
+            _processedPreviewCacheKey = cacheKey;
+            OnPropertyChanged(nameof(HasProcessedPreview));
+            SetStatus("Status_ProcessedPreviewReadyFormat", Path.GetFileName(_processedPreviewPath));
+            _logService.Info(LocalizationService.Instance.Format("Log_ProcessedPreviewReadyFormat", _processedPreviewPath));
+        }
+        finally
+        {
+            _isProcessedPreviewRendering = false;
+            RaiseCommandStates();
+        }
+    }
+
     private void PlayPreview(string path, string labelKey)
     {
         var result = _audioPreviewController.Play(path);
@@ -1545,6 +1632,35 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool CanOpenLastReportFolder()
     {
         return !IsBusy && HasReportFolder;
+    }
+
+    private bool CanRenderProcessedPreview()
+    {
+        return !IsBusy &&
+               !_isProcessedPreviewRendering &&
+               File.Exists(InputPath) &&
+               SelectedPreset is not null &&
+               AudioProcessedPreviewService.CanRender(BuildOptionsForItem(SelectedBatchItem));
+    }
+
+    private bool CanPlayProcessedPreview()
+    {
+        return !IsBusy &&
+               File.Exists(_processedPreviewPath) &&
+               string.Equals(_processedPreviewCacheKey, AudioProcessedPreviewService.BuildCacheKey(BuildOptionsForItem(SelectedBatchItem)), StringComparison.Ordinal);
+    }
+
+    private void InvalidateProcessedPreview()
+    {
+        if (string.IsNullOrWhiteSpace(_processedPreviewPath) && string.IsNullOrWhiteSpace(_processedPreviewCacheKey))
+        {
+            return;
+        }
+
+        AudioProcessedPreviewService.TryDelete(_processedPreviewPath);
+        _processedPreviewPath = string.Empty;
+        _processedPreviewCacheKey = string.Empty;
+        OnPropertyChanged(nameof(HasProcessedPreview));
     }
 
     private void ApplyPresetDefaults(AudioPreset preset)
@@ -1957,6 +2073,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _retryFailedFilesCommand.RaiseCanExecuteChanged();
         _playSourceCommand.RaiseCanExecuteChanged();
         _playOutputCommand.RaiseCanExecuteChanged();
+        _renderProcessedPreviewCommand.RaiseCanExecuteChanged();
+        _playProcessedPreviewCommand.RaiseCanExecuteChanged();
         _stopPreviewCommand.RaiseCanExecuteChanged();
         _openOutputFolderCommand.RaiseCanExecuteChanged();
         _openSelectedOutputCommand.RaiseCanExecuteChanged();
@@ -2035,6 +2153,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _processingCancellation?.Dispose();
         _diagnosticsCancellation?.Dispose();
         _audioPreviewController.Dispose();
+        InvalidateProcessedPreview();
         foreach (var item in BatchItems)
         {
             item.PropertyChanged -= OnBatchItemPropertyChanged;
