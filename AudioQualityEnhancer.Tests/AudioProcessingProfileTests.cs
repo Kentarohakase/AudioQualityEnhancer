@@ -36,6 +36,41 @@ public sealed class AudioProcessingProfileTests
         Assert.Contains("loudnorm=I=-16:TP=-1.5:LRA=11", preview);
     }
 
+    [Fact]
+    public void PodcastVoicePreset_AddsFinishedSpeechChain()
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.PodcastVoice,
+            ExportFormat = ExportFormat.Aac_256,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.StartsWith("highpass=f=80", preview, StringComparison.Ordinal);
+        Assert.Contains("equalizer=f=180:t=q:w=1:g=-2", preview);
+        Assert.Contains("equalizer=f=3500:t=q:w=1:g=2", preview);
+        Assert.Contains("deesser=i=0.25:m=0.5:f=0.5", preview);
+        Assert.Contains("acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250", preview);
+        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9", preview, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NoisySpeechPreset_AddsConservativeCleanupChain()
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.NoisySpeechCleanup,
+            ExportFormat = ExportFormat.Aac_256,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.StartsWith("highpass=f=90", preview, StringComparison.Ordinal);
+        Assert.Contains("afftdn=nf=-25", preview);
+        Assert.Contains("deesser=i=0.25:m=0.5:f=0.5", preview);
+        Assert.Contains("acompressor=threshold=-20dB:ratio=2:attack=20:release=250", preview);
+        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9", preview, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(-99, "afftdn=nf=-35")]
     [InlineData(-25, "afftdn=nf=-25")]
@@ -76,6 +111,8 @@ public sealed class AudioProcessingProfileTests
     {
         Assert.Contains(AudioPreset.ArchiveExport, AudioPreset.All);
         Assert.Contains(AudioPreset.EverydayExport, AudioPreset.All);
+        Assert.Contains(AudioPreset.PodcastVoice, AudioPreset.All);
+        Assert.Contains(AudioPreset.NoisySpeechCleanup, AudioPreset.All);
         Assert.Contains(ExportFormat.PremierePro, ExportFormat.All);
         Assert.Contains(ExportFormat.Opus_192, ExportFormat.All);
     }

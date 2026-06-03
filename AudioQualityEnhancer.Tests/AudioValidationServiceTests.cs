@@ -128,6 +128,30 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void BuildReport_PodcastVoiceUsesSpeechLoudnessTarget()
+    {
+        using var source = CreateInfo("wav", isLossy: false);
+        using var output = CreateInfo("wav", isLossy: false);
+        using var diagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -20,
+            TruePeakDb = -2
+        };
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.PodcastVoice, ExportFormat.Wav24),
+            source,
+            output,
+            sourceDiagnostics: null,
+            diagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: @"C:\audio\voice_podcast_voice.wav");
+
+        Assert.Equal(AudioComparisonStatus.Warning, report.Status);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.LoudnessOffTarget);
+    }
+
+    [Fact]
     public void ValidateOutputFile_RejectsMissingAndEmptyFiles()
     {
         var tempDirectory = TestPaths.CreateTempDirectory();

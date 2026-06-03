@@ -324,6 +324,18 @@
   <data name="ProfileAdvice_Speech_Title" xml:space="preserve"><value>Make speech clearer carefully</value></data>
   <data name="ProfileAdvice_Speech_Reason" xml:space="preserve"><value>Mono, low bit rate or low sample rate often points to speech or already limited material.</value></data>
   <data name="ProfileAdvice_Speech_Note" xml:space="preserve"><value>This can improve loudness and intelligibility, but it cannot replace lost recording detail.</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Title" xml:space="preserve"><value>Prepare speech for podcast use</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Reason" xml:space="preserve"><value>Mono, low bit rate or low sample rate often points to speech or voiceover material.</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Note" xml:space="preserve"><value>This preset smooths speech, gently reduces low-mid buildup and sibilance, and normalizes to a clear listening loudness.</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Title" xml:space="preserve"><value>Clean noisy speech carefully</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Reason" xml:space="preserve"><value>Limited speech sources often benefit from careful noise reduction and steadier speech loudness.</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Note" xml:space="preserve"><value>The cleanup stays conservative so the voice remains more natural and avoids a metallic character.</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Title" xml:space="preserve"><value>Process gently and save losslessly</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Reason" xml:space="preserve"><value>Peak values near 0 dBFS need careful normalization and room against new clipping.</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Note" xml:space="preserve"><value>FLAC avoids additional export loss, but it does not repair existing clipping.</value></data>
@@ -385,6 +397,18 @@
   <data name="Preset_Speech_Name" xml:space="preserve"><value>Enhance speech</value></data>
   <data name="Preset_Speech_Description" xml:space="preserve"><value>High-pass at 80 Hz, normalization around -16 LUFS and optional subtle speech processing.</value></data>
   <data name="Preset_Speech_QualityNote" xml:space="preserve"><value>For speech, intelligibility and loudness are prioritized. Compression and presence boost are intentionally moderate.</value></data>
+
+  <data name="Preset_PodcastVoice_Name" xml:space="preserve"><value>Podcast Voice</value></data>
+
+  <data name="Preset_PodcastVoice_Description" xml:space="preserve"><value>Makes speech clearer with high-pass filtering, low-mid cleanup, presence boost, de-essing, gentle compression and -16 LUFS loudness.</value></data>
+
+  <data name="Preset_PodcastVoice_QualityNote" xml:space="preserve"><value>For podcasts and voiceovers, speech is shaped to sound more finished without forcing hard compression or sharp highs.</value></data>
+
+  <data name="Preset_NoisySpeech_Name" xml:space="preserve"><value>Noisy Speech Cleanup</value></data>
+
+  <data name="Preset_NoisySpeech_Description" xml:space="preserve"><value>Cleans speech recordings carefully with high-pass filtering, light noise reduction, de-essing, compression and -16 LUFS loudness.</value></data>
+
+  <data name="Preset_NoisySpeech_QualityNote" xml:space="preserve"><value>Noise reduction stays conservative so voices do not become metallic or artificial.</value></data>
 
   <data name="Preset_Noise_Name" xml:space="preserve"><value>Reduce noise</value></data>
   <data name="Preset_Noise_Description" xml:space="preserve"><value>Reduces background noise with afftdn. The strength is adjustable.</value></data>

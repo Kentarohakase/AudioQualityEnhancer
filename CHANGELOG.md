@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.4 - 2026-06-04
+
+### Added
+
+- Added `Podcast Voice` and `Noisy Speech Cleanup` presets for clearer speech, voiceovers and noisy speech recordings.
+- Added de-essing, low-mid cleanup and conservative speech cleanup filter chains for speech-focused exports.
+
+### Changed
+
+- Profile advice now prioritizes the new speech presets for mono, low-bitrate or low-sample-rate speech-like sources.
+
 ## 0.12.3 - 2026-06-03
 
 ### Added

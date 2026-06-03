@@ -25,15 +25,29 @@ public sealed class AudioProfileAdvisorServiceTests
     }
 
     [Fact]
-    public void BuildAdvice_MonoLowBitrateSource_PrioritizesSpeech()
+    public void BuildAdvice_MonoLowBitrateSource_PrioritizesPodcastVoiceAndCleanup()
     {
         using var info = CreateInfo("speech.mp3", "mp3", true, 80_000, 44_100, 1);
 
         var advice = _service.BuildAdvice(info, diagnostics: null);
 
-        Assert.Equal(AudioPreset.Speech.Id, advice.Suggestions[0].Preset.Id);
+        Assert.Equal(AudioPreset.PodcastVoice.Id, advice.Suggestions[0].Preset.Id);
+        Assert.Contains(advice.Suggestions, suggestion => suggestion.Preset.Id == AudioPreset.NoisySpeechCleanup.Id);
+        Assert.Contains(advice.Suggestions, suggestion => suggestion.Preset.Id == AudioPreset.Speech.Id);
         Assert.True(advice.NeedsAdvancedAnalysis);
         Assert.True(advice.HasNote);
+    }
+
+    [Fact]
+    public void BuildAdvice_SpeechVideoSource_OffersPodcastPremiereProfile()
+    {
+        using var info = CreateInfo("voiceover.mp4", "aac", true, 96_000, 48_000, 1, container: "mov,mp4,m4a,3gp,3g2,mj2");
+
+        var advice = _service.BuildAdvice(info, diagnostics: null);
+
+        Assert.Contains(advice.Suggestions, suggestion =>
+            suggestion.Preset.Id == AudioPreset.PodcastVoice.Id &&
+            suggestion.ExportFormat?.Id == ExportFormat.PremierePro.Id);
     }
 
     [Fact]

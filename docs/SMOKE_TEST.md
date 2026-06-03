@@ -13,6 +13,8 @@ Diese Tests sind fuer echte Medien-Dateien gedacht und werden nicht automatisier
 - MP3 laden, analysieren und als AAC oder FLAC exportieren.
 - WAV oder FLAC laden, mit Musik-Preset exportieren.
 - Sprachdatei laden, Sprache-Preset verwenden und Ergebnis anhoeren.
+- Podcast- oder Voiceover-Datei laden, Podcast Voice verwenden und auf klare, nicht scharfe Sprache pruefen.
+- Rauschige Sprachaufnahme laden, Noisy Speech Cleanup verwenden und auf natuerliche Stimme ohne metallische Artefakte pruefen.
 - Rauschreduzierung mit vorsichtigem Wert testen.
 
 ## Videoquellen

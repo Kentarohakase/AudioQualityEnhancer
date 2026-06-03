@@ -324,6 +324,18 @@
   <data name="ProfileAdvice_Speech_Title" xml:space="preserve"><value>Sprache vorsichtig verständlicher machen</value></data>
   <data name="ProfileAdvice_Speech_Reason" xml:space="preserve"><value>Mono, niedrige Bitrate oder niedrige Sample Rate sprechen eher für eine Sprachquelle oder begrenztes Material.</value></data>
   <data name="ProfileAdvice_Speech_Note" xml:space="preserve"><value>Die Empfehlung verbessert Lautheit und Verständlichkeit, ersetzt aber keine verlorenen Aufnahme-Details.</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Title" xml:space="preserve"><value>Sprache podcast-tauglich aufbereiten</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Reason" xml:space="preserve"><value>Mono, niedrige Bitrate oder niedrige Sample Rate sprechen oft für Sprache oder Voiceover-Material.</value></data>
+
+  <data name="ProfileAdvice_PodcastVoice_Note" xml:space="preserve"><value>Dieses Preset glättet Sprache, reduziert Mumpf und Zischlaute vorsichtig und normalisiert auf eine gut hörbare Lautheit.</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Title" xml:space="preserve"><value>Rauschige Sprache vorsichtig bereinigen</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Reason" xml:space="preserve"><value>Begrenzte Sprachquellen profitieren oft von vorsichtiger Rauschreduzierung und stabilerer Sprachlautheit.</value></data>
+
+  <data name="ProfileAdvice_NoisySpeech_Note" xml:space="preserve"><value>Die Bereinigung ist konservativ, damit die Stimme natürlicher bleibt und nicht metallisch wirkt.</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Title" xml:space="preserve"><value>Schonend bearbeiten und verlustfrei speichern</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Reason" xml:space="preserve"><value>Peak-Werte nahe 0 dBFS brauchen vorsichtige Normalisierung und Reserve gegen neues Clipping.</value></data>
   <data name="ProfileAdvice_LosslessHeadroom_Note" xml:space="preserve"><value>FLAC vermeidet zusätzliche Exportverluste, repariert aber kein vorhandenes Clipping.</value></data>
@@ -385,6 +397,18 @@
   <data name="Preset_Speech_Name" xml:space="preserve"><value>Sprache verbessern</value></data>
   <data name="Preset_Speech_Description" xml:space="preserve"><value>High-Pass bei 80 Hz, Normalisierung auf etwa -16 LUFS und optional dezente Sprachbearbeitung.</value></data>
   <data name="Preset_Speech_QualityNote" xml:space="preserve"><value>Für Sprache werden Verständlichkeit und Lautheit priorisiert. Kompression und Präsenzanhebung sind bewusst moderat.</value></data>
+
+  <data name="Preset_PodcastVoice_Name" xml:space="preserve"><value>Podcast-Stimme</value></data>
+
+  <data name="Preset_PodcastVoice_Description" xml:space="preserve"><value>Macht Sprache mit High-Pass, Mumpf-Reduktion, Präsenzanhebung, De-Esser, sanfter Kompression und -16 LUFS klarer.</value></data>
+
+  <data name="Preset_PodcastVoice_QualityNote" xml:space="preserve"><value>Für Podcasts und Voiceovers wird Sprache etwas fertiger aufbereitet, ohne harte Kompression oder scharfe Höhen zu erzwingen.</value></data>
+
+  <data name="Preset_NoisySpeech_Name" xml:space="preserve"><value>Rauschige Sprache bereinigen</value></data>
+
+  <data name="Preset_NoisySpeech_Description" xml:space="preserve"><value>Bereinigt Sprachaufnahmen vorsichtig mit High-Pass, leichter Rauschreduzierung, De-Esser, Kompression und -16 LUFS.</value></data>
+
+  <data name="Preset_NoisySpeech_QualityNote" xml:space="preserve"><value>Die Rauschreduzierung bleibt konservativ, damit Stimmen nicht metallisch oder künstlich klingen.</value></data>
 
   <data name="Preset_Noise_Name" xml:space="preserve"><value>Rauschen reduzieren</value></data>
   <data name="Preset_Noise_Description" xml:space="preserve"><value>Reduziert Grundrauschen mit afftdn. Die Stärke ist einstellbar.</value></data>

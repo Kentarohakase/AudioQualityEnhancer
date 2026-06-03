@@ -13,6 +13,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - Lautheit, Peak-Werte und mögliche technische Probleme optional genauer messen
 - passende Presets und Ausgabeformate anhand der Analyse vorschlagen
 - Musik oder Sprache per Preset verbessern
+- Podcast- und Voiceover-Spuren mit eigenen Sprach-Presets aufbereiten
 - Rauschen vorsichtig reduzieren
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
 - Original und Ergebnis direkt anhören
@@ -79,6 +80,14 @@ Normalisiert Musik auf eine sinnvolle Lautheit, ohne sie unnötig hart zu kompri
 ### Sprache verbessern
 
 Filtert tiefe Störgeräusche, hebt Sprache bei Bedarf leicht an und normalisiert sie für bessere Verständlichkeit.
+
+### Podcast-Stimme
+
+Bereitet Sprache für Podcasts und Voiceovers klarer auf. Das Preset reduziert Mumpf vorsichtig, hebt Verständlichkeit moderat an, entschärft Zischlaute und normalisiert auf eine gut hörbare Lautheit.
+
+### Rauschige Sprache bereinigen
+
+Kombiniert vorsichtige Rauschreduzierung mit Sprachbearbeitung. Das ist für begrenzte oder verrauschte Sprachaufnahmen gedacht und bleibt bewusst konservativ, damit Stimmen nicht metallisch klingen.
 
 ### Rauschen reduzieren
 
@@ -150,19 +159,19 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofi
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.3
+.\scripts\package-release.ps1 -Version 0.12.4
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.3 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.12.4 -IncludeFFmpeg
 ```
 
 Pakete prüfen:
 
 ```powershell
-.\scripts\verify-release-package.ps1 -Version 0.12.3 -RequireFFmpegPackage
+.\scripts\verify-release-package.ps1 -Version 0.12.4 -RequireFFmpegPackage
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.

@@ -300,7 +300,9 @@ public sealed class AudioValidationService
             return -14;
         }
 
-        if (preset.Id == AudioPreset.Speech.Id)
+        if (preset.Id == AudioPreset.Speech.Id ||
+            preset.Id == AudioPreset.PodcastVoice.Id ||
+            preset.Id == AudioPreset.NoisySpeechCleanup.Id)
         {
             return -16;
         }

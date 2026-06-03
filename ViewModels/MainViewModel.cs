@@ -702,7 +702,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public bool IsNoisePreset => SelectedPreset?.Id == AudioPreset.NoiseReduction.Id;
 
-    public bool IsLoudnessPreset => SelectedPreset?.Id == AudioPreset.Music.Id || SelectedPreset?.Id == AudioPreset.Speech.Id;
+    public bool IsLoudnessPreset =>
+        SelectedPreset?.Id == AudioPreset.Music.Id ||
+        SelectedPreset?.Id == AudioPreset.Speech.Id ||
+        SelectedPreset?.Id == AudioPreset.PodcastVoice.Id ||
+        SelectedPreset?.Id == AudioPreset.NoisySpeechCleanup.Id;
 
     public bool HasOutputPreview => File.Exists(LastOutputPath);
 

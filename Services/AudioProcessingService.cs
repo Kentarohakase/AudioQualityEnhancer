@@ -278,6 +278,33 @@ public sealed class AudioProcessingService
             return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
+        if (options.Preset.Id == AudioPreset.PodcastVoice.Id)
+        {
+            var preFilters = new[]
+            {
+                "highpass=f=80",
+                "equalizer=f=180:t=q:w=1:g=-2",
+                "equalizer=f=3500:t=q:w=1:g=2",
+                "deesser=i=0.25:m=0.5:f=0.5",
+                "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250"
+            };
+            var loudness = new LoudnessSettings("-16", "-1.5", "9");
+            return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
+        }
+
+        if (options.Preset.Id == AudioPreset.NoisySpeechCleanup.Id)
+        {
+            var preFilters = new[]
+            {
+                "highpass=f=90",
+                "afftdn=nf=-25",
+                "deesser=i=0.25:m=0.5:f=0.5",
+                "acompressor=threshold=-20dB:ratio=2:attack=20:release=250"
+            };
+            var loudness = new LoudnessSettings("-16", "-1.5", "9");
+            return new FilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
+        }
+
         if (options.Preset.Id == AudioPreset.NoiseReduction.Id)
         {
             var value = Math.Clamp(options.NoiseReductionFloor, -35, -20);

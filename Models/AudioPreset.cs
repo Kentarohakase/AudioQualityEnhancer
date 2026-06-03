@@ -72,6 +72,18 @@ public sealed class AudioPreset : INotifyPropertyChanged
         "Preset_Speech_Description",
         "Preset_Speech_QualityNote");
 
+    public static AudioPreset PodcastVoice { get; } = new(
+        "podcast_voice",
+        "Preset_PodcastVoice_Name",
+        "Preset_PodcastVoice_Description",
+        "Preset_PodcastVoice_QualityNote");
+
+    public static AudioPreset NoisySpeechCleanup { get; } = new(
+        "noisy_speech",
+        "Preset_NoisySpeech_Name",
+        "Preset_NoisySpeech_Description",
+        "Preset_NoisySpeech_QualityNote");
+
     public static AudioPreset NoiseReduction { get; } = new(
         "noise",
         "Preset_Noise_Name",
@@ -103,6 +115,8 @@ public sealed class AudioPreset : INotifyPropertyChanged
     {
         Music,
         Speech,
+        PodcastVoice,
+        NoisySpeechCleanup,
         NoiseReduction,
         ExtractCopy,
         ArchiveExport,

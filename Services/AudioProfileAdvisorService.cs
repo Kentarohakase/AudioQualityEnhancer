@@ -34,10 +34,35 @@ public sealed class AudioProfileAdvisorService
             AddSuggestion(
                 suggestions,
                 new AudioProfileSuggestion(
+                    "podcast_voice",
+                    AudioPreset.PodcastVoice,
+                    hasPotentialClipping || hasLowHeadroom ? ExportFormat.Flac : ExportFormat.Aac_256,
+                    98,
+                    "ProfileAdvice_PodcastVoice_Title",
+                    "ProfileAdvice_PodcastVoice_Reason",
+                    "ProfileAdvice_PodcastVoice_Note"));
+
+            if (hasLowBitrate || hasLowSampleRate)
+            {
+                AddSuggestion(
+                    suggestions,
+                    new AudioProfileSuggestion(
+                        "noisy_speech",
+                        AudioPreset.NoisySpeechCleanup,
+                        hasPotentialClipping || hasLowHeadroom ? ExportFormat.Flac : ExportFormat.Aac_256,
+                        93,
+                        "ProfileAdvice_NoisySpeech_Title",
+                        "ProfileAdvice_NoisySpeech_Reason",
+                        "ProfileAdvice_NoisySpeech_Note"));
+            }
+
+            AddSuggestion(
+                suggestions,
+                new AudioProfileSuggestion(
                     "speech",
                     AudioPreset.Speech,
                     hasPotentialClipping || hasLowHeadroom ? ExportFormat.Flac : ExportFormat.Aac_256,
-                    95,
+                    88,
                     "ProfileAdvice_Speech_Title",
                     "ProfileAdvice_Speech_Reason",
                     "ProfileAdvice_Speech_Note"));
@@ -92,9 +117,9 @@ public sealed class AudioProfileAdvisorService
                 suggestions,
                 new AudioProfileSuggestion(
                     "premiere",
-                    looksSpeechLike ? AudioPreset.Speech : AudioPreset.Music,
+                    looksSpeechLike ? AudioPreset.PodcastVoice : AudioPreset.Music,
                     ExportFormat.PremierePro,
-                    78,
+                    looksSpeechLike ? 94 : 78,
                     "ProfileAdvice_Premiere_Title",
                     "ProfileAdvice_Premiere_Reason",
                     "ProfileAdvice_Premiere_Note"));
