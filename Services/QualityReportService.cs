@@ -54,6 +54,10 @@ public sealed class QualityReportService
         builder.AppendLine($"- {LocalizationService.Instance["Report_DoneWithWarnings"]}: {items.Count(item => item.ComparisonReport?.HasWarningsOrErrors == true)}");
         builder.AppendLine($"- {LocalizationService.Instance["BatchStatus_Failed"]}: {items.Count(item => item.Status == BatchProcessingStatus.Failed)}");
         builder.AppendLine($"- {LocalizationService.Instance["BatchStatus_Cancelled"]}: {items.Count(item => item.Status == BatchProcessingStatus.Cancelled)}");
+        builder.AppendLine($"- {LocalizationService.Instance["Report_ResultPassedCount"]}: {items.Count(item => item.ComparisonReport?.Status == AudioComparisonStatus.Passed)}");
+        builder.AppendLine($"- {LocalizationService.Instance["Report_ResultWarningCount"]}: {items.Count(item => item.ComparisonReport?.Status == AudioComparisonStatus.Warning)}");
+        builder.AppendLine($"- {LocalizationService.Instance["Report_ResultCriticalCount"]}: {items.Count(item => item.ComparisonReport?.Status == AudioComparisonStatus.Critical)}");
+        builder.AppendLine($"- {LocalizationService.Instance["Report_ResultMissingCount"]}: {items.Count(item => item.ComparisonReport is null)}");
         builder.AppendLine();
 
         foreach (var item in items)
@@ -100,9 +104,9 @@ public sealed class QualityReportService
         {
             builder.AppendLine($"### {LocalizationService.Instance["Section_ResultFindings"]}");
             builder.AppendLine();
-            foreach (var finding in report.Findings)
+            foreach (var finding in OrderFindingsBySeverity(report.Findings))
             {
-                builder.AppendLine($"- **{finding.SeverityDisplay}: {EscapeMarkdown(finding.Title)}** - {EscapeMarkdown(finding.Message)}");
+                builder.AppendLine($"- **{EscapeMarkdown(finding.CategoryDisplay)} / {finding.SeverityDisplay}: {EscapeMarkdown(finding.Title)}** - {EscapeMarkdown(finding.Message)}");
             }
 
             builder.AppendLine();
@@ -126,5 +130,15 @@ public sealed class QualityReportService
     private static string EscapeMarkdown(string value)
     {
         return value.Replace("|", "\\|", StringComparison.Ordinal).Replace(Environment.NewLine, " ", StringComparison.Ordinal);
+    }
+
+    private static IEnumerable<AudioComparisonFinding> OrderFindingsBySeverity(IEnumerable<AudioComparisonFinding> findings)
+    {
+        return findings.OrderBy(finding => finding.Severity switch
+        {
+            AudioInsightSeverity.Critical => 0,
+            AudioInsightSeverity.Warning => 1,
+            _ => 2
+        });
     }
 }

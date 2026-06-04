@@ -185,6 +185,7 @@ AudioQualityEnhancer nutzt FFmpeg und FFprobe als externe Programme. Die Tools g
 
 - Die Originaldatei wird nicht überschrieben.
 - Wenn eine Zieldatei schon existiert, wird automatisch ein neuer Name erzeugt.
+- Der Ausgabeordner wird vor der Verarbeitung auf Schreibbarkeit geprüft.
 - Temporäre Dateien werden nur während der Verarbeitung genutzt.
 - Logs sollen bei normalen Fehlern helfen, speichern aber keine Zugangsdaten.
 - FFmpeg-Binaries und erzeugte Audiodateien werden nicht committed.

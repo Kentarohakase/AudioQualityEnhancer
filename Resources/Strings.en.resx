@@ -178,6 +178,7 @@
   <data name="Phase_Done" xml:space="preserve"><value>Done</value></data>
   <data name="Phase_Cancel" xml:space="preserve"><value>Cancelling</value></data>
   <data name="Phase_CheckInput" xml:space="preserve"><value>Checking input</value></data>
+  <data name="Phase_CheckOutput" xml:space="preserve"><value>Checking output folder</value></data>
   <data name="Phase_CheckFFmpeg" xml:space="preserve"><value>Checking FFmpeg</value></data>
   <data name="Phase_AnalyzingSource" xml:space="preserve"><value>Analyzing source</value></data>
   <data name="Phase_PreparingProcessing" xml:space="preserve"><value>Preparing processing</value></data>
@@ -246,6 +247,7 @@
   <data name="Error_UnsupportedFormat" xml:space="preserve"><value>This file format is not supported. Supported formats are mp3, wav, flac, m4a, aac, ogg, opus, mp4 and mkv.</value></data>
   <data name="Error_UnsupportedFormatShort" xml:space="preserve"><value>This file format is not supported.</value></data>
   <data name="Error_OutputFolderRequired" xml:space="preserve"><value>Please choose an output folder.</value></data>
+  <data name="Error_OutputFolderNotWritable" xml:space="preserve"><value>The output folder is not writable. Check permissions, free space or whether the folder is locked.</value></data>
   <data name="Error_FFprobeAnalysisFailed" xml:space="preserve"><value>FFprobe could not analyze the file. Check that the file contains a readable audio stream.</value></data>
   <data name="Error_FFprobeNoData" xml:space="preserve"><value>FFprobe did not return any analysis data.</value></data>
   <data name="Error_NoAudioStream" xml:space="preserve"><value>No audio stream was found in the file.</value></data>
@@ -426,6 +428,10 @@
   <data name="Report_DoneWithWarnings" xml:space="preserve"><value>Done with warnings</value></data>
   <data name="Report_NoValidation" xml:space="preserve"><value>No result check is available for this file.</value></data>
   <data name="Report_ItemResultSummaryFormat" xml:space="preserve"><value>Short verdict: {0} - {1}</value></data>
+  <data name="Report_ResultPassedCount" xml:space="preserve"><value>Result OK</value></data>
+  <data name="Report_ResultWarningCount" xml:space="preserve"><value>Result with warning</value></data>
+  <data name="Report_ResultCriticalCount" xml:space="preserve"><value>Result critical</value></data>
+  <data name="Report_ResultMissingCount" xml:space="preserve"><value>Without result check</value></data>
   <data name="Report_SourceValue" xml:space="preserve"><value>Source</value></data>
   <data name="Report_OutputValue" xml:space="preserve"><value>Output</value></data>
 

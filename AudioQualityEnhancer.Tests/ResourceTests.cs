@@ -32,8 +32,10 @@ public sealed partial class ResourceTests
             LocalizationService.Instance["Button_PlayProcessedPreview"],
             LocalizationService.Instance["Status_ProcessedPreviewRendering"],
             LocalizationService.Instance.Format("Status_ProcessedPreviewReadyFormat", "preview.wav"),
+            LocalizationService.Instance["Phase_CheckOutput"],
             LocalizationService.Instance.Format("Log_ProcessedPreviewStartingFormat", 20),
             LocalizationService.Instance.Format("Log_ProcessedPreviewReadyFormat", "preview.wav"),
+            LocalizationService.Instance["Error_OutputFolderNotWritable"],
             LocalizationService.Instance["Error_ProcessedPreviewNoFilters"],
             LocalizationService.Instance["Error_ProcessedPreviewFailed"],
             LocalizationService.Instance["Error_ProcessedPreviewMissingOutput"],
@@ -127,6 +129,10 @@ public sealed partial class ResourceTests
         values.AddRange(comparisonReport.Findings.Select(f => f.CategoryDisplay));
         values.AddRange(comparisonReport.Metrics.SelectMany(m => new[] { m.Label, m.SourceValue, m.OutputValue }));
         values.Add(LocalizationService.Instance.Format("Report_ItemResultSummaryFormat", comparisonReport.StatusText, comparisonReport.Summary));
+        values.Add(LocalizationService.Instance["Report_ResultPassedCount"]);
+        values.Add(LocalizationService.Instance["Report_ResultWarningCount"]);
+        values.Add(LocalizationService.Instance["Report_ResultCriticalCount"]);
+        values.Add(LocalizationService.Instance["Report_ResultMissingCount"]);
 
         using var batchItem = new BatchProcessingItem("track.mp3");
         values.Add(batchItem.StatusDisplay);

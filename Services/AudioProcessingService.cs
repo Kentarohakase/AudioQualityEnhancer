@@ -67,6 +67,13 @@ public sealed class AudioProcessingService
             return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_OutputFolderRequired"]);
         }
 
+        Report(progress, 4, LocalizationService.Instance["Phase_CheckOutput"]);
+        var outputDirectoryCheck = EnsureOutputDirectoryWritable(options.OutputDirectory);
+        if (outputDirectoryCheck.IsFailure)
+        {
+            return Result<ProcessResult>.Failure(outputDirectoryCheck.ErrorMessage ?? LocalizationService.Instance["Error_OutputFolderNotWritable"], outputDirectoryCheck.Exception);
+        }
+
         Report(progress, 5, LocalizationService.Instance["Phase_CheckFFmpeg"]);
         var ffmpegAvailability = await _ffmpegService.CheckAvailabilityAsync(cancellationToken);
         if (ffmpegAvailability.IsFailure)
@@ -74,7 +81,7 @@ public sealed class AudioProcessingService
             return Result<ProcessResult>.Failure(ffmpegAvailability.ErrorMessage ?? LocalizationService.Instance["Error_FFmpegUnavailable"], ffmpegAvailability.Exception);
         }
 
-        Directory.CreateDirectory(options.OutputDirectory);
+        _fileNameService.CleanupTemporaryOutputFiles(options.OutputDirectory, TimeSpan.FromDays(2));
 
         var sourceInfo = options.SourceInfo;
         if (sourceInfo is null)
@@ -243,6 +250,27 @@ public sealed class AudioProcessingService
             filterPlan.PreLoudnessFilters,
             filterPlan.LoudnessSettings,
             filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness));
+    }
+
+    internal static Result EnsureOutputDirectoryWritable(string outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            return Result.Failure(LocalizationService.Instance["Error_OutputFolderRequired"]);
+        }
+
+        try
+        {
+            Directory.CreateDirectory(outputDirectory);
+            var probePath = Path.Combine(outputDirectory, $"{FileNameService.TemporaryFilePrefix}write-test-{Guid.NewGuid():N}.tmp");
+            File.WriteAllText(probePath, string.Empty);
+            File.Delete(probePath);
+            return Result.Success();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or NotSupportedException or ArgumentException)
+        {
+            return Result.Failure(LocalizationService.Instance["Error_OutputFolderNotWritable"], ex);
+        }
     }
 
     private static IReadOnlyList<string> BuildRenderArguments(

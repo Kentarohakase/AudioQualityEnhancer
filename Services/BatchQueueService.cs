@@ -110,7 +110,7 @@ public sealed class BatchQueueService
             BatchQueueFilter.Ready => item.Status == BatchProcessingStatus.Ready,
             BatchQueueFilter.Processing => item.Status is BatchProcessingStatus.Analyzing or BatchProcessingStatus.Processing or BatchProcessingStatus.Validating,
             BatchQueueFilter.Done => item.Status == BatchProcessingStatus.Done,
-            BatchQueueFilter.Warnings => item.Status == BatchProcessingStatus.Done && item.HasComparisonWarnings,
+            BatchQueueFilter.Warnings => item.HasComparisonWarnings,
             BatchQueueFilter.Failed => item.Status == BatchProcessingStatus.Failed,
             BatchQueueFilter.Cancelled => item.Status == BatchProcessingStatus.Cancelled,
             _ => true
@@ -142,7 +142,7 @@ public sealed class BatchQueueService
             Count(snapshot, BatchProcessingStatus.Processing),
             Count(snapshot, BatchProcessingStatus.Validating),
             Count(snapshot, BatchProcessingStatus.Done),
-            snapshot.Count(item => item.Status == BatchProcessingStatus.Done && item.ComparisonReport?.HasWarningsOrErrors == true),
+            snapshot.Count(item => item.ComparisonReport?.HasWarningsOrErrors == true),
             Count(snapshot, BatchProcessingStatus.Failed),
             Count(snapshot, BatchProcessingStatus.Cancelled));
     }

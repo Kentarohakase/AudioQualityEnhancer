@@ -4,6 +4,8 @@ namespace AudioQualityEnhancer.Services;
 
 public sealed class FileNameService
 {
+    internal const string TemporaryFilePrefix = "aqe_";
+
     private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 
     public static IReadOnlySet<string> SupportedInputExtensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -60,8 +62,51 @@ public sealed class FileNameService
         Directory.CreateDirectory(tempDirectory);
 
         var extension = Path.GetExtension(finalOutputPath);
-        var name = $"{Path.GetFileNameWithoutExtension(finalOutputPath)}_{Guid.NewGuid():N}{extension}";
+        var safeBaseName = SanitizeFileName(Path.GetFileNameWithoutExtension(finalOutputPath));
+        var name = $"{TemporaryFilePrefix}{safeBaseName}_{Guid.NewGuid():N}{extension}";
         return Path.Combine(tempDirectory, name);
+    }
+
+    public int CleanupTemporaryOutputFiles(string outputDirectory, TimeSpan minimumAge)
+    {
+        var tempDirectory = Path.Combine(outputDirectory, "Temp");
+        if (!Directory.Exists(tempDirectory))
+        {
+            return 0;
+        }
+
+        var cutoff = DateTimeOffset.Now - minimumAge;
+        string[] candidates;
+        try
+        {
+            candidates = Directory.GetFiles(tempDirectory, $"{TemporaryFilePrefix}*");
+        }
+        catch
+        {
+            return 0;
+        }
+
+        var deleted = 0;
+        foreach (var path in candidates)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                if (fileInfo.LastWriteTimeUtc > cutoff.UtcDateTime)
+                {
+                    continue;
+                }
+
+                fileInfo.Delete();
+                deleted++;
+            }
+            catch
+            {
+                // Cleanup is best effort; locked temp files are retried on a future run.
+            }
+        }
+
+        return deleted;
     }
 
     public CopyOutputSuggestion? SuggestCopyOutput(AudioInfo info)

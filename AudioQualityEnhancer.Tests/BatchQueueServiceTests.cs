@@ -137,12 +137,13 @@ public sealed class BatchQueueServiceTests
         try
         {
             items[4].SetComparisonReport(CreateComparisonReport(AudioComparisonStatus.Warning));
+            items[6].SetComparisonReport(CreateComparisonReport(AudioComparisonStatus.Critical));
             var service = new BatchQueueService(new FileNameService());
 
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Ready));
             Assert.Equal(3, service.GetItemsByFilter(items, BatchQueueFilter.Processing).Count);
             Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Done).Count);
-            Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Warnings));
+            Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Warnings).Count);
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Failed));
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Cancelled));
             Assert.Equal(items.Length, service.GetItemsByFilter(items, BatchQueueFilter.All).Count);

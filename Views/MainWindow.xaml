@@ -367,6 +367,9 @@
                 <DataTrigger Binding="{Binding HasComparisonWarnings}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BatchProcessingStatus.Validating}">
+                    <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static models:BatchProcessingStatus.Failed}">
                     <Setter Property="Background" Value="{DynamicResource CriticalBackgroundBrush}" />
                 </DataTrigger>
@@ -587,9 +590,9 @@
                                       Margin="0,0,0,10">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{Binding [Field_File], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding FileName}" Width="*" />
-                                    <DataGridTextColumn Header="{Binding [Field_Status], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding StatusDisplay}" Width="105" />
+                                    <DataGridTextColumn Header="{Binding [Field_Status], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding StatusDisplay}" Width="125" />
                                     <DataGridTextColumn Header="{Binding [Field_ScoreShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ScoreDisplay}" Width="72" />
-                                    <DataGridTextColumn Header="{Binding [Field_ResultCheckShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ValidationStatusDisplay}" Width="92" />
+                                    <DataGridTextColumn Header="{Binding [Field_ResultCheckShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ValidationStatusDisplay}" Width="108" />
                                     <DataGridTextColumn Header="{Binding [Field_Progress], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ProgressDisplay}" Width="78" />
                                     <DataGridTextColumn Header="{Binding [Field_Message], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ErrorMessage}" Width="1.2*" />
                                 </DataGrid.Columns>

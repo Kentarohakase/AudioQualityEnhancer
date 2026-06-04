@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Added an output-folder writability check before FFmpeg processing starts.
+- Added safe cleanup for stale AudioQualityEnhancer-owned temporary export files.
+- Added result status counts to Markdown reports.
+
+### Changed
+
+- Batch warning filters now include every item with result-check warnings or errors, not only completed items.
+- Result report findings are ordered by severity and include their localized category.
+- The batch grid gives the result-checking status and result status a little more room.
+
 ## 0.12.6 - 2026-06-04
 
 ### Added

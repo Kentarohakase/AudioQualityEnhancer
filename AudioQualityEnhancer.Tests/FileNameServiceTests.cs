@@ -67,8 +67,36 @@ public sealed class FileNameServiceTests
             var tempPath = service.CreateTemporaryOutputPath(tempDirectory, finalPath);
 
             Assert.StartsWith(Path.Combine(tempDirectory, "Temp"), tempPath, StringComparison.OrdinalIgnoreCase);
+            Assert.StartsWith(FileNameService.TemporaryFilePrefix, Path.GetFileName(tempPath), StringComparison.Ordinal);
             Assert.Equal(".wav", Path.GetExtension(tempPath));
             Assert.True(Directory.Exists(Path.Combine(tempDirectory, "Temp")));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CleanupTemporaryOutputFiles_DeletesOnlyOldOwnedTempFiles()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var service = new FileNameService();
+            var tempPath = service.CreateTemporaryOutputPath(tempDirectory, Path.Combine(tempDirectory, "result.flac"));
+            var tempFolder = Path.GetDirectoryName(tempPath)!;
+            File.WriteAllText(tempPath, "stale");
+            File.SetLastWriteTimeUtc(tempPath, DateTime.UtcNow.AddDays(-3));
+            var unrelatedPath = Path.Combine(tempFolder, "other-tool.tmp");
+            File.WriteAllText(unrelatedPath, "keep");
+
+            var deleted = service.CleanupTemporaryOutputFiles(tempDirectory, TimeSpan.FromDays(2));
+
+            Assert.Equal(1, deleted);
+            Assert.False(File.Exists(tempPath));
+            Assert.True(File.Exists(unrelatedPath));
         }
         finally
         {

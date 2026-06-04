@@ -178,6 +178,7 @@
   <data name="Phase_Done" xml:space="preserve"><value>Fertig</value></data>
   <data name="Phase_Cancel" xml:space="preserve"><value>Abbruch</value></data>
   <data name="Phase_CheckInput" xml:space="preserve"><value>Prüfe Eingabe</value></data>
+  <data name="Phase_CheckOutput" xml:space="preserve"><value>Prüfe Ausgabeordner</value></data>
   <data name="Phase_CheckFFmpeg" xml:space="preserve"><value>Prüfe FFmpeg</value></data>
   <data name="Phase_AnalyzingSource" xml:space="preserve"><value>Analysiere Quelle</value></data>
   <data name="Phase_PreparingProcessing" xml:space="preserve"><value>Bereite Verarbeitung vor</value></data>
@@ -246,6 +247,7 @@
   <data name="Error_UnsupportedFormat" xml:space="preserve"><value>Dieses Dateiformat wird nicht unterstützt. Unterstützt werden mp3, wav, flac, m4a, aac, ogg, opus, mp4 und mkv.</value></data>
   <data name="Error_UnsupportedFormatShort" xml:space="preserve"><value>Dieses Dateiformat wird nicht unterstützt.</value></data>
   <data name="Error_OutputFolderRequired" xml:space="preserve"><value>Bitte wähle einen Ausgabeordner aus.</value></data>
+  <data name="Error_OutputFolderNotWritable" xml:space="preserve"><value>Der Ausgabeordner ist nicht beschreibbar. Prüfe Berechtigungen, freien Speicherplatz oder ob der Ordner gesperrt ist.</value></data>
   <data name="Error_FFprobeAnalysisFailed" xml:space="preserve"><value>FFprobe konnte die Datei nicht analysieren. Prüfe, ob die Datei eine lesbare Audiospur enthält.</value></data>
   <data name="Error_FFprobeNoData" xml:space="preserve"><value>FFprobe hat keine Analysedaten zurückgegeben.</value></data>
   <data name="Error_NoAudioStream" xml:space="preserve"><value>In der Datei wurde keine Audiospur gefunden.</value></data>
@@ -426,6 +428,10 @@
   <data name="Report_DoneWithWarnings" xml:space="preserve"><value>Fertig mit Warnungen</value></data>
   <data name="Report_NoValidation" xml:space="preserve"><value>Für diese Datei liegt kein Ergebnisbericht vor.</value></data>
   <data name="Report_ItemResultSummaryFormat" xml:space="preserve"><value>Kurzbewertung: {0} - {1}</value></data>
+  <data name="Report_ResultPassedCount" xml:space="preserve"><value>Ergebnis OK</value></data>
+  <data name="Report_ResultWarningCount" xml:space="preserve"><value>Ergebnis mit Warnung</value></data>
+  <data name="Report_ResultCriticalCount" xml:space="preserve"><value>Ergebnis kritisch</value></data>
+  <data name="Report_ResultMissingCount" xml:space="preserve"><value>Ohne Ergebnisprüfung</value></data>
   <data name="Report_SourceValue" xml:space="preserve"><value>Quelle</value></data>
   <data name="Report_OutputValue" xml:space="preserve"><value>Ausgabe</value></data>
 
