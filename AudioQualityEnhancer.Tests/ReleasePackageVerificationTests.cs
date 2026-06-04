@@ -9,17 +9,14 @@ public sealed class ReleasePackageVerificationTests
     [Fact]
     public void VerifyReleasePackage_FailsWhenThirdPartyNoticeIsEmpty()
     {
-        const string version = "unit-empty-notice";
+        var version = $"unit-empty-notice-{Guid.NewGuid():N}";
         var artifactsDirectory = Path.Combine(TestPaths.RepositoryRoot, "artifacts");
         var zipPath = Path.Combine(artifactsDirectory, $"AudioQualityEnhancer-{version}-win-x64.zip");
         Directory.CreateDirectory(artifactsDirectory);
 
         try
         {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
+            DeletePackageArtifacts(version);
 
             using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
@@ -35,33 +32,25 @@ public sealed class ReleasePackageVerificationTests
             var result = RunVerifyScript(version);
 
             Assert.NotEqual(0, result.ExitCode);
-            Assert.Contains("THIRD_PARTY_NOTICES.md is missing or empty", result.Error + result.Output, StringComparison.Ordinal);
+            Assert.Contains("THIRD_PARTY_NOTICES.md is missing or empty", result.CombinedOutput, StringComparison.Ordinal);
         }
         finally
         {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-
-            DeleteChecksumFile(zipPath);
+            DeletePackageArtifacts(version);
         }
     }
 
     [Fact]
     public void VerifyReleasePackage_FailsWhenChecksumDoesNotMatch()
     {
-        const string version = "unit-bad-checksum";
+        var version = $"unit-bad-checksum-{Guid.NewGuid():N}";
         var artifactsDirectory = Path.Combine(TestPaths.RepositoryRoot, "artifacts");
         var zipPath = Path.Combine(artifactsDirectory, $"AudioQualityEnhancer-{version}-win-x64.zip");
         Directory.CreateDirectory(artifactsDirectory);
 
         try
         {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
+            DeletePackageArtifacts(version);
 
             using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
@@ -77,16 +66,11 @@ public sealed class ReleasePackageVerificationTests
             var result = RunVerifyScript(version);
 
             Assert.NotEqual(0, result.ExitCode);
-            Assert.Contains("SHA256 checksum mismatch", result.Error + result.Output, StringComparison.Ordinal);
+            Assert.Contains("SHA256 checksum mismatch", result.CombinedOutput, StringComparison.Ordinal);
         }
         finally
         {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-
-            DeleteChecksumFile(zipPath);
+            DeletePackageArtifacts(version);
         }
     }
 
@@ -109,6 +93,21 @@ public sealed class ReleasePackageVerificationTests
         if (File.Exists(checksumPath))
         {
             File.Delete(checksumPath);
+        }
+    }
+
+    private static void DeletePackageArtifacts(string version)
+    {
+        var artifactsDirectory = Path.Combine(TestPaths.RepositoryRoot, "artifacts");
+        foreach (var suffix in new[] { "win-x64", "win-x64-with-ffmpeg" })
+        {
+            var zipPath = Path.Combine(artifactsDirectory, $"AudioQualityEnhancer-{version}-{suffix}.zip");
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            DeleteChecksumFile(zipPath);
         }
     }
 
@@ -140,5 +139,8 @@ public sealed class ReleasePackageVerificationTests
         return new ScriptResult(process.ExitCode, output, error);
     }
 
-    private sealed record ScriptResult(int ExitCode, string Output, string Error);
+    private sealed record ScriptResult(int ExitCode, string Output, string Error)
+    {
+        public string CombinedOutput => Error + Output;
+    }
 }
