@@ -116,10 +116,11 @@ public sealed class AudioValidationService
         var metrics = BuildMetrics(sourceInfo, outputInfo, sourceDiagnostics, outputDiagnostics);
 
         AddDurationFinding(sourceInfo, outputInfo, findings);
+        AddFormatFindings(options, sourceInfo, outputInfo, findings);
         AddPeakFindings(outputDiagnostics, findings);
         AddLoudnessFinding(options, outputDiagnostics, findings);
 
-        var effectiveExportFormat = options.Preset.IsArchiveExport ? ExportFormat.Flac : options.ExportFormat;
+        var effectiveExportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
         if (sourceInfo.IsLikelyLossy && effectiveExportFormat.IsLossless)
         {
             AddFinding(findings, AudioComparisonFindingKind.LossyToLossless, AudioInsightSeverity.Info);
@@ -253,6 +254,44 @@ public sealed class AudioValidationService
         }
     }
 
+    private static void AddFormatFindings(
+        ProcessingOptions options,
+        AudioInfo sourceInfo,
+        AudioInfo outputInfo,
+        ICollection<AudioComparisonFinding> findings)
+    {
+        if (!options.Preset.IsCopyOnly)
+        {
+            var expectedCodec = GetExpectedOutputCodec(options);
+            if (!string.IsNullOrWhiteSpace(expectedCodec) &&
+                !CodecsMatch(expectedCodec, outputInfo.Codec))
+            {
+                AddFinding(findings, AudioComparisonFindingKind.CodecMismatch, AudioInsightSeverity.Warning);
+            }
+        }
+
+        if (GetExpectedSampleRate(options) is { } expectedSampleRate)
+        {
+            if (outputInfo.SampleRate is > 0 && outputInfo.SampleRate != expectedSampleRate)
+            {
+                AddFinding(findings, AudioComparisonFindingKind.SampleRateMismatch, AudioInsightSeverity.Warning);
+            }
+        }
+        else if (sourceInfo.SampleRate is > 0 &&
+                 outputInfo.SampleRate is > 0 &&
+                 sourceInfo.SampleRate != outputInfo.SampleRate)
+        {
+            AddFinding(findings, AudioComparisonFindingKind.SampleRateMismatch, AudioInsightSeverity.Warning);
+        }
+
+        if (sourceInfo.Channels is > 0 &&
+            outputInfo.Channels is > 0 &&
+            sourceInfo.Channels != outputInfo.Channels)
+        {
+            AddFinding(findings, AudioComparisonFindingKind.ChannelCountChanged, AudioInsightSeverity.Warning);
+        }
+    }
+
     private static void AddPeakFindings(AudioDiagnostics? outputDiagnostics, ICollection<AudioComparisonFinding> findings)
     {
         if (outputDiagnostics is null)
@@ -308,6 +347,52 @@ public sealed class AudioValidationService
         }
 
         return null;
+    }
+
+    private static string? GetExpectedOutputCodec(ProcessingOptions options)
+    {
+        var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
+        if (exportFormat.Id == ExportFormat.Wav24.Id || exportFormat.Id == ExportFormat.PremierePro.Id)
+        {
+            return "pcm_s24le";
+        }
+
+        if (exportFormat.Id == ExportFormat.Flac.Id)
+        {
+            return "flac";
+        }
+
+        if (exportFormat.Id == ExportFormat.Mp3_320.Id)
+        {
+            return "mp3";
+        }
+
+        if (exportFormat.Id == ExportFormat.Aac_256.Id)
+        {
+            return "aac";
+        }
+
+        if (exportFormat.Id == ExportFormat.Opus_160.Id || exportFormat.Id == ExportFormat.Opus_192.Id)
+        {
+            return "opus";
+        }
+
+        return null;
+    }
+
+    private static int? GetExpectedSampleRate(ProcessingOptions options)
+    {
+        return options.ExportFormat.Id == ExportFormat.PremierePro.Id ? 48_000 : null;
+    }
+
+    private static bool CodecsMatch(string expectedCodec, string actualCodec)
+    {
+        return NormalizeCodec(expectedCodec).Equals(NormalizeCodec(actualCodec), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeCodec(string codec)
+    {
+        return codec.Trim().ToLowerInvariant();
     }
 
     private static AudioComparisonStatus GetStatus(IReadOnlyList<AudioComparisonFinding> findings)

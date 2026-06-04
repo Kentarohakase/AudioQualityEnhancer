@@ -232,6 +232,11 @@
   <data name="Error_FFprobeNotFound" xml:space="preserve"><value>FFprobe was not found. Install FFmpeg and make sure ffprobe.exe is on PATH or next to the app.</value></data>
   <data name="Error_FFmpegExitCodeFormat" xml:space="preserve"><value>FFmpeg exited with code {0}. Details are in the log.</value></data>
   <data name="Error_FFmpegStartFailed" xml:space="preserve"><value>An unexpected error occurred while starting FFmpeg.</value></data>
+  <data name="Error_FFmpegOutputLocked" xml:space="preserve"><value>The file or output folder is probably locked or not writable.</value></data>
+  <data name="Error_FFmpegPathUnavailable" xml:space="preserve"><value>An input or output file could not be opened. Check the path and output folder.</value></data>
+  <data name="Error_FFmpegCodecUnavailable" xml:space="preserve"><value>The required codec is not available in this FFmpeg build.</value></data>
+  <data name="Error_FFmpegInvalidArguments" xml:space="preserve"><value>FFmpeg rejected the selected export arguments. Check the preset and output format.</value></data>
+  <data name="Error_FFmpegInputUnreadable" xml:space="preserve"><value>FFmpeg could not reliably read the source file.</value></data>
   <data name="Error_ProcessingCancelled" xml:space="preserve"><value>Processing was cancelled.</value></data>
   <data name="Error_AnalysisCancelled" xml:space="preserve"><value>Analysis was cancelled.</value></data>
   <data name="Error_NoFileSelected" xml:space="preserve"><value>Please select a file first.</value></data>
@@ -316,6 +321,12 @@
   <data name="AnalysisFinding_VeryQuiet_Message" xml:space="preserve"><value>Normalization can help, but it raises existing noise as well.</value></data>
   <data name="AnalysisFinding_AlreadyLoud_Title" xml:space="preserve"><value>Already very loud</value></data>
   <data name="AnalysisFinding_AlreadyLoud_Message" xml:space="preserve"><value>More compression or heavy loudness boosting can increase artifacts.</value></data>
+  <data name="AnalysisFinding_MonoSource_Title" xml:space="preserve"><value>Mono source</value></data>
+  <data name="AnalysisFinding_MonoSource_Message" xml:space="preserve"><value>The file is mono. That can be correct for speech, but should be checked deliberately for music.</value></data>
+  <data name="AnalysisFinding_MultichannelSource_Title" xml:space="preserve"><value>More than two channels</value></data>
+  <data name="AnalysisFinding_MultichannelSource_Message" xml:space="preserve"><value>The source contains more than stereo. Check after export whether channels were preserved or intentionally mixed.</value></data>
+  <data name="AnalysisFinding_LossyTranscodingRisk_Title" xml:space="preserve"><value>Transcoding risk</value></data>
+  <data name="AnalysisFinding_LossyTranscodingRisk_Message" xml:space="preserve"><value>Re-encoding lossy material to another lossy format can add artifacts. FLAC/WAV only preserve the processed result.</value></data>
   <data name="AnalysisFinding_AdvancedAnalysisRecommended_Title" xml:space="preserve"><value>Advanced analysis recommended</value></data>
   <data name="AnalysisFinding_AdvancedAnalysisRecommended_Message" xml:space="preserve"><value>Loudness and peak recommendations become more precise after running advanced analysis.</value></data>
   <data name="AnalysisRecommendation_LossySource" xml:space="preserve"><value>For lossy sources, normalize gently and treat a lossless target format as an editing or archive format only.</value></data>
@@ -325,6 +336,9 @@
   <data name="AnalysisRecommendation_LowHeadroom" xml:space="preserve"><value>Use a true-peak limit and leave some reserve to avoid creating new clipping.</value></data>
   <data name="AnalysisRecommendation_VeryQuiet" xml:space="preserve"><value>Normalize carefully and listen back to check whether noise became distractingly louder.</value></data>
   <data name="AnalysisRecommendation_AlreadyLoud" xml:space="preserve"><value>Avoid extra compression. A lossless export preserves the result but does not repair existing overprocessing.</value></data>
+  <data name="AnalysisRecommendation_MonoSource" xml:space="preserve"><value>Mono is often appropriate for speech. For music, check whether the source was accidentally reduced to one channel.</value></data>
+  <data name="AnalysisRecommendation_MultichannelSource" xml:space="preserve"><value>If multichannel audio matters, listen to the result by channel and use an export that preserves the channel count.</value></data>
+  <data name="AnalysisRecommendation_LossyTranscodingRisk" xml:space="preserve"><value>Avoid unnecessary extra lossy exports. Prefer FLAC or WAV for intermediate files.</value></data>
   <data name="AnalysisRecommendation_AdvancedAnalysisRecommended" xml:space="preserve"><value>Run advanced analysis before deciding on stronger processing for critical material.</value></data>
 
   <data name="ProfileAdvice_TargetFormat" xml:space="preserve"><value>{0} → {1}</value></data>
@@ -377,6 +391,12 @@
   <data name="ValidationFinding_OutputUnreadable_Message" xml:space="preserve"><value>FFprobe could not reliably read the generated file.</value></data>
   <data name="ValidationFinding_DurationMismatch_Title" xml:space="preserve"><value>Duration differs</value></data>
   <data name="ValidationFinding_DurationMismatch_Message" xml:space="preserve"><value>The output duration does not match the source cleanly. Check whether the beginning or end is missing.</value></data>
+  <data name="ValidationFinding_CodecMismatch_Title" xml:space="preserve"><value>Codec does not match profile</value></data>
+  <data name="ValidationFinding_CodecMismatch_Message" xml:space="preserve"><value>The generated file does not use the codec expected for the selected output format.</value></data>
+  <data name="ValidationFinding_SampleRateMismatch_Title" xml:space="preserve"><value>Sample rate changed unexpectedly</value></data>
+  <data name="ValidationFinding_SampleRateMismatch_Message" xml:space="preserve"><value>The output sample rate differs from the expected value or from the source.</value></data>
+  <data name="ValidationFinding_ChannelCountChanged_Title" xml:space="preserve"><value>Channel count changed</value></data>
+  <data name="ValidationFinding_ChannelCountChanged_Message" xml:space="preserve"><value>The output has a different channel count than the source. Check whether mono, stereo or multichannel audio is intentional.</value></data>
   <data name="ValidationFinding_PotentialClipping_Title" xml:space="preserve"><value>Possible clipping in result</value></data>
   <data name="ValidationFinding_PotentialClipping_Message" xml:space="preserve"><value>The output peak is very close to 0 dBFS. The result may be clipped or too heavily limited.</value></data>
   <data name="ValidationFinding_LowHeadroom_Title" xml:space="preserve"><value>Low headroom in result</value></data>

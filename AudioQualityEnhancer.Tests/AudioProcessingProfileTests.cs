@@ -107,6 +107,13 @@ public sealed class AudioProcessingProfileTests
     }
 
     [Fact]
+    public void ResolveForPreset_ArchiveExportAlwaysUsesFlac()
+    {
+        Assert.Same(ExportFormat.Flac, ExportFormat.ResolveForPreset(AudioPreset.ArchiveExport, ExportFormat.Mp3_320));
+        Assert.Same(ExportFormat.Aac_256, ExportFormat.ResolveForPreset(AudioPreset.Music, ExportFormat.Aac_256));
+    }
+
+    [Fact]
     public void PresetAndExportLists_ContainExpectedProfiles()
     {
         Assert.Contains(AudioPreset.ArchiveExport, AudioPreset.All);

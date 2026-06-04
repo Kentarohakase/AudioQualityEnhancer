@@ -5,6 +5,13 @@
 ### Added
 
 - Added a processed preset preview that renders a temporary 20-second WAV so the original and current preset can be compared before export.
+- Added clearer analysis findings for mono sources, multichannel sources and lossy transcoding risks.
+- Added result-check warnings for unexpected codec, sample-rate and channel-count changes after export.
+
+### Changed
+
+- Centralized archive export format resolution so archive processing and validation consistently use FLAC.
+- Improved FFmpeg failure messages for locked files, unavailable paths, unsupported codecs, invalid arguments and unreadable sources.
 
 ## 0.12.4 - 2026-06-04
 

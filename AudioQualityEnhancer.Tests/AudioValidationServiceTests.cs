@@ -104,6 +104,78 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void BuildReport_CodecMismatchCreatesWarning()
+    {
+        using var source = CreateInfo("wav", isLossy: false);
+        using var output = CreateInfo("aac", isLossy: true);
+        using var diagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -14,
+            TruePeakDb = -2
+        };
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.Music, ExportFormat.Flac),
+            source,
+            output,
+            sourceDiagnostics: null,
+            diagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: @"C:\audio\song_music.flac");
+
+        Assert.Equal(AudioComparisonStatus.Warning, report.Status);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.CodecMismatch);
+    }
+
+    [Fact]
+    public void BuildReport_PremiereProfileRequires48Khz()
+    {
+        using var source = CreateInfo("wav", isLossy: false, sampleRate: 48_000);
+        using var output = CreateInfo("pcm_s24le", isLossy: false, sampleRate: 44_100);
+        using var diagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -14,
+            TruePeakDb = -2
+        };
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.Music, ExportFormat.PremierePro),
+            source,
+            output,
+            sourceDiagnostics: null,
+            diagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: @"C:\audio\clip_music_premiere_pro.wav");
+
+        Assert.Equal(AudioComparisonStatus.Warning, report.Status);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.SampleRateMismatch);
+    }
+
+    [Fact]
+    public void BuildReport_ChannelCountChangeCreatesWarning()
+    {
+        using var source = CreateInfo("wav", isLossy: false, channels: 6);
+        using var output = CreateInfo("flac", isLossy: false, channels: 2);
+        using var diagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -14,
+            TruePeakDb = -2
+        };
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.Music, ExportFormat.Flac),
+            source,
+            output,
+            sourceDiagnostics: null,
+            diagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: @"C:\audio\surround_music.flac");
+
+        Assert.Equal(AudioComparisonStatus.Warning, report.Status);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.ChannelCountChanged);
+    }
+
+    [Fact]
     public void BuildReport_LoudnessTargetMissCreatesWarning()
     {
         using var source = CreateInfo("flac", isLossy: false);
@@ -236,7 +308,12 @@ public sealed class AudioValidationServiceTests
         };
     }
 
-    private static AudioInfo CreateInfo(string codec, bool isLossy, TimeSpan? duration = null)
+    private static AudioInfo CreateInfo(
+        string codec,
+        bool isLossy,
+        TimeSpan? duration = null,
+        int sampleRate = 48_000,
+        int channels = 2)
     {
         return new AudioInfo
         {
@@ -244,8 +321,8 @@ public sealed class AudioValidationServiceTests
             Codec = codec,
             CodecLongName = codec.ToUpperInvariant(),
             BitRate = isLossy ? 128_000 : 900_000,
-            SampleRate = 48_000,
-            Channels = 2,
+            SampleRate = sampleRate,
+            Channels = channels,
             Duration = duration ?? TimeSpan.FromSeconds(60),
             Container = codec,
             FileSizeBytes = 1_000_000,

@@ -232,6 +232,11 @@
   <data name="Error_FFprobeNotFound" xml:space="preserve"><value>FFprobe wurde nicht gefunden. Installiere FFmpeg und stelle sicher, dass ffprobe.exe im PATH liegt oder neben der App liegt.</value></data>
   <data name="Error_FFmpegExitCodeFormat" xml:space="preserve"><value>FFmpeg wurde mit Exit Code {0} beendet. Details stehen im Log.</value></data>
   <data name="Error_FFmpegStartFailed" xml:space="preserve"><value>Beim Starten von FFmpeg ist ein unerwarteter Fehler aufgetreten.</value></data>
+  <data name="Error_FFmpegOutputLocked" xml:space="preserve"><value>Die Datei oder der Ausgabeordner ist vermutlich gesperrt oder nicht beschreibbar.</value></data>
+  <data name="Error_FFmpegPathUnavailable" xml:space="preserve"><value>Eine Eingabe- oder Ausgabedatei konnte nicht geöffnet werden. Prüfe Pfad und Ausgabeordner.</value></data>
+  <data name="Error_FFmpegCodecUnavailable" xml:space="preserve"><value>Der benötigte Codec ist in dieser FFmpeg-Version nicht verfügbar.</value></data>
+  <data name="Error_FFmpegInvalidArguments" xml:space="preserve"><value>FFmpeg hat die gewählten Exportargumente abgelehnt. Prüfe Profil und Ausgabeformat.</value></data>
+  <data name="Error_FFmpegInputUnreadable" xml:space="preserve"><value>FFmpeg konnte die Quelldatei nicht zuverlässig lesen.</value></data>
   <data name="Error_ProcessingCancelled" xml:space="preserve"><value>Die Verarbeitung wurde abgebrochen.</value></data>
   <data name="Error_AnalysisCancelled" xml:space="preserve"><value>Analyse wurde abgebrochen.</value></data>
   <data name="Error_NoFileSelected" xml:space="preserve"><value>Bitte wähle zuerst eine Datei aus.</value></data>
@@ -316,6 +321,12 @@
   <data name="AnalysisFinding_VeryQuiet_Message" xml:space="preserve"><value>Normalisierung kann helfen, hebt aber vorhandenes Rauschen ebenfalls an.</value></data>
   <data name="AnalysisFinding_AlreadyLoud_Title" xml:space="preserve"><value>Bereits sehr laut</value></data>
   <data name="AnalysisFinding_AlreadyLoud_Message" xml:space="preserve"><value>Weitere Kompression oder starke Lautheitsanhebung kann Artefakte verstärken.</value></data>
+  <data name="AnalysisFinding_MonoSource_Title" xml:space="preserve"><value>Mono-Quelle</value></data>
+  <data name="AnalysisFinding_MonoSource_Message" xml:space="preserve"><value>Die Datei ist mono. Das kann für Sprache korrekt sein, sollte bei Musik aber bewusst geprüft werden.</value></data>
+  <data name="AnalysisFinding_MultichannelSource_Title" xml:space="preserve"><value>Mehr als zwei Kanäle</value></data>
+  <data name="AnalysisFinding_MultichannelSource_Message" xml:space="preserve"><value>Die Quelle enthält mehr als Stereo. Prüfe nach dem Export, ob Kanäle erhalten bleiben oder bewusst gemischt wurden.</value></data>
+  <data name="AnalysisFinding_LossyTranscodingRisk_Title" xml:space="preserve"><value>Transcoding-Risiko</value></data>
+  <data name="AnalysisFinding_LossyTranscodingRisk_Message" xml:space="preserve"><value>Erneutes verlustbehaftetes Encoding kann zusätzliche Artefakte erzeugen. FLAC/WAV bewahren nur das bearbeitete Ergebnis.</value></data>
   <data name="AnalysisFinding_AdvancedAnalysisRecommended_Title" xml:space="preserve"><value>Erweiterte Analyse empfohlen</value></data>
   <data name="AnalysisFinding_AdvancedAnalysisRecommended_Message" xml:space="preserve"><value>Loudness- und Peak-Empfehlungen werden genauer, wenn die erweiterte Analyse ausgeführt wurde.</value></data>
   <data name="AnalysisRecommendation_LossySource" xml:space="preserve"><value>Bei verlustbehafteten Quellen lieber schonend normalisieren und ein verlustfreies Zielformat nur als Bearbeitungs- oder Archivformat verstehen.</value></data>
@@ -325,6 +336,9 @@
   <data name="AnalysisRecommendation_LowHeadroom" xml:space="preserve"><value>Arbeite mit True-Peak-Limit und lasse etwas Reserve, damit kein neues Clipping entsteht.</value></data>
   <data name="AnalysisRecommendation_VeryQuiet" xml:space="preserve"><value>Nutze Normalisierung vorsichtig und prüfe nachher, ob Rauschen störend lauter geworden ist.</value></data>
   <data name="AnalysisRecommendation_AlreadyLoud" xml:space="preserve"><value>Vermeide zusätzliche Kompression. Ein verlustfreier Export bewahrt das Ergebnis, repariert aber keine vorhandene Überbearbeitung.</value></data>
+  <data name="AnalysisRecommendation_MonoSource" xml:space="preserve"><value>Bei Sprache ist Mono oft sinnvoll. Bei Musik prüfe, ob die Quelle versehentlich auf einen Kanal reduziert wurde.</value></data>
+  <data name="AnalysisRecommendation_MultichannelSource" xml:space="preserve"><value>Wenn Mehrkanalton wichtig ist, höre das Ergebnis kanalweise an und nutze einen Export, der die Kanalzahl erhält.</value></data>
+  <data name="AnalysisRecommendation_LossyTranscodingRisk" xml:space="preserve"><value>Vermeide unnötige zusätzliche Lossy-Exporte. Für Zwischenschritte lieber FLAC oder WAV verwenden.</value></data>
   <data name="AnalysisRecommendation_AdvancedAnalysisRecommended" xml:space="preserve"><value>Starte die erweiterte Analyse, bevor du bei kritischem Material über stärkere Bearbeitung entscheidest.</value></data>
 
   <data name="ProfileAdvice_TargetFormat" xml:space="preserve"><value>{0} → {1}</value></data>
@@ -377,6 +391,12 @@
   <data name="ValidationFinding_OutputUnreadable_Message" xml:space="preserve"><value>FFprobe konnte die erzeugte Datei nicht zuverlässig auslesen.</value></data>
   <data name="ValidationFinding_DurationMismatch_Title" xml:space="preserve"><value>Dauer weicht ab</value></data>
   <data name="ValidationFinding_DurationMismatch_Message" xml:space="preserve"><value>Die Dauer der Ausgabe passt nicht sauber zur Quelle. Prüfe, ob Anfang oder Ende fehlen.</value></data>
+  <data name="ValidationFinding_CodecMismatch_Title" xml:space="preserve"><value>Codec passt nicht zum Profil</value></data>
+  <data name="ValidationFinding_CodecMismatch_Message" xml:space="preserve"><value>Die erzeugte Datei nutzt nicht den Codec, der zum gewählten Ausgabeformat erwartet wurde.</value></data>
+  <data name="ValidationFinding_SampleRateMismatch_Title" xml:space="preserve"><value>Sample Rate unerwartet geändert</value></data>
+  <data name="ValidationFinding_SampleRateMismatch_Message" xml:space="preserve"><value>Die Sample Rate der Ausgabe weicht vom erwarteten Wert oder von der Quelle ab.</value></data>
+  <data name="ValidationFinding_ChannelCountChanged_Title" xml:space="preserve"><value>Kanalzahl geändert</value></data>
+  <data name="ValidationFinding_ChannelCountChanged_Message" xml:space="preserve"><value>Die Ausgabe hat eine andere Kanalzahl als die Quelle. Prüfe, ob Mono, Stereo oder Mehrkanalton so beabsichtigt ist.</value></data>
   <data name="ValidationFinding_PotentialClipping_Title" xml:space="preserve"><value>Mögliches Clipping im Ergebnis</value></data>
   <data name="ValidationFinding_PotentialClipping_Message" xml:space="preserve"><value>Der Peak der Ausgabe liegt sehr nah an 0 dBFS. Das Ergebnis kann übersteuert oder zu hart limitiert sein.</value></data>
   <data name="ValidationFinding_LowHeadroom_Title" xml:space="preserve"><value>Wenig Headroom im Ergebnis</value></data>

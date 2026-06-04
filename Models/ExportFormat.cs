@@ -42,6 +42,11 @@ public sealed class ExportFormat : INotifyPropertyChanged
 
     public override string ToString() => DisplayName;
 
+    public static ExportFormat ResolveForPreset(AudioPreset preset, ExportFormat selectedFormat)
+    {
+        return preset.IsArchiveExport ? Flac : selectedFormat;
+    }
+
     private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != "Item[]")

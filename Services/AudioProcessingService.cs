@@ -222,7 +222,7 @@ public sealed class AudioProcessingService
             return Result<OutputPlan>.Success(new OutputPlan(outputPath, new[] { "-c:a", "copy" }, string.Empty, Array.Empty<string>(), null, false));
         }
 
-        var exportFormat = options.Preset.IsArchiveExport ? ExportFormat.Flac : options.ExportFormat;
+        var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
         if (options.Preset.IsArchiveExport && options.ExportFormat.Id != ExportFormat.Flac.Id)
         {
             _logService.Info(LocalizationService.Instance["Log_ArchiveForcesFlac"]);

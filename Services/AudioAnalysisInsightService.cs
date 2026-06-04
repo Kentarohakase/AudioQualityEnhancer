@@ -15,6 +15,8 @@ public sealed class AudioAnalysisInsightService
             score -= 5;
             AddFinding(findings, AudioAnalysisFindingKind.LossySource, AudioInsightSeverity.Info);
             AddRecommendation(recommendations, AudioAnalysisFindingKind.LossySource);
+            AddFinding(findings, AudioAnalysisFindingKind.LossyTranscodingRisk, AudioInsightSeverity.Info);
+            AddRecommendation(recommendations, AudioAnalysisFindingKind.LossyTranscodingRisk);
         }
 
         if (info.IsLikelyLossy && info.BitRate is > 0)
@@ -33,6 +35,18 @@ public sealed class AudioAnalysisInsightService
             score -= 10;
             AddFinding(findings, AudioAnalysisFindingKind.LowSampleRate, AudioInsightSeverity.Warning);
             AddRecommendation(recommendations, AudioAnalysisFindingKind.LowSampleRate);
+        }
+
+        if (info.Channels == 1)
+        {
+            AddFinding(findings, AudioAnalysisFindingKind.MonoSource, AudioInsightSeverity.Info);
+            AddRecommendation(recommendations, AudioAnalysisFindingKind.MonoSource);
+        }
+        else if (info.Channels > 2)
+        {
+            score -= 5;
+            AddFinding(findings, AudioAnalysisFindingKind.MultichannelSource, AudioInsightSeverity.Warning);
+            AddRecommendation(recommendations, AudioAnalysisFindingKind.MultichannelSource);
         }
 
         if (diagnostics is null)

@@ -48,7 +48,7 @@ Bei Videodateien wird die erste Audiospur vorausgewählt. Wenn mehrere Audiospur
 
 ## Analyse
 
-Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, wenig Headroom oder sehr leises Material.
+Die normale Analyse ist schnell und liest Metadaten mit FFprobe. Zusätzlich gibt es eine erweiterte Analyse mit FFmpeg. Sie misst Lautheit, True Peak, Sample Peak, Durchschnittspegel und Dynamikbereich. Das hilft bei Hinweisen auf Clipping, sehr niedrige Bitrate, verdächtige Sample Rate, wenig Headroom, sehr leises Material, Mono-/Mehrkanalquellen und mögliche Transcoding-Fallen.
 
 Die App bewertet diese Daten zusätzlich mit einem einfachen Score, technischen Hinweisen und Empfehlungen. Das hilft bei der Wahl eines sinnvollen Presets. Der Score bewertet technische Auffälligkeiten, nicht subjektive Klangqualität, und verspricht keine Wiederherstellung verlorener Details.
 
@@ -68,7 +68,7 @@ Nach einem Batch-Lauf kannst du die Warteschlange nach Status filtern, Einträge
 
 ## Ergebnisprüfung
 
-Nach einem Export prüft die App die erzeugte Datei noch einmal. Sie vergleicht technische Werte wie Dauer, Codec, Sample Rate, Lautheit und Peaks mit der Quelle. Dadurch sieht man schneller, ob der Export plausibel ist oder ob zum Beispiel Clipping, wenig Headroom oder eine auffällige Dauerabweichung entstanden ist.
+Nach einem Export prüft die App die erzeugte Datei noch einmal. Sie vergleicht technische Werte wie Dauer, Codec, Sample Rate, Kanalzahl, Lautheit und Peaks mit der Quelle und dem gewählten Ausgabeformat. Dadurch sieht man schneller, ob der Export plausibel ist oder ob zum Beispiel Clipping, wenig Headroom, eine auffällige Dauerabweichung oder eine unerwartete Formatänderung entstanden ist.
 
 Diese Prüfung bewertet Messwerte, nicht den subjektiven Klang. Sie kann helfen, Fehler zu finden, macht aus schlechtem Ausgangsmaterial aber keine verlorenen Details wieder hörbar.
 
@@ -153,7 +153,7 @@ dotnet test
 dotnet run
 ```
 
-Die Tests prüfen Parser, Dateilogik, Batch-Logik, Ergebnisprüfung, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
+Die Tests prüfen Parser, Dateilogik, Batch-Logik, Analyse-Bewertung, FFmpeg-Argumentdarstellung, Ergebnisprüfung, Exportprofile und Sprachressourcen. Sie starten keine FFmpeg-Prozesse.
 
 ## Release bauen
 

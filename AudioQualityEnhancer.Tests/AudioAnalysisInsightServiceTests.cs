@@ -112,6 +112,44 @@ public sealed class AudioAnalysisInsightServiceTests
     }
 
     [Fact]
+    public void BuildReport_MonoSource_AddsInformationalChannelFinding()
+    {
+        using var info = CreateInfo(codec: "wav", isLossy: false, bitRate: 768_000, sampleRate: 48_000, channels: 1);
+        using var diagnostics = CreateDiagnostics(integratedLoudness: -16, truePeak: -2, maxVolume: -2);
+
+        var report = _service.BuildReport(info, diagnostics);
+
+        Assert.Equal(100, report.Score);
+        Assert.Contains(report.Findings, f => f.Kind == AudioAnalysisFindingKind.MonoSource && f.Severity == AudioInsightSeverity.Info);
+        Assert.Contains(report.Recommendations, r => r.Kind == AudioAnalysisFindingKind.MonoSource);
+    }
+
+    [Fact]
+    public void BuildReport_MultichannelSource_AddsWarningWithoutCriticalStatus()
+    {
+        using var info = CreateInfo(codec: "wav", isLossy: false, bitRate: 4_608_000, sampleRate: 48_000, channels: 6);
+        using var diagnostics = CreateDiagnostics(integratedLoudness: -18, truePeak: -3, maxVolume: -3);
+
+        var report = _service.BuildReport(info, diagnostics);
+
+        Assert.Equal(95, report.Score);
+        Assert.Equal(AudioAnalysisStatus.Caution, report.Status);
+        Assert.Contains(report.Findings, f => f.Kind == AudioAnalysisFindingKind.MultichannelSource && f.Severity == AudioInsightSeverity.Warning);
+    }
+
+    [Fact]
+    public void BuildReport_LossySource_AddsTranscodingRiskGuidance()
+    {
+        using var info = CreateInfo(codec: "aac", isLossy: true, bitRate: 256_000, sampleRate: 48_000);
+        using var diagnostics = CreateDiagnostics(integratedLoudness: -16, truePeak: -2, maxVolume: -2);
+
+        var report = _service.BuildReport(info, diagnostics);
+
+        Assert.Contains(report.Findings, f => f.Kind == AudioAnalysisFindingKind.LossyTranscodingRisk);
+        Assert.Contains(report.Recommendations, r => r.Kind == AudioAnalysisFindingKind.LossyTranscodingRisk);
+    }
+
+    [Fact]
     public void BuildReport_MissingDiagnostics_AddsInfoOnlyWithoutScorePenalty()
     {
         using var info = CreateInfo(codec: "flac", isLossy: false, bitRate: 900_000, sampleRate: 48_000);

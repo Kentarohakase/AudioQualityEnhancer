@@ -10,5 +10,8 @@ public enum AudioAnalysisFindingKind
     LowHeadroom,
     VeryQuiet,
     AlreadyLoud,
+    MonoSource,
+    MultichannelSource,
+    LossyTranscodingRisk,
     AdvancedAnalysisRecommended
 }

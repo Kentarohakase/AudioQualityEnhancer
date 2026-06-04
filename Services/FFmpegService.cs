@@ -66,7 +66,7 @@ public sealed class FFmpegService
                 return Result<ProcessResult>.Success(result);
             }
 
-            return Result<ProcessResult>.Failure(LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", result.ExitCode), value: result);
+            return Result<ProcessResult>.Failure(CreateExitErrorMessage(result), value: result);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
@@ -78,14 +78,65 @@ public sealed class FFmpegService
         }
     }
 
-    private static string FormatCommand(IEnumerable<string> arguments)
+    internal static string FormatCommand(IEnumerable<string> arguments)
     {
         return "ffmpeg " + string.Join(" ", arguments.Select(QuoteArgument));
     }
 
     private static string QuoteArgument(string value)
     {
-        return value.Any(char.IsWhiteSpace) ? $"\"{value}\"" : value;
+        if (value.Length == 0)
+        {
+            return "\"\"";
+        }
+
+        return value.Any(char.IsWhiteSpace) || value.Contains('"', StringComparison.Ordinal)
+            ? $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\""
+            : value;
+    }
+
+    internal static string CreateExitErrorMessage(ProcessResult result)
+    {
+        var detail = ResolveFriendlyErrorDetail(result.StandardError + Environment.NewLine + result.StandardOutput);
+        var baseMessage = LocalizationService.Instance.Format("Error_FFmpegExitCodeFormat", result.ExitCode);
+        return string.IsNullOrWhiteSpace(detail)
+            ? baseMessage
+            : $"{baseMessage} {detail}";
+    }
+
+    private static string ResolveFriendlyErrorDetail(string output)
+    {
+        if (ContainsAny(output, "Permission denied", "Access is denied", "Device or resource busy"))
+        {
+            return LocalizationService.Instance["Error_FFmpegOutputLocked"];
+        }
+
+        if (ContainsAny(output, "No such file or directory", "Cannot open file", "Failed to open"))
+        {
+            return LocalizationService.Instance["Error_FFmpegPathUnavailable"];
+        }
+
+        if (ContainsAny(output, "Unknown encoder", "Encoder not found", "Unknown decoder", "Decoder not found"))
+        {
+            return LocalizationService.Instance["Error_FFmpegCodecUnavailable"];
+        }
+
+        if (ContainsAny(output, "Invalid argument", "Unable to find a suitable output format"))
+        {
+            return LocalizationService.Instance["Error_FFmpegInvalidArguments"];
+        }
+
+        if (ContainsAny(output, "Invalid data found", "could not find codec parameters", "moov atom not found"))
+        {
+            return LocalizationService.Instance["Error_FFmpegInputUnreadable"];
+        }
+
+        return string.Empty;
+    }
+
+    private static bool ContainsAny(string value, params string[] candidates)
+    {
+        return candidates.Any(candidate => value.Contains(candidate, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool TryReportProgressFromProgressLine(string line, TimeSpan? totalDuration, Action<double>? progress)
