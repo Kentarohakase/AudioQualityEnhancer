@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.13.1 - 2026-06-04
+
+### Fixed
+
+- Stabilized release package verification tests for GitHub Actions by avoiding fragile PowerShell error-message assertions.
+
+## 0.13.0 - 2026-06-04
+
 ### Added
 
 - Added an explicit `asInvoker` application manifest so the app does not request administrator privileges.
