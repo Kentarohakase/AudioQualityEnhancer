@@ -7,6 +7,8 @@ internal sealed class AudioProcessedPreviewService
 {
     public static readonly TimeSpan PreviewDuration = TimeSpan.FromSeconds(20);
 
+    internal const string PreviewFilePattern = "processed-preview-*.wav";
+
     private readonly FFmpegService _ffmpegService;
     private readonly string _previewDirectory;
 
@@ -39,6 +41,7 @@ internal sealed class AudioProcessedPreviewService
         }
 
         Directory.CreateDirectory(_previewDirectory);
+        CleanupStalePreviews(_previewDirectory, TimeSpan.FromDays(2));
         var outputPath = Path.Combine(_previewDirectory, $"processed-preview-{Guid.NewGuid():N}.wav");
         var audioStream = options.SourceInfo is null
             ? options.AudioStream
@@ -114,6 +117,47 @@ internal sealed class AudioProcessedPreviewService
         {
             // Temporary preview cleanup should not hide the real UI action.
         }
+    }
+
+    internal static int CleanupStalePreviews(string previewDirectory, TimeSpan minimumAge)
+    {
+        if (!Directory.Exists(previewDirectory))
+        {
+            return 0;
+        }
+
+        string[] candidates;
+        try
+        {
+            candidates = Directory.GetFiles(previewDirectory, PreviewFilePattern);
+        }
+        catch
+        {
+            return 0;
+        }
+
+        var cutoff = DateTimeOffset.Now - minimumAge;
+        var deleted = 0;
+        foreach (var path in candidates)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                if (fileInfo.LastWriteTimeUtc > cutoff.UtcDateTime)
+                {
+                    continue;
+                }
+
+                fileInfo.Delete();
+                deleted++;
+            }
+            catch
+            {
+                // Best effort cleanup; locked previews can be retried later.
+            }
+        }
+
+        return deleted;
     }
 
     private static bool CanRender(ProcessingOptions options, AudioFilterPlan filterPlan)

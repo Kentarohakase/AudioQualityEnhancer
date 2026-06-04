@@ -279,6 +279,48 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void BuildReport_MissingOutputDiagnosticsForLoudnessPresetCreatesWarning()
+    {
+        using var source = CreateInfo("wav", isLossy: false);
+        using var output = CreateInfo("flac", isLossy: false);
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.Music, ExportFormat.Flac),
+            source,
+            output,
+            sourceDiagnostics: null,
+            outputDiagnostics: null,
+            outputDiagnosticsSkipped: true,
+            outputPath: @"C:\audio\song_music.flac");
+
+        Assert.Equal(AudioComparisonStatus.Warning, report.Status);
+        Assert.Contains(report.Findings, finding =>
+            finding.Kind == AudioComparisonFindingKind.OutputDiagnosticsMissing &&
+            finding.Severity == AudioInsightSeverity.Warning);
+    }
+
+    [Fact]
+    public void BuildReport_MissingOutputDiagnosticsForNeutralPresetStaysInformational()
+    {
+        using var source = CreateInfo("wav", isLossy: false);
+        using var output = CreateInfo("flac", isLossy: false);
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.NoiseReduction, ExportFormat.Flac),
+            source,
+            output,
+            sourceDiagnostics: null,
+            outputDiagnostics: null,
+            outputDiagnosticsSkipped: true,
+            outputPath: @"C:\audio\noise.flac");
+
+        Assert.Equal(AudioComparisonStatus.Passed, report.Status);
+        Assert.Contains(report.Findings, finding =>
+            finding.Kind == AudioComparisonFindingKind.OutputDiagnosticsMissing &&
+            finding.Severity == AudioInsightSeverity.Info);
+    }
+
+    [Fact]
     public void BuildReport_StreamCopyUsesMetadataOnlyFinding()
     {
         using var source = CreateInfo("aac", isLossy: true);

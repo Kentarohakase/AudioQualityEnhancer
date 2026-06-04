@@ -134,6 +134,76 @@ public sealed class AudioProcessedPreviewServiceTests
         }
     }
 
+    [Fact]
+    public void BuildCacheKey_ChangesWhenFilterOptionsOrSelectedStreamChange()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "voice.mp3");
+            File.WriteAllText(inputPath, "fake media");
+            var firstStream = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(30), "deu", "Deutsch", string.Empty);
+            var secondStream = new AudioStreamInfo(2, 1, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(30), "eng", "English", string.Empty);
+            var baseline = new ProcessingOptions
+            {
+                InputPath = inputPath,
+                Preset = AudioPreset.Speech,
+                EnableSpeechPresenceBoost = true,
+                AudioStream = firstStream
+            };
+            var changedFilterOption = new ProcessingOptions
+            {
+                InputPath = inputPath,
+                Preset = AudioPreset.Speech,
+                EnableSpeechPresenceBoost = false,
+                AudioStream = firstStream
+            };
+            var changedStream = new ProcessingOptions
+            {
+                InputPath = inputPath,
+                Preset = AudioPreset.Speech,
+                EnableSpeechPresenceBoost = true,
+                AudioStream = secondStream
+            };
+
+            Assert.NotEqual(AudioProcessedPreviewService.BuildCacheKey(baseline), AudioProcessedPreviewService.BuildCacheKey(changedFilterOption));
+            Assert.NotEqual(AudioProcessedPreviewService.BuildCacheKey(baseline), AudioProcessedPreviewService.BuildCacheKey(changedStream));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CleanupStalePreviews_DeletesOnlyOldProcessedPreviewFiles()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var stalePreview = Path.Combine(tempDirectory, "processed-preview-stale.wav");
+            var freshPreview = Path.Combine(tempDirectory, "processed-preview-fresh.wav");
+            var unrelated = Path.Combine(tempDirectory, "other-preview.wav");
+            File.WriteAllText(stalePreview, "stale");
+            File.WriteAllText(freshPreview, "fresh");
+            File.WriteAllText(unrelated, "keep");
+            File.SetLastWriteTimeUtc(stalePreview, DateTime.UtcNow.AddDays(-3));
+
+            var deleted = AudioProcessedPreviewService.CleanupStalePreviews(tempDirectory, TimeSpan.FromDays(2));
+
+            Assert.Equal(1, deleted);
+            Assert.False(File.Exists(stalePreview));
+            Assert.True(File.Exists(freshPreview));
+            Assert.True(File.Exists(unrelated));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
     public static TheoryData<AudioPreset> SpeechPreviewPresets => new()
     {
         AudioPreset.PodcastVoice,

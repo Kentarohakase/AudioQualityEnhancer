@@ -132,7 +132,10 @@ public sealed class AudioValidationService
         }
         else if (outputDiagnosticsSkipped || outputDiagnostics is null)
         {
-            AddFinding(findings, AudioComparisonFindingKind.OutputDiagnosticsMissing, AudioInsightSeverity.Info);
+            AddFinding(
+                findings,
+                AudioComparisonFindingKind.OutputDiagnosticsMissing,
+                RequiresOutputDiagnostics(options.Preset) ? AudioInsightSeverity.Warning : AudioInsightSeverity.Info);
         }
 
         if (findings.Count == 0)
@@ -347,6 +350,11 @@ public sealed class AudioValidationService
         }
 
         return null;
+    }
+
+    private static bool RequiresOutputDiagnostics(AudioPreset preset)
+    {
+        return GetTargetLoudness(preset).HasValue;
     }
 
     private static string? GetExpectedOutputCodec(ProcessingOptions options)

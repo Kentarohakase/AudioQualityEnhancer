@@ -20,6 +20,11 @@ public sealed class SettingsService
         _settingsPath = Path.Combine(directory, "settings.json");
     }
 
+    internal SettingsService(string settingsPath)
+    {
+        _settingsPath = settingsPath;
+    }
+
     public string SettingsPath => _settingsPath;
 
     public AppSettings Load()

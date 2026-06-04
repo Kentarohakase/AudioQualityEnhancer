@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- Added safe cleanup for stale processed-preview WAV files.
+- Added tests covering processed-preview cache invalidation for filter options and selected audio streams.
+- Added settings persistence tests for corrupt, missing and non-writable settings paths.
+
+### Changed
+
+- Missing output loudness/peak diagnostics now produce a warning for loudness-changing presets.
+
 ## 0.13.1 - 2026-06-04
 
 ### Fixed
