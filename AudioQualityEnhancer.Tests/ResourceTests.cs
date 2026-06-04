@@ -85,6 +85,7 @@ public sealed partial class ResourceTests
         values.Add(report.StatusText);
         values.Add(report.Summary);
         values.AddRange(report.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
+        values.AddRange(report.Findings.Select(f => f.CategoryDisplay));
         values.AddRange(report.Recommendations.Select(r => r.Text));
 
         var profileAdvice = new AudioProfileAdvisorService(new FileNameService()).BuildAdvice(reportInfo, diagnostics: null);
@@ -123,12 +124,16 @@ public sealed partial class ResourceTests
         values.Add(comparisonReport.StatusText);
         values.Add(comparisonReport.Summary);
         values.AddRange(comparisonReport.Findings.SelectMany(f => new[] { f.SeverityDisplay, f.Title, f.Message }));
+        values.AddRange(comparisonReport.Findings.Select(f => f.CategoryDisplay));
         values.AddRange(comparisonReport.Metrics.SelectMany(m => new[] { m.Label, m.SourceValue, m.OutputValue }));
+        values.Add(LocalizationService.Instance.Format("Report_ItemResultSummaryFormat", comparisonReport.StatusText, comparisonReport.Summary));
 
         using var batchItem = new BatchProcessingItem("track.mp3");
         values.Add(batchItem.StatusDisplay);
         values.Add(batchItem.ValidationStatusDisplay);
         batchItem.Status = BatchProcessingStatus.Ready;
+        values.Add(batchItem.StatusDisplay);
+        batchItem.Status = BatchProcessingStatus.Validating;
         values.Add(batchItem.StatusDisplay);
         batchItem.Status = BatchProcessingStatus.Failed;
         values.Add(batchItem.StatusDisplay);

@@ -6,6 +6,7 @@ public sealed record BatchQueueSummary(
     int Analyzing,
     int Ready,
     int Processing,
+    int Validating,
     int Done,
     int DoneWithWarnings,
     int Failed,

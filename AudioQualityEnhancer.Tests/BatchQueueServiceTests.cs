@@ -61,6 +61,7 @@ public sealed class BatchQueueServiceTests
         {
             new BatchProcessingItem(@"C:\audio\ready.mp3") { Status = BatchProcessingStatus.Ready },
             new BatchProcessingItem(@"C:\audio\processing.mp3") { Status = BatchProcessingStatus.Processing },
+            new BatchProcessingItem(@"C:\audio\validating.mp3") { Status = BatchProcessingStatus.Validating },
             new BatchProcessingItem(@"C:\audio\done.mp3") { Status = BatchProcessingStatus.Done },
             new BatchProcessingItem(@"C:\audio\failed.mp3") { Status = BatchProcessingStatus.Failed },
             new BatchProcessingItem(@"C:\audio\cancelled.mp3") { Status = BatchProcessingStatus.Cancelled }
@@ -72,9 +73,10 @@ public sealed class BatchQueueServiceTests
 
             var summary = service.BuildSummary(items);
 
-            Assert.Equal(5, summary.Total);
+            Assert.Equal(6, summary.Total);
             Assert.Equal(1, summary.Ready);
             Assert.Equal(1, summary.Processing);
+            Assert.Equal(1, summary.Validating);
             Assert.Equal(1, summary.Done);
             Assert.Equal(1, summary.Failed);
             Assert.Equal(1, summary.Cancelled);
@@ -125,6 +127,7 @@ public sealed class BatchQueueServiceTests
             new BatchProcessingItem(@"C:\audio\ready.mp3") { Status = BatchProcessingStatus.Ready },
             new BatchProcessingItem(@"C:\audio\analyzing.mp3") { Status = BatchProcessingStatus.Analyzing },
             new BatchProcessingItem(@"C:\audio\processing.mp3") { Status = BatchProcessingStatus.Processing },
+            new BatchProcessingItem(@"C:\audio\validating.mp3") { Status = BatchProcessingStatus.Validating },
             new BatchProcessingItem(@"C:\audio\done.mp3") { Status = BatchProcessingStatus.Done },
             new BatchProcessingItem(@"C:\audio\warning.mp3") { Status = BatchProcessingStatus.Done },
             new BatchProcessingItem(@"C:\audio\failed.mp3") { Status = BatchProcessingStatus.Failed },
@@ -137,7 +140,7 @@ public sealed class BatchQueueServiceTests
             var service = new BatchQueueService(new FileNameService());
 
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Ready));
-            Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Processing).Count);
+            Assert.Equal(3, service.GetItemsByFilter(items, BatchQueueFilter.Processing).Count);
             Assert.Equal(2, service.GetItemsByFilter(items, BatchQueueFilter.Done).Count);
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Warnings));
             Assert.Single(service.GetItemsByFilter(items, BatchQueueFilter.Failed));
@@ -215,6 +218,40 @@ public sealed class BatchQueueServiceTests
         Assert.Equal(BatchProcessingStatus.Pending, item.Status);
         Assert.Equal(string.Empty, item.ErrorMessage);
         Assert.Equal(0, item.Progress);
+    }
+
+    [Fact]
+    public void MarkProcessingStarted_ClearsTransientState()
+    {
+        using var item = new BatchProcessingItem(@"C:\audio\track.mp3")
+        {
+            Status = BatchProcessingStatus.Ready,
+            ErrorMessage = "old error",
+            Progress = 55
+        };
+        var service = new BatchQueueService(new FileNameService());
+
+        service.MarkProcessingStarted(item);
+
+        Assert.Equal(BatchProcessingStatus.Processing, item.Status);
+        Assert.Equal(string.Empty, item.ErrorMessage);
+        Assert.Equal(0, item.Progress);
+    }
+
+    [Fact]
+    public void MarkValidationStarted_UsesDedicatedValidationStatus()
+    {
+        using var item = new BatchProcessingItem(@"C:\audio\track.mp3")
+        {
+            Status = BatchProcessingStatus.Processing,
+            Progress = 95
+        };
+        var service = new BatchQueueService(new FileNameService());
+
+        service.MarkValidationStarted(item);
+
+        Assert.Equal(BatchProcessingStatus.Validating, item.Status);
+        Assert.Equal(95, item.Progress);
     }
 
     [Fact]

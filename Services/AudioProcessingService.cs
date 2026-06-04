@@ -252,6 +252,16 @@ public sealed class AudioProcessingService
         string filterGraph,
         AudioStreamInfo? audioStream)
     {
+        return BuildRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream).Arguments;
+    }
+
+    internal static FFmpegRenderPlan BuildRenderPlan(
+        string inputPath,
+        string outputPath,
+        IReadOnlyList<string> codecArguments,
+        string filterGraph,
+        AudioStreamInfo? audioStream)
+    {
         var args = BuildInputArguments(inputPath, audioStream);
 
         if (!string.IsNullOrWhiteSpace(filterGraph))
@@ -262,7 +272,7 @@ public sealed class AudioProcessingService
 
         args.AddRange(codecArguments);
         args.Add(outputPath);
-        return args;
+        return new FFmpegRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream?.FFmpegMapSpecifier ?? "0:a:0", args);
     }
 
     private static IReadOnlyList<string> BuildLoudnessAnalysisArguments(string inputPath, string filterGraph, AudioStreamInfo? audioStream)
@@ -430,3 +440,11 @@ public sealed class AudioProcessingService
         bool ShouldUseTwoPassLoudness);
 
 }
+
+internal sealed record FFmpegRenderPlan(
+    string InputPath,
+    string OutputPath,
+    IReadOnlyList<string> CodecArguments,
+    string FilterGraph,
+    string AudioMap,
+    IReadOnlyList<string> Arguments);

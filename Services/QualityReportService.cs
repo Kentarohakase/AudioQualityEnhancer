@@ -93,7 +93,7 @@ public sealed class QualityReportService
 
         builder.AppendLine($"- {LocalizationService.Instance["Field_ResultStatus"]}: {report.StatusText}");
         builder.AppendLine();
-        builder.AppendLine(report.Summary);
+        builder.AppendLine(LocalizationService.Instance.Format("Report_ItemResultSummaryFormat", report.StatusText, report.Summary));
         builder.AppendLine();
 
         if (report.HasFindings)

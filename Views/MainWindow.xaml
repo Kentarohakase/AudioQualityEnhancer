@@ -765,6 +765,10 @@
                                                     <TextBlock Text="{Binding SeverityDisplay}" Style="{StaticResource InsightSeverityBadgeTextStyle}" />
                                                 </Border>
                                                 <StackPanel>
+                                                    <TextBlock Text="{Binding CategoryDisplay}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="11"
+                                                               TextWrapping="Wrap" />
                                                     <TextBlock Text="{Binding Title}"
                                                                FontWeight="SemiBold"
                                                                FontSize="13"
@@ -1135,6 +1139,10 @@
                                                 <TextBlock Text="{Binding SeverityDisplay}" Style="{StaticResource InsightSeverityBadgeTextStyle}" />
                                             </Border>
                                             <StackPanel>
+                                                <TextBlock Text="{Binding CategoryDisplay}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap" />
                                                 <TextBlock Text="{Binding Title}"
                                                            FontWeight="SemiBold"
                                                            FontSize="13"

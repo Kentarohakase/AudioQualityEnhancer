@@ -90,13 +90,25 @@ public sealed class BatchQueueService
         return true;
     }
 
+    public void MarkProcessingStarted(BatchProcessingItem item)
+    {
+        item.Status = BatchProcessingStatus.Processing;
+        item.Progress = 0;
+        item.ErrorMessage = string.Empty;
+    }
+
+    public void MarkValidationStarted(BatchProcessingItem item)
+    {
+        item.Status = BatchProcessingStatus.Validating;
+    }
+
     public bool MatchesFilter(BatchProcessingItem item, BatchQueueFilter filter)
     {
         return filter switch
         {
             BatchQueueFilter.All => true,
             BatchQueueFilter.Ready => item.Status == BatchProcessingStatus.Ready,
-            BatchQueueFilter.Processing => item.Status is BatchProcessingStatus.Analyzing or BatchProcessingStatus.Processing,
+            BatchQueueFilter.Processing => item.Status is BatchProcessingStatus.Analyzing or BatchProcessingStatus.Processing or BatchProcessingStatus.Validating,
             BatchQueueFilter.Done => item.Status == BatchProcessingStatus.Done,
             BatchQueueFilter.Warnings => item.Status == BatchProcessingStatus.Done && item.HasComparisonWarnings,
             BatchQueueFilter.Failed => item.Status == BatchProcessingStatus.Failed,
@@ -128,6 +140,7 @@ public sealed class BatchQueueService
             Count(snapshot, BatchProcessingStatus.Analyzing),
             Count(snapshot, BatchProcessingStatus.Ready),
             Count(snapshot, BatchProcessingStatus.Processing),
+            Count(snapshot, BatchProcessingStatus.Validating),
             Count(snapshot, BatchProcessingStatus.Done),
             snapshot.Count(item => item.Status == BatchProcessingStatus.Done && item.ComparisonReport?.HasWarningsOrErrors == true),
             Count(snapshot, BatchProcessingStatus.Failed),

@@ -160,19 +160,19 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Analyse-Bewertung, FFmpeg-Arg
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.5
+.\scripts\package-release.ps1 -Version 0.12.6
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.5 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.12.6 -IncludeFFmpeg
 ```
 
 Pakete prüfen:
 
 ```powershell
-.\scripts\verify-release-package.ps1 -Version 0.12.5 -RequireFFmpegPackage
+.\scripts\verify-release-package.ps1 -Version 0.12.6 -RequireFFmpegPackage
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`.

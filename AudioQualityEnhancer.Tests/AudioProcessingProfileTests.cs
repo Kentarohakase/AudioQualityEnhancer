@@ -156,6 +156,28 @@ public sealed class AudioProcessingProfileTests
     }
 
     [Fact]
+    public void BuildRenderPlan_ExposesArgumentsAndPlanPartsForTests()
+    {
+        var stream = new AudioStreamInfo(3, 1, "aac", "AAC", 192_000, 48_000, 2, TimeSpan.FromSeconds(10), "eng", "English", string.Empty);
+        var codecArgs = new[] { "-c:a", "flac" };
+
+        var plan = AudioProcessingService.BuildRenderPlan(
+            "input.mkv",
+            "output.flac",
+            codecArgs,
+            "highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11",
+            stream);
+
+        Assert.Equal("input.mkv", plan.InputPath);
+        Assert.Equal("output.flac", plan.OutputPath);
+        Assert.Equal("0:3", plan.AudioMap);
+        Assert.Same(codecArgs, plan.CodecArguments);
+        Assert.Contains("-af", plan.Arguments);
+        Assert.Contains("highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11", plan.Arguments);
+        Assert.Equal("output.flac", plan.Arguments[^1]);
+    }
+
+    [Fact]
     public void ResolveAudioStream_FallsBackToSelectedSourceStreamForInvalidRequest()
     {
         var first = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(10), "deu", "Deutsch", string.Empty);

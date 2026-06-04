@@ -1037,9 +1037,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 }
 
                 SelectedBatchItem = item;
-                item.Status = BatchProcessingStatus.Processing;
-                item.Progress = 0;
-                item.ErrorMessage = string.Empty;
+                _batchQueueService.MarkProcessingStarted(item);
                 ProgressValue = 0;
                 OverallProgressValue = BatchQueueService.CalculateOverallProgress(i, processableItems.Count, 0);
                 SetStatus("Status_BatchProcessingFormat", i + 1, processableItems.Count, item.FileName);
@@ -1146,6 +1144,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         SetProcessingPhase("Phase_ResultValidation");
         SetStatus("Status_ResultValidationRunning");
+        _batchQueueService.MarkValidationStarted(item);
         _logService.Info(LocalizationService.Instance.Format("Log_ValidationQueueItemFormat", item.FileName));
 
         var result = await _audioValidationService.ValidateAsync(

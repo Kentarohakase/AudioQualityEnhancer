@@ -6,6 +6,7 @@ public enum BatchProcessingStatus
     Analyzing,
     Ready,
     Processing,
+    Validating,
     Done,
     Failed,
     Cancelled

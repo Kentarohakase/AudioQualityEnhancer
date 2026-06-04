@@ -32,7 +32,7 @@ public sealed class BatchQueueViewService
                 "BatchSummary_Format",
                 summary.Total,
                 summary.Ready,
-                summary.Processing,
+                summary.Processing + summary.Validating,
                 summary.Done,
                 summary.DoneWithWarnings,
                 summary.Failed,

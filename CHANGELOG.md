@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.12.6 - 2026-06-04
+
+### Added
+
+- Added a dedicated batch validation status so queue items visibly move from export to result checking.
+- Added localized finding categories for analysis and result-check notes in the UI.
+- Added an internal FFmpeg render plan helper to make argument generation easier to test.
+
+### Changed
+
+- Result reports now include a short per-file verdict before detailed findings and metrics.
+- Batch processing state transitions for export and validation now live in the queue service instead of the main view model.
+
 ## 0.12.5 - 2026-06-04
 
 ### Added
