@@ -70,7 +70,9 @@ jobs:
         run: |
           gh release upload "${{ steps.vars.outputs.tag }}" `
             "artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64.zip" `
+            "artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64.zip.sha256.txt" `
             "artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64-with-ffmpeg.zip" `
+            "artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64-with-ffmpeg.zip.sha256.txt" `
             --clobber
 
       - name: Upload workflow artifacts
@@ -79,4 +81,6 @@ jobs:
           name: AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64
           path: |
             artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64.zip
+            artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64.zip.sha256.txt
             artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64-with-ffmpeg.zip
+            artifacts\AudioQualityEnhancer-${{ steps.vars.outputs.version }}-win-x64-with-ffmpeg.zip.sha256.txt

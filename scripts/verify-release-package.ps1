@@ -16,6 +16,37 @@ $ffmpegZip = Join-Path $artifactsDir "AudioQualityEnhancer-$Version-$Runtime-wit
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+function Test-ZipChecksum {
+    param(
+        [string]$ZipPath
+    )
+
+    $checksumPath = "$ZipPath.sha256.txt"
+    if (-not (Test-Path -LiteralPath $checksumPath)) {
+        throw "SHA256 checksum missing: $checksumPath"
+    }
+
+    $line = (Get-Content -LiteralPath $checksumPath -ErrorAction Stop | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($line)) {
+        throw "SHA256 checksum file is empty: $checksumPath"
+    }
+
+    $parts = $line.Trim() -split "\s+", 2
+    $expectedHash = $parts[0]
+    if ($expectedHash -notmatch "^[a-fA-F0-9]{64}$") {
+        throw "SHA256 checksum is invalid in $(Split-Path -Leaf $checksumPath)."
+    }
+
+    if ($parts.Count -gt 1 -and $parts[1] -ne (Split-Path -Leaf $ZipPath)) {
+        throw "SHA256 checksum references unexpected file in $(Split-Path -Leaf $checksumPath)."
+    }
+
+    $actualHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
+    if (-not $actualHash.Equals($expectedHash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "SHA256 checksum mismatch for $(Split-Path -Leaf $ZipPath)."
+    }
+}
+
 function Test-ZipEntries {
     param(
         [string]$ZipPath,
@@ -27,6 +58,8 @@ function Test-ZipEntries {
     if (-not (Test-Path -LiteralPath $ZipPath)) {
         throw "Release package missing: $ZipPath"
     }
+
+    Test-ZipChecksum -ZipPath $ZipPath
 
     $zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
     try {

@@ -13,6 +13,7 @@ $packageSuffix = if ($IncludeFFmpeg) { "$Runtime-with-ffmpeg" } else { $Runtime 
 $packageName = "AudioQualityEnhancer-$Version-$packageSuffix"
 $stageDir = Join-Path $artifactsDir $packageName
 $zipPath = Join-Path $artifactsDir "$packageName.zip"
+$checksumPath = "$zipPath.sha256.txt"
 
 function Assert-InRoot {
     param([string]$PathToCheck)
@@ -46,6 +47,11 @@ if (Test-Path -LiteralPath $stageDir) {
 if (Test-Path -LiteralPath $zipPath) {
     Assert-InRoot $zipPath
     Remove-Item -LiteralPath $zipPath -Force
+}
+
+if (Test-Path -LiteralPath $checksumPath) {
+    Assert-InRoot $checksumPath
+    Remove-Item -LiteralPath $checksumPath -Force
 }
 
 New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
@@ -95,8 +101,13 @@ if ($IncludeFFmpeg) {
 
 Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $zipPath -Force
 
+$checksum = Get-FileHash -LiteralPath $zipPath -Algorithm SHA256
+"$($checksum.Hash.ToLowerInvariant())  $(Split-Path -Leaf $zipPath)" | Set-Content -LiteralPath $checksumPath -Encoding UTF8
+
 Write-Host "Release package created:"
 Write-Host $zipPath
+Write-Host "SHA256 checksum created:"
+Write-Host $checksumPath
 
 if ($IncludeFFmpeg) {
     Write-Host "FFmpeg and FFprobe were included in Tools/."

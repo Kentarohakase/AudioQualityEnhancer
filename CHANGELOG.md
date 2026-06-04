@@ -4,6 +4,19 @@
 
 ### Added
 
+- Added an explicit `asInvoker` application manifest so the app does not request administrator privileges.
+- Added SHA256 checksum files for release ZIP packages.
+- Added release verification for checksum files.
+- Added README guidance for normal user execution, SmartScreen warnings and checksum verification.
+
+### Changed
+
+- Release workflow now uploads checksum files alongside ZIP packages.
+
+## 0.12.7 - 2026-06-04
+
+### Added
+
 - Added an output-folder writability check before FFmpeg processing starts.
 - Added safe cleanup for stale AudioQualityEnhancer-owned temporary export files.
 - Added result status counts to Markdown reports.

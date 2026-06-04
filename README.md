@@ -160,22 +160,36 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Analyse-Bewertung, FFmpeg-Arg
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.6
+.\scripts\package-release.ps1 -Version 0.13.0
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.12.6 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version 0.13.0 -IncludeFFmpeg
 ```
 
 Pakete prüfen:
 
 ```powershell
-.\scripts\verify-release-package.ps1 -Version 0.12.6 -RequireFFmpegPackage
+.\scripts\verify-release-package.ps1 -Version 0.13.0 -RequireFFmpegPackage
 ```
 
-Die fertigen ZIP-Dateien liegen danach in `artifacts`.
+Die fertigen ZIP-Dateien liegen danach in `artifacts`. Zu jedem ZIP wird eine passende `.sha256.txt`-Datei erzeugt.
+
+Checksum eines Downloads prüfen:
+
+```powershell
+Get-FileHash .\AudioQualityEnhancer-0.13.0-win-x64.zip -Algorithm SHA256
+```
+
+Der angezeigte SHA256-Wert muss zum Inhalt der passenden `.sha256.txt`-Datei im Release passen.
+
+## Windows Adminrechte und SmartScreen
+
+Die App fordert keine Administratorrechte an und wird mit normalen Benutzerrechten gestartet. Wenn Windows trotzdem nach Administratorrechten fragt, liegt die App oder der gewählte Ausgabeordner wahrscheinlich in einem geschützten Bereich wie `C:\Program Files`. Lege die portable App besser in einen Benutzerordner und wähle einen beschreibbaren Ausgabeordner.
+
+Windows SmartScreen kann bei neuen, unsignierten Open-Source-Downloads eine Warnung anzeigen. Das ist kein Hinweis darauf, dass AudioQualityEnhancer Adminrechte benötigt. Die Warnung lässt sich ohne Code-Signing-Zertifikat nicht zuverlässig vermeiden. Die SHA256-Dateien im Release helfen dir, den Download gegen die veröffentlichte Datei zu prüfen.
 
 ## Third-party software
 
@@ -186,6 +200,7 @@ AudioQualityEnhancer nutzt FFmpeg und FFprobe als externe Programme. Die Tools g
 - Die Originaldatei wird nicht überschrieben.
 - Wenn eine Zieldatei schon existiert, wird automatisch ein neuer Name erzeugt.
 - Der Ausgabeordner wird vor der Verarbeitung auf Schreibbarkeit geprüft.
+- Die App fordert keine Administratorrechte an.
 - Temporäre Dateien werden nur während der Verarbeitung genutzt.
 - Logs sollen bei normalen Fehlern helfen, speichern aber keine Zugangsdaten.
 - FFmpeg-Binaries und erzeugte Audiodateien werden nicht committed.

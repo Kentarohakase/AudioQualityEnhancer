@@ -28,6 +28,19 @@ public sealed class RepositoryHygieneTests
         Assert.Empty(failures);
     }
 
+    [Fact]
+    public void ApplicationManifest_UsesAsInvokerExecutionLevel()
+    {
+        var projectPath = Path.Combine(TestPaths.RepositoryRoot, "AudioQualityEnhancer.csproj");
+        var manifestPath = Path.Combine(TestPaths.RepositoryRoot, "app.manifest");
+
+        Assert.Contains("<ApplicationManifest>app.manifest</ApplicationManifest>", File.ReadAllText(projectPath), StringComparison.Ordinal);
+        var manifest = File.ReadAllText(manifestPath);
+        Assert.Contains("requestedExecutionLevel", manifest, StringComparison.Ordinal);
+        Assert.Contains("level=\"asInvoker\"", manifest, StringComparison.Ordinal);
+        Assert.Contains("uiAccess=\"false\"", manifest, StringComparison.Ordinal);
+    }
+
     private static IReadOnlyList<string> GetTrackedFiles()
     {
         using var process = new Process();
