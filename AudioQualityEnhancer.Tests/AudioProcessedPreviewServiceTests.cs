@@ -16,7 +16,7 @@ public sealed class AudioProcessedPreviewServiceTests
         Assert.DoesNotContain("0:a:0", args);
         Assert.Equal("20", args[args.IndexOf("-t") + 1]);
         Assert.Equal("highpass=f=80", args[args.IndexOf("-af") + 1]);
-        Assert.Equal("pcm_s16le", args[args.IndexOf("-c:a") + 1]);
+        Assert.Equal("pcm_s24le", args[args.IndexOf("-c:a") + 1]);
         Assert.Equal("wav", args[args.IndexOf("-f") + 1]);
         Assert.Equal("preview.wav", args[^1]);
     }
@@ -177,6 +177,96 @@ public sealed class AudioProcessedPreviewServiceTests
     }
 
     [Fact]
+    public async Task RenderAsync_WithTwoPassLoudness_MeasuresSegmentAndRendersLinear()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "voice.mp3");
+            File.WriteAllText(inputPath, "fake media");
+            var runner = new TwoPassFakeRunner();
+            var service = CreateService(runner, tempDirectory);
+
+            var result = await service.RenderAsync(
+                new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.PodcastVoice, UseTwoPassLoudness = true },
+                log: null,
+                progress: null,
+                CancellationToken.None);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2, runner.Invocations.Count);
+
+            var measureArgs = runner.Invocations[0].Arguments;
+            Assert.Contains("null", measureArgs);
+            Assert.Contains(measureArgs, argument => argument.Contains("print_format=json", StringComparison.Ordinal));
+
+            var renderArgs = runner.Invocations[1].Arguments;
+            Assert.Contains(renderArgs, argument =>
+                argument.Contains("measured_I=-23.5", StringComparison.Ordinal) &&
+                argument.Contains("linear=true", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RenderAsync_FallsBackToSinglePassWhenMeasurementYieldsNoStats()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "voice.mp3");
+            File.WriteAllText(inputPath, "fake media");
+            var runner = new FakeProcessRunner { CreateOutputFile = true };
+            var service = CreateService(runner, tempDirectory);
+
+            var result = await service.RenderAsync(
+                new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.PodcastVoice, UseTwoPassLoudness = true },
+                log: null,
+                progress: null,
+                CancellationToken.None);
+
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(runner.LastOptions);
+            Assert.Contains(runner.LastOptions.Arguments, argument =>
+                argument.Contains("loudnorm=I=-16:TP=-1.5:LRA=9", StringComparison.Ordinal) &&
+                !argument.Contains("measured_I", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void BuildCacheKey_ReflectsTwoPassLoudnessOnlyForLoudnessPresets()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "voice.mp3");
+            File.WriteAllText(inputPath, "fake media");
+
+            var loudnessTwoPass = new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.PodcastVoice, UseTwoPassLoudness = true };
+            var loudnessSinglePass = new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.PodcastVoice, UseTwoPassLoudness = false };
+            var noiseTwoPass = new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.NoiseReduction, UseTwoPassLoudness = true };
+            var noiseSinglePass = new ProcessingOptions { InputPath = inputPath, Preset = AudioPreset.NoiseReduction, UseTwoPassLoudness = false };
+
+            Assert.NotEqual(AudioProcessedPreviewService.BuildCacheKey(loudnessTwoPass), AudioProcessedPreviewService.BuildCacheKey(loudnessSinglePass));
+            Assert.Equal(AudioProcessedPreviewService.BuildCacheKey(noiseTwoPass), AudioProcessedPreviewService.BuildCacheKey(noiseSinglePass));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CleanupStalePreviews_DeletesOnlyOldProcessedPreviewFiles()
     {
         var tempDirectory = TestPaths.CreateTempDirectory();
@@ -210,9 +300,30 @@ public sealed class AudioProcessedPreviewServiceTests
         AudioPreset.NoisySpeechCleanup
     };
 
-    private static AudioProcessedPreviewService CreateService(FakeProcessRunner runner, string tempDirectory)
+    private static AudioProcessedPreviewService CreateService(IProcessRunner runner, string tempDirectory)
     {
         return new AudioProcessedPreviewService(new FFmpegService(new ToolDiscoveryService(), runner), tempDirectory);
+    }
+
+    private sealed class TwoPassFakeRunner : IProcessRunner
+    {
+        public List<ProcessRunOptions> Invocations { get; } = new();
+
+        public Task<ProcessResult> RunAsync(ProcessRunOptions options, CancellationToken cancellationToken)
+        {
+            Invocations.Add(options);
+
+            if (Invocations.Count == 1)
+            {
+                const string loudnormJson = """
+                    { "input_i" : "-23.5", "input_tp" : "-4.2", "input_lra" : "3.1", "input_thresh" : "-34.6", "target_offset" : "0.3" }
+                    """;
+                return Task.FromResult(new ProcessResult(0, string.Empty, loudnormJson, TimeSpan.FromMilliseconds(1)));
+            }
+
+            File.WriteAllText(options.Arguments[^1], "fake preview");
+            return Task.FromResult(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(1)));
+        }
     }
 
     private sealed class FakeProcessRunner : IProcessRunner

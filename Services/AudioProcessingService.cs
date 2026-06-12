@@ -378,7 +378,7 @@ public sealed class AudioProcessingService
         return sourceInfo.SelectedAudioStream ?? sourceInfo.AudioStreams.First();
     }
 
-    private static LoudnormMeasuredStats? TryParseLoudnormStats(string output)
+    internal static LoudnormMeasuredStats? TryParseLoudnormStats(string output)
     {
         var marker = output.IndexOf("\"input_i\"", StringComparison.OrdinalIgnoreCase);
         if (marker < 0)

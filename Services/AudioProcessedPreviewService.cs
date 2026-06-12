@@ -50,8 +50,22 @@ internal sealed class AudioProcessedPreviewService
             filterPlan.LoudnessSettings is not null,
             audioStream,
             options.SourceInfo);
-        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterPlan.FilterGraph, audioStream, outputSampleRate);
         var duration = ResolveProgressDuration(options.SourceInfo);
+
+        // Match the export pipeline: with two-pass loudness enabled the preview segment is
+        // measured first and rendered with the same linear loudnorm the export will use.
+        // A single-pass dynamic preview would sound different from the final file.
+        var filterGraph = filterPlan.FilterGraph;
+        if (filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness)
+        {
+            var measured = await MeasureSegmentLoudnessAsync(options.InputPath, filterPlan, audioStream, log, duration, cancellationToken);
+            if (measured is not null)
+            {
+                filterGraph = AudioFilterPlanner.BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, measured, printJson: false);
+            }
+        }
+
+        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterGraph, audioStream, outputSampleRate);
 
         log?.Invoke(LocalizationService.Instance.Format("Log_ProcessedPreviewStartingFormat", PreviewDuration.TotalSeconds));
         var result = await _ffmpegService.ExecuteAsync(arguments, log, progress, duration, cancellationToken);
@@ -76,17 +90,63 @@ internal sealed class AudioProcessedPreviewService
 
     public static string BuildCacheKey(ProcessingOptions options)
     {
-        var filterGraph = AudioFilterPlanner.BuildPlan(options).FilterGraph;
+        var filterPlan = AudioFilterPlanner.BuildPlan(options);
         var audioStream = options.SourceInfo is null
             ? options.AudioStream
             : AudioProcessingService.ResolveAudioStream(options.AudioStream, options.SourceInfo);
+        var loudnessMode = filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness
+            ? "twopass"
+            : "singlepass";
 
         return string.Join(
             "|",
             NormalizePath(options.InputPath),
             GetFileStamp(options.InputPath),
             audioStream?.StreamIndex.ToString(CultureInfo.InvariantCulture) ?? "default",
-            filterGraph);
+            filterPlan.FilterGraph,
+            loudnessMode);
+    }
+
+    private async Task<LoudnormMeasuredStats?> MeasureSegmentLoudnessAsync(
+        string inputPath,
+        AudioFilterPlan filterPlan,
+        AudioStreamInfo? audioStream,
+        Action<string>? log,
+        TimeSpan duration,
+        CancellationToken cancellationToken)
+    {
+        var measureFilter = AudioFilterPlanner.BuildLoudnormFilter(
+            filterPlan.PreLoudnessFilters,
+            filterPlan.LoudnessSettings!,
+            null,
+            printJson: true);
+        var arguments = BuildMeasureArguments(inputPath, measureFilter, audioStream);
+
+        var result = await _ffmpegService.ExecuteAsync(arguments, log, null, duration, cancellationToken);
+        if (result.IsFailure || result.Value is null)
+        {
+            // A failed measurement falls back to the single-pass preview instead of failing.
+            return null;
+        }
+
+        return AudioProcessingService.TryParseLoudnormStats(
+            result.Value.StandardError + Environment.NewLine + result.Value.StandardOutput);
+    }
+
+    internal static IReadOnlyList<string> BuildMeasureArguments(
+        string inputPath,
+        string filterGraph,
+        AudioStreamInfo? audioStream)
+    {
+        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream);
+        args.Add("-t");
+        args.Add(PreviewDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
+        args.Add("-af");
+        args.Add(filterGraph);
+        args.Add("-f");
+        args.Add("null");
+        args.Add("NUL");
+        return args;
     }
 
     internal static IReadOnlyList<string> BuildRenderArguments(
@@ -108,7 +168,7 @@ internal sealed class AudioProcessedPreviewService
         }
 
         args.Add("-c:a");
-        args.Add("pcm_s16le");
+        args.Add("pcm_s24le");
         args.Add("-f");
         args.Add("wav");
         args.Add(outputPath);
