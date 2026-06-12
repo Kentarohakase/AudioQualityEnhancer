@@ -1,0 +1,181 @@
+<UserControl x:Class="AudioQualityEnhancer.Views.Sections.SourceSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:AudioQualityEnhancer.Services">
+    <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <TextBlock Text="&#xE8B7;" Style="{StaticResource SectionIconStyle}" />
+                <TextBlock Text="{Binding [Section_Source], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+
+            <!-- Drag events bubble to the window-level handlers on MainWindow. -->
+            <Border BorderBrush="{DynamicResource DropZoneBorderBrush}"
+                    BorderThickness="1.5"
+                    CornerRadius="8"
+                    Background="{DynamicResource DropZoneBackgroundBrush}"
+                    Padding="18"
+                    Margin="0,0,0,12"
+                    AllowDrop="True">
+                <StackPanel>
+                    <TextBlock Text="&#xE8E5;"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="22"
+                               Foreground="{DynamicResource AccentBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding [Hint_DropFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding [Hint_DropFilesOrSelect], Source={x:Static loc:LocalizationService.Instance}}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="12"
+                               Margin="0,3,0,0"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="170" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Content="{Binding [Button_SelectFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding SelectFileCommand}" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_RemoveSelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding RemoveSelectedFileCommand}" />
+                <Button Grid.Column="4"
+                        Content="{Binding [Button_ClearFinishedFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding ClearFinishedFilesCommand}" />
+                <TextBlock Grid.Column="6"
+                           Text="{Binding [Field_Filter], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource LabelStyle}"
+                           VerticalAlignment="Center" />
+                <ComboBox Grid.Column="8"
+                          ItemsSource="{Binding BatchFilters}"
+                          SelectedItem="{Binding SelectedBatchFilter, Mode=TwoWay}"
+                          DisplayMemberPath="DisplayName" />
+            </Grid>
+
+            <TextBlock Text="{Binding BatchSummaryText}"
+                       Style="{StaticResource LabelStyle}"
+                       Margin="0,0,0,8" />
+
+            <WrapPanel Margin="0,0,0,10">
+                <Button Content="{Binding [Button_RetrySelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding RetrySelectedFileCommand}"
+                        Margin="0,0,8,8" />
+                <Button Content="{Binding [Button_RetryFailedFiles], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding RetryFailedFilesCommand}"
+                        Margin="0,0,8,8" />
+                <Button Content="{Binding [Button_OpenSelectedOutput], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenSelectedOutputCommand}"
+                        Margin="0,0,8,8" />
+                <Button Content="{Binding [Button_OpenSelectedOutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenSelectedOutputFolderCommand}"
+                        Margin="0,0,8,8" />
+                <Button Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenLastReportCommand}"
+                        Margin="0,0,8,8" />
+                <Button Content="{Binding [Button_OpenLastReportFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenLastReportFolderCommand}"
+                        Margin="0,0,8,8" />
+            </WrapPanel>
+
+            <DataGrid ItemsSource="{Binding BatchItemsView}"
+                      SelectedItem="{Binding SelectedBatchItem, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      SelectionMode="Single"
+                      MinHeight="160"
+                      MaxHeight="230"
+                      RowStyle="{StaticResource BatchDataGridRowStyle}"
+                      Margin="0,0,0,10">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{Binding [Field_File], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding FileName}" Width="*" />
+                    <DataGridTextColumn Header="{Binding [Field_Status], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding StatusDisplay}" Width="125" />
+                    <DataGridTextColumn Header="{Binding [Field_ScoreShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ScoreDisplay}" Width="72" />
+                    <DataGridTextColumn Header="{Binding [Field_ResultCheckShort], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ValidationStatusDisplay}" Width="108" />
+                    <DataGridTextColumn Header="{Binding [Field_Progress], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ProgressDisplay}" Width="78" />
+                    <DataGridTextColumn Header="{Binding [Field_Message], Source={x:Static loc:LocalizationService.Instance}}" Binding="{Binding ErrorMessage}" Width="1.2*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Text="{Binding [Field_SelectedFile], Source={x:Static loc:LocalizationService.Instance}}"
+                       Style="{StaticResource LabelStyle}"
+                       Margin="0,0,0,4" />
+            <TextBox Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}"
+                     IsReadOnly="True" />
+
+            <StackPanel Margin="0,12,0,0"
+                        Visibility="{Binding HasMultipleAudioStreams, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding [Field_AudioTrack], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource LabelStyle}"
+                           Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding AvailableAudioStreams}"
+                          SelectedItem="{Binding SelectedAudioStream, Mode=TwoWay}"
+                          DisplayMemberPath="DisplayName" />
+                <TextBlock Text="{Binding [Hint_AudioTrack], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource LabelStyle}"
+                           TextWrapping="Wrap"
+                           Margin="0,4,0,0" />
+            </StackPanel>
+
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Content="{Binding [Button_PlaySource], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding PlaySourceCommand}" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_RenderProcessedPreview], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding RenderProcessedPreviewCommand}" />
+                <Button Grid.Column="4"
+                        Content="{Binding [Button_PlayProcessedPreview], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding PlayProcessedPreviewCommand}" />
+                <Button Grid.Column="6"
+                        Content="{Binding [Button_PlayOutput], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding PlayOutputCommand}" />
+                <Button Grid.Column="8"
+                        Content="{Binding [Button_StopPreview], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding StopPreviewCommand}" />
+            </Grid>
+
+            <StackPanel Margin="0,10,0,0"
+                        Visibility="{Binding IsPreviewActive, Converter={StaticResource BoolToVis}}">
+                <Slider Minimum="0"
+                        Maximum="{Binding PreviewDurationSeconds}"
+                        Value="{Binding PreviewPositionSeconds, Mode=TwoWay}"
+                        IsEnabled="{Binding IsPreviewActive}" />
+                <TextBlock Text="{Binding PreviewTimeText}"
+                           Style="{StaticResource LabelStyle}"
+                           HorizontalAlignment="Center"
+                           Margin="0,3,0,0" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -1,0 +1,103 @@
+<UserControl x:Class="AudioQualityEnhancer.Views.Sections.OutputSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:AudioQualityEnhancer.Services">
+    <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <TextBlock Text="&#xE74E;" Style="{StaticResource SectionIconStyle}" />
+                <TextBlock Text="{Binding [Section_Output], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding [Field_OutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                       Style="{StaticResource LabelStyle}"
+                       Margin="0,0,0,4" />
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_SelectFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding SelectOutputFolderCommand}" />
+            </Grid>
+
+            <CheckBox Content="{Binding [Checkbox_SaveLog], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding SaveLogFile}"
+                      Margin="0,0,0,8" />
+            <CheckBox Content="{Binding [Checkbox_SaveReport], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding SaveReportFile}"
+                      Margin="0,0,0,14" />
+
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Content="{Binding [Button_OpenOutputFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenOutputFolderCommand}" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_OpenLastOutput], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenLastOutputCommand}" />
+                <Button Grid.Column="4"
+                        Content="{Binding [Button_OpenLastReport], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenLastReportCommand}" />
+                <Button Grid.Column="6"
+                        Content="{Binding [Button_OpenLastReportFolder], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding OpenLastReportFolderCommand}" />
+            </Grid>
+
+            <DockPanel Margin="0,0,0,4">
+                <TextBlock Text="{Binding [Field_CurrentFileProgress], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource LabelStyle}" />
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding ProgressValue, StringFormat={}{0:0}%}"
+                           Style="{StaticResource LabelStyle}" />
+            </DockPanel>
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding ProgressValue, Mode=OneWay}"
+                         Margin="0,0,0,4" />
+            <TextBlock Text="{Binding ProcessingPhaseText}"
+                       Style="{StaticResource LabelStyle}"
+                       Margin="0,0,0,12" />
+
+            <DockPanel Margin="0,0,0,4">
+                <TextBlock Text="{Binding [Field_OverallProgress], Source={x:Static loc:LocalizationService.Instance}}"
+                           Style="{StaticResource LabelStyle}" />
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding OverallProgressValue, StringFormat={}{0:0}%}"
+                           Style="{StaticResource LabelStyle}" />
+            </DockPanel>
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding OverallProgressValue, Mode=OneWay}"
+                         Margin="0,0,0,16" />
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Content="{Binding [Button_StartQueue], Source={x:Static loc:LocalizationService.Instance}}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding StartCommand}" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_Cancel], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding CancelCommand}" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>
