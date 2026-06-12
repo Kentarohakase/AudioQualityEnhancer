@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added an inactivity watchdog: FFmpeg/FFprobe processes that stop responding are terminated and reported instead of hanging the run.
+- Added a free disk space check before processing starts, with needed/free numbers in the error message.
 - Added folder support for drag and drop; dropped folders contribute their supported audio files recursively.
 - Added window size and maximized-state persistence across sessions.
 - Added a selectable loudness target (-14 LUFS streaming, -16 LUFS podcast, -23 LUFS EBU R128 broadcast) with the preset default as the automatic fallback; result validation checks against the selected target.
@@ -20,6 +22,7 @@
 - The preset preview of longer sources now plays the loudest section instead of always the first 20 seconds.
 - Adding multiple files now runs the analyses in parallel, and FFmpeg/FFprobe discovery results are cached for faster batch processing.
 - The main view model is organized into feature-focused partial classes; log output is batched into fewer UI updates during processing.
+- The main window XAML is organized into section UserControls with shared styles in an application-level resource dictionary.
 - The in-memory log is now capped so very large batch runs keep the UI responsive; the oldest lines are replaced by a truncation marker.
 - Missing output loudness/peak diagnostics now produce a warning for loudness-changing presets.
 
