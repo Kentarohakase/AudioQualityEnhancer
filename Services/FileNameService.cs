@@ -34,6 +34,49 @@ public sealed class FileNameService
         return SupportedInputExtensions.Contains(Path.GetExtension(path));
     }
 
+    /// <summary>
+    /// Expands dropped paths so folders contribute their supported files (recursively,
+    /// sorted for a stable queue order) while plain file paths pass through unchanged.
+    /// </summary>
+    public IReadOnlyList<string> ExpandInputPaths(IEnumerable<string> paths)
+    {
+        var expanded = new List<string>();
+        foreach (var path in paths)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                continue;
+            }
+
+            if (Directory.Exists(path))
+            {
+                expanded.AddRange(FindSupportedFiles(path));
+            }
+            else
+            {
+                expanded.Add(path);
+            }
+        }
+
+        return expanded;
+    }
+
+    private IReadOnlyList<string> FindSupportedFiles(string directory)
+    {
+        try
+        {
+            return Directory
+                .EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+                .Where(IsSupportedInputFile)
+                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            return Array.Empty<string>();
+        }
+    }
+
     public string CreateUniqueOutputPath(string inputPath, string outputDirectory, string suffix, string extension)
     {
         Directory.CreateDirectory(outputDirectory);

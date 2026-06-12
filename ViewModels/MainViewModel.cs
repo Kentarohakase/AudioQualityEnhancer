@@ -200,7 +200,17 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         NoiseReductionFloor = settings.NoiseReductionFloor;
         SelectedLoudnessTarget = LoudnessTargetOption.All.FirstOrDefault(t => t.Id == settings.LoudnessTargetId) ?? LoudnessTargetOption.Auto;
         EnableNoiseTracking = settings.EnableNoiseTracking;
+        WindowWidth = settings.WindowWidth;
+        WindowHeight = settings.WindowHeight;
+        WindowMaximized = settings.WindowMaximized;
     }
+
+    /// <summary>Window metrics are set by the view on close and applied by it on startup.</summary>
+    public double WindowWidth { get; set; }
+
+    public double WindowHeight { get; set; }
+
+    public bool WindowMaximized { get; set; }
 
     public void PersistSettings()
     {
@@ -218,7 +228,10 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             UseTwoPassLoudness = UseTwoPassLoudness,
             NoiseReductionFloor = NoiseReductionFloor,
             LoudnessTargetId = SelectedLoudnessTarget?.Id ?? LoudnessTargetOption.Auto.Id,
-            EnableNoiseTracking = EnableNoiseTracking
+            EnableNoiseTracking = EnableNoiseTracking,
+            WindowWidth = WindowWidth,
+            WindowHeight = WindowHeight,
+            WindowMaximized = WindowMaximized
         };
         _settingsService.Save(settings);
     }

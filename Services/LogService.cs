@@ -5,6 +5,12 @@ namespace AudioQualityEnhancer.Services;
 
 public sealed class LogService
 {
+    // Bounds the in-memory log so very large batch runs cannot make the bound
+    // log TextBox (and CurrentText snapshots) arbitrarily expensive.
+    internal const int MaxBufferLength = 1_000_000;
+    internal const int TrimmedBufferLength = 750_000;
+    internal const string TruncationMarker = "[...]";
+
     private static readonly Regex SensitiveValueRegex = new(
         "(?i)(authorization|bearer|token|api[_-]?key|password|secret)(\\s*[:=]\\s*)\\S+",
         RegexOptions.Compiled);
@@ -71,9 +77,32 @@ public sealed class LogService
         lock (_syncRoot)
         {
             _buffer.AppendLine(line);
+            TrimBufferIfNeeded();
         }
 
         LogAdded?.Invoke(this, line);
+    }
+
+    private void TrimBufferIfNeeded()
+    {
+        if (_buffer.Length <= MaxBufferLength)
+        {
+            return;
+        }
+
+        var removeCount = _buffer.Length - TrimmedBufferLength;
+        while (removeCount < _buffer.Length && _buffer[removeCount] != '\n')
+        {
+            removeCount++;
+        }
+
+        if (removeCount < _buffer.Length)
+        {
+            removeCount++;
+        }
+
+        _buffer.Remove(0, removeCount);
+        _buffer.Insert(0, TruncationMarker + Environment.NewLine);
     }
 
     private static string Sanitize(string message)

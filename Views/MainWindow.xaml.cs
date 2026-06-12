@@ -14,6 +14,35 @@ public partial class MainWindow : Window
         InitializeComponent();
         _viewModel = new MainViewModel();
         DataContext = _viewModel;
+        RestoreWindowLayout();
+    }
+
+    private void RestoreWindowLayout()
+    {
+        var width = _viewModel.WindowWidth;
+        var height = _viewModel.WindowHeight;
+        if (width >= MinWidth && width <= SystemParameters.VirtualScreenWidth &&
+            height >= MinHeight && height <= SystemParameters.VirtualScreenHeight)
+        {
+            Width = width;
+            Height = height;
+        }
+
+        if (_viewModel.WindowMaximized)
+        {
+            WindowState = WindowState.Maximized;
+        }
+    }
+
+    private void StoreWindowLayout()
+    {
+        var bounds = WindowState == WindowState.Normal
+            ? new Rect(Left, Top, Width, Height)
+            : RestoreBounds;
+
+        _viewModel.WindowWidth = bounds.Width;
+        _viewModel.WindowHeight = bounds.Height;
+        _viewModel.WindowMaximized = WindowState == WindowState.Maximized;
     }
 
     private async void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -42,18 +71,22 @@ public partial class MainWindow : Window
             return;
         }
 
-        await _viewModel.LoadInputFilesAsync(files);
+        await _viewModel.LoadInputFilesAsync(_fileNameService.ExpandInputPaths(files));
         e.Handled = true;
     }
 
     private bool IsSupportedFileDrop(System.Windows.DragEventArgs e)
     {
-        return GetDroppedFiles(e).Any(path => File.Exists(path) && _fileNameService.IsSupportedInputFile(path));
+        // Folders are accepted without scanning them here; DragEnter must stay cheap.
+        // Their contents are expanded on drop and an empty result is reported as status.
+        return GetDroppedFiles(e).Any(path =>
+            Directory.Exists(path) ||
+            (File.Exists(path) && _fileNameService.IsSupportedInputFile(path)));
     }
 
     private static bool HasFileDrop(System.Windows.DragEventArgs e)
     {
-        return GetDroppedFiles(e).Any(File.Exists);
+        return GetDroppedFiles(e).Any(path => File.Exists(path) || Directory.Exists(path));
     }
 
     private static IReadOnlyList<string> GetDroppedFiles(System.Windows.DragEventArgs e)
@@ -71,6 +104,7 @@ public partial class MainWindow : Window
     {
         try
         {
+            StoreWindowLayout();
             _viewModel.PersistSettings();
         }
         finally

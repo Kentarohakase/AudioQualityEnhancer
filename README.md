@@ -7,7 +7,7 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 ## Was kann die App?
 
 - Audio- und Videodateien mit Audiospur öffnen
-- Datei per Button oder Drag and Drop auswählen
+- Dateien oder ganze Ordner per Button oder Drag and Drop auswählen
 - Audiospur bei Videoquellen auswählen, wenn mehrere Spuren vorhanden sind
 - Codec, Bitrate, Sample Rate, Kanäle, Dauer und Dateigröße anzeigen
 - Lautheit, Peak-Werte und mögliche technische Probleme optional genauer messen
@@ -61,7 +61,7 @@ Die Beratung erkennt Musik oder Sprache nicht sicher. Sie erklärt nur, welche E
 
 ## Batch-Verarbeitung
 
-Du kannst mehrere Dateien per Button oder Drag and Drop hinzufügen. Die App analysiert jede Datei und zeigt sie in einer Warteschlange an. Beim Start werden die bereiten Dateien nacheinander mit demselben Preset, Ausgabeformat und Ausgabeordner verarbeitet.
+Du kannst mehrere Dateien oder ganze Ordner per Button oder Drag and Drop hinzufügen; bei Ordnern werden alle unterstützten Dateien auch aus Unterordnern übernommen. Die App analysiert jede Datei und zeigt sie in einer Warteschlange an. Beim Start werden die bereiten Dateien nacheinander mit demselben Preset, Ausgabeformat und Ausgabeordner verarbeitet.
 
 Wenn eine Datei fehlschlägt, läuft die Warteschlange weiter. Abbrechen stoppt nur die laufende Verarbeitung; noch offene Dateien bleiben in der Liste.
 

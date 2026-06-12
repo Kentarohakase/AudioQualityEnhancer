@@ -32,6 +32,39 @@ public sealed class FileNameServiceTests
     }
 
     [Fact]
+    public void ExpandInputPaths_ExpandsFoldersToSupportedFilesAndKeepsFilePaths()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var subDirectory = Directory.CreateDirectory(Path.Combine(tempDirectory, "sub")).FullName;
+            var rootTrack = Path.Combine(tempDirectory, "b.mp3");
+            var nestedTrack = Path.Combine(subDirectory, "a.flac");
+            var unsupported = Path.Combine(tempDirectory, "notes.txt");
+            File.WriteAllText(rootTrack, "x");
+            File.WriteAllText(nestedTrack, "x");
+            File.WriteAllText(unsupported, "x");
+
+            var result = new FileNameService().ExpandInputPaths(new[] { tempDirectory, "direct.wav" });
+
+            Assert.Equal(new[] { rootTrack, nestedTrack, "direct.wav" }, result);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ExpandInputPaths_SkipsEmptyEntries()
+    {
+        var result = new FileNameService().ExpandInputPaths(new[] { string.Empty, "  ", "track.mp3" });
+
+        Assert.Equal(new[] { "track.mp3" }, result);
+    }
+
+    [Fact]
     public void CreateUniqueOutputPath_CreatesDirectoryAndAvoidsExistingTargets()
     {
         var tempDirectory = TestPaths.CreateTempDirectory();

@@ -27,4 +27,10 @@ public sealed record AppSettings
     public string LoudnessTargetId { get; init; } = "auto";
 
     public bool EnableNoiseTracking { get; init; } = false;
+
+    public double WindowWidth { get; init; }
+
+    public double WindowHeight { get; init; }
+
+    public bool WindowMaximized { get; init; } = false;
 }

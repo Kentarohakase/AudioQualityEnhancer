@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added folder support for drag and drop; dropped folders contribute their supported audio files recursively.
+- Added window size and maximized-state persistence across sessions.
 - Added a selectable loudness target (-14 LUFS streaming, -16 LUFS podcast, -23 LUFS EBU R128 broadcast) with the preset default as the automatic fallback; result validation checks against the selected target.
 - Added an optional adaptive noise tracking mode for the noise reduction presets for material with varying background noise.
 - Added safe cleanup for stale processed-preview WAV files.
@@ -18,6 +20,7 @@
 - The preset preview of longer sources now plays the loudest section instead of always the first 20 seconds.
 - Adding multiple files now runs the analyses in parallel, and FFmpeg/FFprobe discovery results are cached for faster batch processing.
 - The main view model is organized into feature-focused partial classes; log output is batched into fewer UI updates during processing.
+- The in-memory log is now capped so very large batch runs keep the UI responsive; the oldest lines are replaced by a truncation marker.
 - Missing output loudness/peak diagnostics now produce a warning for loudness-changing presets.
 
 ### Fixed
