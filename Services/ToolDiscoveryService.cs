@@ -1,20 +1,46 @@
 using System.Diagnostics;
-using System.Text;
 using AudioQualityEnhancer.Models;
 
 namespace AudioQualityEnhancer.Services;
 
 public sealed class ToolDiscoveryService
 {
+    private readonly object _cacheLock = new();
+    private readonly Dictionary<string, ToolLocation> _locationCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ToolStatus> _statusCache = new(StringComparer.OrdinalIgnoreCase);
+
     public string ResolveExecutable(string toolName)
     {
-        return LocateTool(toolName).ExecutablePath;
+        return GetOrLocateTool(toolName).ExecutablePath;
     }
 
     public async Task<ToolStatus> GetStatusAsync(string toolName, CancellationToken cancellationToken)
     {
-        var location = LocateTool(toolName);
+        var location = GetOrLocateTool(toolName);
 
+        lock (_cacheLock)
+        {
+            if (_statusCache.TryGetValue(toolName, out var cachedStatus) &&
+                string.Equals(cachedStatus.ExecutablePath, location.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                return cachedStatus;
+            }
+        }
+
+        var status = await ProbeToolAsync(toolName, location, cancellationToken);
+        if (status.IsAvailable)
+        {
+            lock (_cacheLock)
+            {
+                _statusCache[toolName] = status;
+            }
+        }
+
+        return status;
+    }
+
+    private static async Task<ToolStatus> ProbeToolAsync(string toolName, ToolLocation location, CancellationToken cancellationToken)
+    {
         try
         {
             using var process = new Process();
@@ -60,6 +86,38 @@ public sealed class ToolDiscoveryService
                 null,
                 LocalizationService.Instance.Format("Error_ToolNotFoundFormat", toolName));
         }
+    }
+
+    private ToolLocation GetOrLocateTool(string toolName)
+    {
+        lock (_cacheLock)
+        {
+            if (_locationCache.TryGetValue(toolName, out var cachedLocation) && File.Exists(cachedLocation.ExecutablePath))
+            {
+                return cachedLocation;
+            }
+        }
+
+        var location = LocateTool(toolName);
+        if (File.Exists(location.ExecutablePath))
+        {
+            lock (_cacheLock)
+            {
+                _locationCache[toolName] = location;
+            }
+        }
+        else
+        {
+            // Keep unresolved tools uncached so a tool installed while the app
+            // is running is picked up on the next call.
+            lock (_cacheLock)
+            {
+                _locationCache.Remove(toolName);
+                _statusCache.Remove(toolName);
+            }
+        }
+
+        return location;
     }
 
     private static ToolLocation LocateTool(string toolName)
