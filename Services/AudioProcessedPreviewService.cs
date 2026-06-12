@@ -12,6 +12,10 @@ internal sealed class AudioProcessedPreviewService
     private readonly FFmpegService _ffmpegService;
     private readonly string _previewDirectory;
 
+    // Remembers the loudest segment per source file so switching presets does not
+    // re-run the volumedetect probes. Only touched from the UI thread.
+    private readonly Dictionary<string, TimeSpan> _segmentStartCache = new(StringComparer.Ordinal);
+
     public AudioProcessedPreviewService(FFmpegService ffmpegService)
         : this(ffmpegService, Path.Combine(Path.GetTempPath(), "AudioQualityEnhancer", "Previews"))
     {
@@ -51,6 +55,7 @@ internal sealed class AudioProcessedPreviewService
             audioStream,
             options.SourceInfo);
         var duration = ResolveProgressDuration(options.SourceInfo);
+        var previewStart = await ResolvePreviewStartAsync(options, audioStream, log, cancellationToken);
 
         // Match the export pipeline: with two-pass loudness enabled the preview segment is
         // measured first and rendered with the same linear loudnorm the export will use.
@@ -58,14 +63,14 @@ internal sealed class AudioProcessedPreviewService
         var filterGraph = filterPlan.FilterGraph;
         if (filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness)
         {
-            var measured = await MeasureSegmentLoudnessAsync(options.InputPath, filterPlan, audioStream, log, duration, cancellationToken);
+            var measured = await MeasureSegmentLoudnessAsync(options.InputPath, filterPlan, audioStream, log, duration, previewStart, cancellationToken);
             if (measured is not null)
             {
                 filterGraph = AudioFilterPlanner.BuildLoudnormFilter(filterPlan.PreLoudnessFilters, filterPlan.LoudnessSettings, measured, printJson: false);
             }
         }
 
-        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterGraph, audioStream, outputSampleRate);
+        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterGraph, audioStream, outputSampleRate, previewStart);
 
         log?.Invoke(LocalizationService.Instance.Format("Log_ProcessedPreviewStartingFormat", PreviewDuration.TotalSeconds));
         var result = await _ffmpegService.ExecuteAsync(arguments, log, progress, duration, cancellationToken);
@@ -107,12 +112,124 @@ internal sealed class AudioProcessedPreviewService
             loudnessMode);
     }
 
+    private async Task<TimeSpan> ResolvePreviewStartAsync(
+        ProcessingOptions options,
+        AudioStreamInfo? audioStream,
+        Action<string>? log,
+        CancellationToken cancellationToken)
+    {
+        var candidates = GetSegmentCandidates(options.SourceInfo?.Duration);
+        if (candidates.Count == 0)
+        {
+            return TimeSpan.Zero;
+        }
+
+        var cacheKey = string.Join(
+            "|",
+            NormalizePath(options.InputPath),
+            GetFileStamp(options.InputPath),
+            audioStream?.StreamIndex.ToString(CultureInfo.InvariantCulture) ?? "default");
+        if (_segmentStartCache.TryGetValue(cacheKey, out var cachedStart))
+        {
+            return cachedStart;
+        }
+
+        var bestStart = TimeSpan.Zero;
+        var bestMeanVolume = double.NegativeInfinity;
+        foreach (var candidate in candidates)
+        {
+            var arguments = BuildVolumeDetectArguments(options.InputPath, audioStream, candidate);
+            var result = await _ffmpegService.ExecuteAsync(arguments, null, null, null, cancellationToken);
+            if (result.Value?.WasCancelled == true)
+            {
+                return TimeSpan.Zero;
+            }
+
+            if (result.IsFailure || result.Value is null)
+            {
+                continue;
+            }
+
+            var meanVolume = TryParseMeanVolume(result.Value.StandardError + Environment.NewLine + result.Value.StandardOutput);
+            if (meanVolume is not null && meanVolume > bestMeanVolume)
+            {
+                bestMeanVolume = meanVolume.Value;
+                bestStart = candidate;
+            }
+        }
+
+        _segmentStartCache[cacheKey] = bestStart;
+        if (bestStart > TimeSpan.Zero)
+        {
+            log?.Invoke(LocalizationService.Instance.Format("Log_PreviewSegmentFormat", bestStart.TotalSeconds));
+        }
+
+        return bestStart;
+    }
+
+    /// <summary>
+    /// Candidate preview start positions. Short or unknown sources always preview from the
+    /// beginning; longer sources probe evenly spread segments to find the loudest one, so the
+    /// preview is judged on representative material instead of a quiet intro.
+    /// </summary>
+    internal static IReadOnlyList<TimeSpan> GetSegmentCandidates(TimeSpan? duration)
+    {
+        if (duration is null || duration.Value < PreviewDuration + PreviewDuration)
+        {
+            return Array.Empty<TimeSpan>();
+        }
+
+        var usableSeconds = (duration.Value - PreviewDuration).TotalSeconds;
+        return new[] { 0d, 0.25d, 0.5d, 0.75d }
+            .Select(fraction => TimeSpan.FromSeconds(usableSeconds * fraction))
+            .ToArray();
+    }
+
+    internal static double? TryParseMeanVolume(string output)
+    {
+        const string marker = "mean_volume:";
+        var index = output.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var rest = output[(index + marker.Length)..];
+        var lineEnd = rest.IndexOfAny(new[] { '\r', '\n' });
+        if (lineEnd >= 0)
+        {
+            rest = rest[..lineEnd];
+        }
+
+        rest = rest.Replace("dB", string.Empty, StringComparison.OrdinalIgnoreCase).Trim();
+        return double.TryParse(rest, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
+    }
+
+    internal static IReadOnlyList<string> BuildVolumeDetectArguments(
+        string inputPath,
+        AudioStreamInfo? audioStream,
+        TimeSpan seekStart)
+    {
+        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream, seekStart);
+        args.Add("-t");
+        args.Add(PreviewDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
+        args.Add("-af");
+        args.Add("volumedetect");
+        args.Add("-f");
+        args.Add("null");
+        args.Add("NUL");
+        return args;
+    }
+
     private async Task<LoudnormMeasuredStats?> MeasureSegmentLoudnessAsync(
         string inputPath,
         AudioFilterPlan filterPlan,
         AudioStreamInfo? audioStream,
         Action<string>? log,
         TimeSpan duration,
+        TimeSpan seekStart,
         CancellationToken cancellationToken)
     {
         var measureFilter = AudioFilterPlanner.BuildLoudnormFilter(
@@ -120,7 +237,7 @@ internal sealed class AudioProcessedPreviewService
             filterPlan.LoudnessSettings!,
             null,
             printJson: true);
-        var arguments = BuildMeasureArguments(inputPath, measureFilter, audioStream);
+        var arguments = BuildMeasureArguments(inputPath, measureFilter, audioStream, seekStart);
 
         var result = await _ffmpegService.ExecuteAsync(arguments, log, null, duration, cancellationToken);
         if (result.IsFailure || result.Value is null)
@@ -136,9 +253,10 @@ internal sealed class AudioProcessedPreviewService
     internal static IReadOnlyList<string> BuildMeasureArguments(
         string inputPath,
         string filterGraph,
-        AudioStreamInfo? audioStream)
+        AudioStreamInfo? audioStream,
+        TimeSpan? seekStart = null)
     {
-        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream);
+        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream, seekStart);
         args.Add("-t");
         args.Add(PreviewDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
         args.Add("-af");
@@ -154,9 +272,10 @@ internal sealed class AudioProcessedPreviewService
         string outputPath,
         string filterGraph,
         AudioStreamInfo? audioStream,
-        int? outputSampleRate = null)
+        int? outputSampleRate = null,
+        TimeSpan? seekStart = null)
     {
-        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream);
+        var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream, seekStart);
         args.Add("-t");
         args.Add(PreviewDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
         args.Add("-af");

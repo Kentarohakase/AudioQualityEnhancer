@@ -267,6 +267,97 @@ public sealed class AudioProcessedPreviewServiceTests
     }
 
     [Fact]
+    public void GetSegmentCandidates_ReturnsEmptyForShortOrUnknownSources()
+    {
+        Assert.Empty(AudioProcessedPreviewService.GetSegmentCandidates(null));
+        Assert.Empty(AudioProcessedPreviewService.GetSegmentCandidates(TimeSpan.FromSeconds(30)));
+    }
+
+    [Fact]
+    public void GetSegmentCandidates_SpreadsStartsAcrossLongSources()
+    {
+        var candidates = AudioProcessedPreviewService.GetSegmentCandidates(TimeSpan.FromSeconds(120));
+
+        Assert.Equal(
+            new[] { TimeSpan.Zero, TimeSpan.FromSeconds(25), TimeSpan.FromSeconds(50), TimeSpan.FromSeconds(75) },
+            candidates);
+    }
+
+    [Fact]
+    public void TryParseMeanVolume_ReadsVolumedetectOutput()
+    {
+        const string output = "[Parsed_volumedetect_0 @ 0000026a7520d140] mean_volume: -21.1 dB\n[Parsed_volumedetect_0 @ 0000026a7520d140] max_volume: -18.1 dB";
+
+        Assert.Equal(-21.1, AudioProcessedPreviewService.TryParseMeanVolume(output));
+        Assert.Null(AudioProcessedPreviewService.TryParseMeanVolume("no volume info"));
+    }
+
+    [Fact]
+    public void BuildVolumeDetectArguments_SeeksAndMeasuresTwentySeconds()
+    {
+        var args = AudioProcessedPreviewService.BuildVolumeDetectArguments("input.mp3", null, TimeSpan.FromSeconds(50)).ToList();
+
+        Assert.Equal("50", args[args.IndexOf("-ss") + 1]);
+        Assert.True(args.IndexOf("-ss") < args.IndexOf("-i"), "-ss must be an input option for fast seeking");
+        Assert.Equal("20", args[args.IndexOf("-t") + 1]);
+        Assert.Equal("volumedetect", args[args.IndexOf("-af") + 1]);
+    }
+
+    [Fact]
+    public void BuildRenderArguments_AppliesSeekStartAsInputOption()
+    {
+        var args = AudioProcessedPreviewService.BuildRenderArguments(
+            "input.mp3",
+            "preview.wav",
+            "highpass=f=80",
+            audioStream: null,
+            outputSampleRate: null,
+            seekStart: TimeSpan.FromSeconds(25)).ToList();
+
+        Assert.Equal("25", args[args.IndexOf("-ss") + 1]);
+        Assert.True(args.IndexOf("-ss") < args.IndexOf("-i"));
+    }
+
+    [Fact]
+    public async Task RenderAsync_PicksLoudestSegmentForLongSources()
+    {
+        var tempDirectory = TestPaths.CreateTempDirectory();
+
+        try
+        {
+            var inputPath = Path.Combine(tempDirectory, "voice.mp3");
+            File.WriteAllText(inputPath, "fake media");
+            var runner = new SegmentProbeFakeRunner();
+            var service = CreateService(runner, tempDirectory);
+            using var sourceInfo = new AudioInfo { Codec = "mp3", Duration = TimeSpan.FromSeconds(120) };
+
+            var result = await service.RenderAsync(
+                new ProcessingOptions
+                {
+                    InputPath = inputPath,
+                    Preset = AudioPreset.PodcastVoice,
+                    SourceInfo = sourceInfo,
+                    UseTwoPassLoudness = false
+                },
+                log: null,
+                progress: null,
+                CancellationToken.None);
+
+            Assert.True(result.IsSuccess);
+
+            // 4 volumedetect probes plus the actual render.
+            Assert.Equal(5, runner.Invocations.Count);
+            var renderArgs = runner.Invocations[^1].Arguments.ToList();
+            // The fake reports the segment at 50s as the loudest one.
+            Assert.Equal("50", renderArgs[renderArgs.IndexOf("-ss") + 1]);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CleanupStalePreviews_DeletesOnlyOldProcessedPreviewFiles()
     {
         var tempDirectory = TestPaths.CreateTempDirectory();
@@ -303,6 +394,30 @@ public sealed class AudioProcessedPreviewServiceTests
     private static AudioProcessedPreviewService CreateService(IProcessRunner runner, string tempDirectory)
     {
         return new AudioProcessedPreviewService(new FFmpegService(new ToolDiscoveryService(), runner), tempDirectory);
+    }
+
+    private sealed class SegmentProbeFakeRunner : IProcessRunner
+    {
+        public List<ProcessRunOptions> Invocations { get; } = new();
+
+        public Task<ProcessResult> RunAsync(ProcessRunOptions options, CancellationToken cancellationToken)
+        {
+            Invocations.Add(options);
+
+            var argsList = options.Arguments.ToList();
+            var filterIndex = argsList.IndexOf("-af");
+            if (filterIndex >= 0 && argsList[filterIndex + 1] == "volumedetect")
+            {
+                var startIndex = argsList.IndexOf("-ss");
+                var start = startIndex >= 0 ? argsList[startIndex + 1] : "0";
+                // Make the segment starting at 50 seconds the loudest one.
+                var meanVolume = start == "50" ? "-12.0" : "-30.0";
+                return Task.FromResult(new ProcessResult(0, string.Empty, $"[Parsed_volumedetect_0 @ 0] mean_volume: {meanVolume} dB", TimeSpan.FromMilliseconds(1)));
+            }
+
+            File.WriteAllText(options.Arguments[^1], "fake preview");
+            return Task.FromResult(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(1)));
+        }
     }
 
     private sealed class TwoPassFakeRunner : IProcessRunner

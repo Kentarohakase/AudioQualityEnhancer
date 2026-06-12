@@ -338,9 +338,9 @@ public sealed class AudioProcessingService
         return args;
     }
 
-    internal static List<string> BuildInputArguments(string inputPath, AudioStreamInfo? audioStream)
+    internal static List<string> BuildInputArguments(string inputPath, AudioStreamInfo? audioStream, TimeSpan? seekStart = null)
     {
-        return new List<string>
+        var args = new List<string>
         {
             "-hide_banner",
             "-nostdin",
@@ -348,7 +348,17 @@ public sealed class AudioProcessingService
             "-stats_period",
             "0.5",
             "-progress",
-            "pipe:1",
+            "pipe:1"
+        };
+
+        if (seekStart is { TotalSeconds: > 0 } seek)
+        {
+            args.Add("-ss");
+            args.Add(seek.TotalSeconds.ToString("0.##", CultureInfo.InvariantCulture));
+        }
+
+        args.AddRange(new[]
+        {
             "-i",
             inputPath,
             "-map",
@@ -356,7 +366,9 @@ public sealed class AudioProcessingService
             "-vn",
             "-sn",
             "-dn"
-        };
+        });
+
+        return args;
     }
 
     internal static AudioStreamInfo? ResolveAudioStream(AudioStreamInfo? requestedStream, AudioInfo sourceInfo)
