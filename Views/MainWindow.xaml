@@ -951,6 +951,14 @@
                                           IsChecked="{Binding UseTwoPassLoudness}"
                                           IsEnabled="{Binding IsLoudnessPreset}"
                                           Margin="0,0,0,8" />
+                                <TextBlock Text="{Binding [Field_LoudnessTarget], Source={x:Static loc:LocalizationService.Instance}}"
+                                           Style="{StaticResource LabelStyle}"
+                                           Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding LoudnessTargets}"
+                                          SelectedItem="{Binding SelectedLoudnessTarget}"
+                                          DisplayMemberPath="Name"
+                                          IsEnabled="{Binding IsLoudnessPreset}"
+                                          Margin="0,0,0,8" />
                                 <CheckBox Content="{Binding [Checkbox_SpeechCompression], Source={x:Static loc:LocalizationService.Instance}}"
                                           IsChecked="{Binding EnableSpeechCompression}"
                                           IsEnabled="{Binding IsSpeechPreset}"
@@ -958,6 +966,10 @@
                                 <CheckBox Content="{Binding [Checkbox_SpeechPresenceBoost], Source={x:Static loc:LocalizationService.Instance}}"
                                           IsChecked="{Binding EnableSpeechPresenceBoost}"
                                           IsEnabled="{Binding IsSpeechPreset}"
+                                          Margin="0,0,0,8" />
+                                <CheckBox Content="{Binding [Checkbox_NoiseTracking], Source={x:Static loc:LocalizationService.Instance}}"
+                                          IsChecked="{Binding EnableNoiseTracking}"
+                                          IsEnabled="{Binding IsNoiseTrackingPreset}"
                                           Margin="0,0,0,8" />
                                 <StackPanel>
                                     <DockPanel>

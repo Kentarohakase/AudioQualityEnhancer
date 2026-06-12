@@ -76,6 +76,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _batchSummaryText;
     private LanguageOption _selectedLanguage = LanguageOption.German;
     private ThemeOption _selectedTheme = ThemeOption.Light;
+    private LoudnessTargetOption _selectedLoudnessTarget = LoudnessTargetOption.Auto;
+    private bool _enableNoiseTracking;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -141,6 +143,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
 
         Presets = new ObservableCollection<AudioPreset>(AudioPreset.All);
         ExportFormats = new ObservableCollection<ExportFormat>(ExportFormat.All);
+        LoudnessTargets = new ObservableCollection<LoudnessTargetOption>(LoudnessTargetOption.All);
         Languages = new ObservableCollection<LanguageOption>(LanguageOption.All);
         Themes = new ObservableCollection<ThemeOption>(ThemeOption.All);
         BatchFilters = new ObservableCollection<BatchQueueFilterOption>(BatchQueueFilterOption.All);
@@ -195,6 +198,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         EnableSpeechPresenceBoost = settings.EnableSpeechPresenceBoost;
         UseTwoPassLoudness = settings.UseTwoPassLoudness;
         NoiseReductionFloor = settings.NoiseReductionFloor;
+        SelectedLoudnessTarget = LoudnessTargetOption.All.FirstOrDefault(t => t.Id == settings.LoudnessTargetId) ?? LoudnessTargetOption.Auto;
+        EnableNoiseTracking = settings.EnableNoiseTracking;
     }
 
     public void PersistSettings()
@@ -211,7 +216,9 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             EnableSpeechCompression = EnableSpeechCompression,
             EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
             UseTwoPassLoudness = UseTwoPassLoudness,
-            NoiseReductionFloor = NoiseReductionFloor
+            NoiseReductionFloor = NoiseReductionFloor,
+            LoudnessTargetId = SelectedLoudnessTarget?.Id ?? LoudnessTargetOption.Auto.Id,
+            EnableNoiseTracking = EnableNoiseTracking
         };
         _settingsService.Save(settings);
     }

@@ -8,10 +8,11 @@ internal static class AudioFilterPlanner
     public static AudioFilterPlan BuildPlan(ProcessingOptions options)
     {
         var dualMono = IsMonoSource(options);
+        var truePeak = ResolveTruePeak(options);
 
         if (options.Preset.Id == AudioPreset.Music.Id)
         {
-            var loudness = new LoudnessSettings("-14", "-1.5", "11", dualMono);
+            var loudness = new LoudnessSettings(ResolveLoudnessTarget(options, "-14"), truePeak, "11", dualMono);
             return new AudioFilterPlan(
                 BuildLoudnormFilter(Array.Empty<string>(), loudness, null, printJson: false),
                 Array.Empty<string>(),
@@ -35,7 +36,7 @@ internal static class AudioFilterPlanner
                 preFilters.Add("acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250");
             }
 
-            var loudness = new LoudnessSettings("-16", "-1.5", "11", dualMono);
+            var loudness = new LoudnessSettings(ResolveLoudnessTarget(options, "-16"), truePeak, "11", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
@@ -49,7 +50,7 @@ internal static class AudioFilterPlanner
                 "deesser=i=0.25:m=0.5:f=0.5",
                 "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250"
             };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9", dualMono);
+            var loudness = new LoudnessSettings(ResolveLoudnessTarget(options, "-16"), truePeak, "9", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
@@ -58,21 +59,45 @@ internal static class AudioFilterPlanner
             var preFilters = new[]
             {
                 "highpass=f=90",
-                "afftdn=nf=-25",
+                BuildNoiseFilter(-25, options.EnableNoiseTracking),
                 "deesser=i=0.25:m=0.5:f=0.5",
                 "acompressor=threshold=-20dB:ratio=2:attack=20:release=250"
             };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9", dualMono);
+            var loudness = new LoudnessSettings(ResolveLoudnessTarget(options, "-16"), truePeak, "9", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
         if (options.Preset.Id == AudioPreset.NoiseReduction.Id)
         {
-            var value = Math.Clamp(options.NoiseReductionFloor, -35, -20);
-            return new AudioFilterPlan(string.Create(CultureInfo.InvariantCulture, $"afftdn=nf={value}"), Array.Empty<string>(), null);
+            return new AudioFilterPlan(
+                BuildNoiseFilter(options.NoiseReductionFloor, options.EnableNoiseTracking),
+                Array.Empty<string>(),
+                null);
         }
 
         return new AudioFilterPlan(string.Empty, Array.Empty<string>(), null);
+    }
+
+    private static string ResolveLoudnessTarget(ProcessingOptions options, string presetDefault)
+    {
+        return string.IsNullOrWhiteSpace(options.LoudnessTargetLufs)
+            ? presetDefault
+            : options.LoudnessTargetLufs;
+    }
+
+    private static string ResolveTruePeak(ProcessingOptions options)
+    {
+        // Lossy encoding can raise the true peak about 0.5-1 dB above the limited
+        // value, so lossy targets get extra headroom to avoid post-encode clipping.
+        var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
+        return exportFormat.IsLossless ? "-1.5" : "-2.0";
+    }
+
+    private static string BuildNoiseFilter(int noiseFloor, bool trackNoise)
+    {
+        var value = Math.Clamp(noiseFloor, -35, -20);
+        var filter = string.Create(CultureInfo.InvariantCulture, $"afftdn=nf={value}");
+        return trackNoise ? filter + ":tn=true" : filter;
     }
 
     private static bool IsMonoSource(ProcessingOptions options)

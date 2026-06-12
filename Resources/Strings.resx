@@ -509,4 +509,11 @@
   <data name="CopyReason_Pcm" xml:space="preserve"><value>PCM-Audio wird ohne Re-Encoding in einem WAV-Container gespeichert.</value></data>
   <data name="CopyReason_Ac3" xml:space="preserve"><value>Dieser Codec wird für verlustfreie Extraktion in einem MKA-Container gespeichert.</value></data>
 
+  <data name="Field_LoudnessTarget" xml:space="preserve"><value>Loudness-Ziel</value></data>
+  <data name="Loudness_Auto" xml:space="preserve"><value>Automatisch (Preset-Standard)</value></data>
+  <data name="Loudness_Streaming" xml:space="preserve"><value>-14 LUFS (Streaming/Musik)</value></data>
+  <data name="Loudness_Podcast" xml:space="preserve"><value>-16 LUFS (Podcast/Sprache)</value></data>
+  <data name="Loudness_Broadcast" xml:space="preserve"><value>-23 LUFS (EBU R128 Broadcast)</value></data>
+  <data name="Checkbox_NoiseTracking" xml:space="preserve"><value>Adaptive Rauschverfolgung</value></data>
+  <data name="Log_PreviewSegmentFormat" xml:space="preserve"><value>Vorschau-Abschnitt: lautester Bereich ab {0:0} Sekunden.</value></data>
 </root>

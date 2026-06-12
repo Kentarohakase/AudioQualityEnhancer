@@ -51,7 +51,7 @@ public sealed class AudioProcessingProfileTests
         Assert.Contains("equalizer=f=3500:t=q:w=1:g=2", preview);
         Assert.Contains("deesser=i=0.25:m=0.5:f=0.5", preview);
         Assert.Contains("acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250", preview);
-        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9", preview, StringComparison.Ordinal);
+        Assert.EndsWith("loudnorm=I=-16:TP=-2.0:LRA=9", preview, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class AudioProcessingProfileTests
         Assert.Contains("afftdn=nf=-25", preview);
         Assert.Contains("deesser=i=0.25:m=0.5:f=0.5", preview);
         Assert.Contains("acompressor=threshold=-20dB:ratio=2:attack=20:release=250", preview);
-        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9", preview, StringComparison.Ordinal);
+        Assert.EndsWith("loudnorm=I=-16:TP=-2.0:LRA=9", preview, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -178,6 +178,76 @@ public sealed class AudioProcessingProfileTests
     }
 
     [Fact]
+    public void LoudnessTarget_OverridesPresetDefault()
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.Music,
+            ExportFormat = ExportFormat.Flac,
+            LoudnessTargetLufs = "-23",
+            UseTwoPassLoudness = false
+        });
+
+        Assert.Equal("loudnorm=I=-23:TP=-1.5:LRA=11", preview);
+    }
+
+    [Fact]
+    public void LossyExportFormat_GetsExtraTruePeakHeadroom()
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.Music,
+            ExportFormat = ExportFormat.Mp3_320,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.Equal("loudnorm=I=-14:TP=-2.0:LRA=11", preview);
+    }
+
+    [Fact]
+    public void ArchivePresetWithLossyFormatSelected_KeepsLosslessTruePeak()
+    {
+        // The archive preset forces FLAC regardless of the selected export format,
+        // so the true peak must be resolved against the format actually used.
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.Speech,
+            ExportFormat = ExportFormat.PremierePro,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.Contains("TP=-1.5", preview);
+    }
+
+    [Theory]
+    [InlineData(true, "afftdn=nf=-25:tn=true")]
+    [InlineData(false, "afftdn=nf=-25")]
+    public void NoiseReductionPreset_TogglesAdaptiveNoiseTracking(bool trackNoise, string expectedFilter)
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.NoiseReduction,
+            EnableNoiseTracking = trackNoise
+        });
+
+        Assert.Equal(expectedFilter, preview);
+    }
+
+    [Fact]
+    public void NoisySpeechPreset_UsesAdaptiveNoiseTrackingWhenEnabled()
+    {
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.NoisySpeechCleanup,
+            ExportFormat = ExportFormat.Aac_256,
+            EnableNoiseTracking = true,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.Contains("afftdn=nf=-25:tn=true", preview);
+    }
+
+    [Fact]
     public void MonoSource_AddsDualMonoToLoudnessNormalization()
     {
         using var info = new AudioInfo { Codec = "mp3", Channels = 1 };
@@ -189,7 +259,7 @@ public sealed class AudioProcessingProfileTests
             UseTwoPassLoudness = false
         });
 
-        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9:dual_mono=true", preview, StringComparison.Ordinal);
+        Assert.EndsWith("loudnorm=I=-16:TP=-2.0:LRA=9:dual_mono=true", preview, StringComparison.Ordinal);
     }
 
     [Fact]

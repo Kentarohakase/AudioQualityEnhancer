@@ -23,4 +23,8 @@ public sealed record AppSettings
     public bool UseTwoPassLoudness { get; init; } = true;
 
     public int NoiseReductionFloor { get; init; } = -25;
+
+    public string LoudnessTargetId { get; init; } = "auto";
+
+    public bool EnableNoiseTracking { get; init; } = false;
 }

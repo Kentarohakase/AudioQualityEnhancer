@@ -1,3 +1,4 @@
+using System.Globalization;
 using AudioQualityEnhancer.Models;
 
 namespace AudioQualityEnhancer.Services;
@@ -323,7 +324,7 @@ public sealed class AudioValidationService
             return;
         }
 
-        var target = GetTargetLoudness(options.Preset);
+        var target = GetTargetLoudness(options);
         if (target is null)
         {
             return;
@@ -335,7 +336,25 @@ public sealed class AudioValidationService
         }
     }
 
-    private static double? GetTargetLoudness(AudioPreset preset)
+    private static double? GetTargetLoudness(ProcessingOptions options)
+    {
+        var presetTarget = GetPresetTargetLoudness(options.Preset);
+        if (presetTarget is null)
+        {
+            return null;
+        }
+
+        // A user-selected loudness target overrides the preset default and must be
+        // validated against the same value the loudnorm filter actually used.
+        if (double.TryParse(options.LoudnessTargetLufs, NumberStyles.Float, CultureInfo.InvariantCulture, out var selectedTarget))
+        {
+            return selectedTarget;
+        }
+
+        return presetTarget;
+    }
+
+    private static double? GetPresetTargetLoudness(AudioPreset preset)
     {
         if (preset.Id == AudioPreset.Music.Id)
         {
@@ -354,7 +373,7 @@ public sealed class AudioValidationService
 
     private static bool RequiresOutputDiagnostics(AudioPreset preset)
     {
-        return GetTargetLoudness(preset).HasValue;
+        return GetPresetTargetLoudness(preset).HasValue;
     }
 
     private static string? GetExpectedOutputCodec(ProcessingOptions options)

@@ -16,6 +16,11 @@ public sealed class ProcessingOptions
 
     public int NoiseReductionFloor { get; init; } = -25;
 
+    /// <summary>Loudness target in LUFS, or null to use the preset default.</summary>
+    public string? LoudnessTargetLufs { get; init; }
+
+    public bool EnableNoiseTracking { get; init; }
+
     public bool EnableSpeechCompression { get; init; }
 
     public bool EnableSpeechPresenceBoost { get; init; }

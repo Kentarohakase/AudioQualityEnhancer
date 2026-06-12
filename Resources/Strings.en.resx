@@ -508,4 +508,11 @@
   <data name="CopyReason_Vorbis" xml:space="preserve"><value>Vorbis is stored in an Ogg container for lossless extraction.</value></data>
   <data name="CopyReason_Pcm" xml:space="preserve"><value>PCM audio is stored in a WAV container without re-encoding.</value></data>
   <data name="CopyReason_Ac3" xml:space="preserve"><value>This codec is stored in an MKA container for lossless extraction.</value></data>
+  <data name="Field_LoudnessTarget" xml:space="preserve"><value>Loudness target</value></data>
+  <data name="Loudness_Auto" xml:space="preserve"><value>Automatic (preset default)</value></data>
+  <data name="Loudness_Streaming" xml:space="preserve"><value>-14 LUFS (streaming/music)</value></data>
+  <data name="Loudness_Podcast" xml:space="preserve"><value>-16 LUFS (podcast/speech)</value></data>
+  <data name="Loudness_Broadcast" xml:space="preserve"><value>-23 LUFS (EBU R128 broadcast)</value></data>
+  <data name="Checkbox_NoiseTracking" xml:space="preserve"><value>Adaptive noise tracking</value></data>
+  <data name="Log_PreviewSegmentFormat" xml:space="preserve"><value>Preview segment: loudest section starting at {0:0} seconds.</value></data>
 </root>

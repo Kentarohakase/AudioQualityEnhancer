@@ -279,6 +279,7 @@ public sealed partial class MainViewModel
                 OnPropertyChanged(nameof(IsSpeechPreset));
                 OnPropertyChanged(nameof(IsNoisePreset));
                 OnPropertyChanged(nameof(IsLoudnessPreset));
+                OnPropertyChanged(nameof(IsNoiseTrackingPreset));
                 UpdateQualityNotice();
                 UpdateFilterDetails();
                 InvalidateProcessedPreview();
@@ -464,6 +465,46 @@ public sealed partial class MainViewModel
             }
         }
     }
+
+    public ObservableCollection<LoudnessTargetOption> LoudnessTargets { get; }
+
+    public LoudnessTargetOption SelectedLoudnessTarget
+    {
+        get => _selectedLoudnessTarget;
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            if (SetProperty(ref _selectedLoudnessTarget, value))
+            {
+                UpdateQualityNotice();
+                UpdateFilterDetails();
+                InvalidateProcessedPreview();
+                RaiseCommandStates();
+            }
+        }
+    }
+
+    public bool EnableNoiseTracking
+    {
+        get => _enableNoiseTracking;
+        set
+        {
+            if (SetProperty(ref _enableNoiseTracking, value))
+            {
+                UpdateFilterDetails();
+                InvalidateProcessedPreview();
+                RaiseCommandStates();
+            }
+        }
+    }
+
+    public bool IsNoiseTrackingPreset =>
+        SelectedPreset?.Id == AudioPreset.NoiseReduction.Id ||
+        SelectedPreset?.Id == AudioPreset.NoisySpeechCleanup.Id;
 
     public int NoiseReductionFloor
     {

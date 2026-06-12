@@ -255,6 +255,8 @@ public sealed partial class MainViewModel
             SourceInfo = item?.AudioInfo ?? AudioInfo,
             AudioStream = item?.SelectedAudioStream ?? SelectedAudioStream,
             NoiseReductionFloor = NoiseReductionFloor,
+            LoudnessTargetLufs = SelectedLoudnessTarget?.IntegratedLufs,
+            EnableNoiseTracking = EnableNoiseTracking,
             EnableSpeechCompression = EnableSpeechCompression,
             EnableSpeechPresenceBoost = EnableSpeechPresenceBoost,
             UseTwoPassLoudness = UseTwoPassLoudness
