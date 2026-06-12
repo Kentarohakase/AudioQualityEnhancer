@@ -191,7 +191,10 @@ public sealed class FFprobeService
     private async Task<ProcessResult> RunProcessAsync(IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
         return await _processRunner.RunAsync(
-            new ProcessRunOptions(_toolDiscoveryService.ResolveExecutable("ffprobe"), arguments),
+            new ProcessRunOptions(
+                _toolDiscoveryService.ResolveExecutable("ffprobe"),
+                arguments,
+                InactivityTimeout: FFmpegService.DefaultInactivityTimeout),
             cancellationToken);
     }
 

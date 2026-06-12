@@ -80,8 +80,14 @@ public sealed partial class AudioDiagnosticsService
                 new ProcessRunOptions(
                     _toolDiscoveryService.ResolveExecutable("ffmpeg"),
                     BuildArguments(inputPath, audioStream),
-                    StandardErrorLine: line => TryReportProgress(line, totalDuration, progress)),
+                    StandardErrorLine: line => TryReportProgress(line, totalDuration, progress),
+                    InactivityTimeout: FFmpegService.DefaultInactivityTimeout),
                 cancellationToken);
+
+            if (result.TimedOut)
+            {
+                return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_FFmpegTimeout"], value: result);
+            }
 
             if (result.WasCancelled)
             {

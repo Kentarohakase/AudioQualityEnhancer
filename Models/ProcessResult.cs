@@ -6,4 +6,5 @@ public sealed record ProcessResult(
     string StandardError,
     TimeSpan Duration,
     bool WasCancelled = false,
-    string? OutputPath = null);
+    string? OutputPath = null,
+    bool TimedOut = false);

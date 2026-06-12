@@ -5,6 +5,10 @@ namespace AudioQualityEnhancer.Services;
 
 public sealed class FFmpegService
 {
+    // FFmpeg emits progress output at least every 0.5 seconds, so this much
+    // silence indicates a stuck process rather than a long-running encode.
+    internal static readonly TimeSpan DefaultInactivityTimeout = TimeSpan.FromMinutes(2);
+
     private readonly ToolDiscoveryService _toolDiscoveryService;
     private readonly IProcessRunner _processRunner;
 
@@ -52,8 +56,14 @@ public sealed class FFmpegService
                     {
                         log?.Invoke(line);
                         TryReportProgressFromFFmpegText(line, totalDuration, progress);
-                    }),
+                    },
+                    DefaultInactivityTimeout),
                 cancellationToken);
+
+            if (result.TimedOut)
+            {
+                return Result<ProcessResult>.Failure(LocalizationService.Instance["Error_FFmpegTimeout"], value: result);
+            }
 
             if (result.WasCancelled)
             {

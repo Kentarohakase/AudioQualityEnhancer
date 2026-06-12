@@ -65,6 +65,40 @@ public sealed class ProcessRunnerTests
         Assert.True(result.Duration < TimeSpan.FromSeconds(5));
     }
 
+    [Fact]
+    public async Task RunAsync_KillsSilentProcessAfterInactivityTimeout()
+    {
+        var runner = new ProcessRunner();
+
+        var result = await runner.RunAsync(
+            new ProcessRunOptions(
+                GetCommandProcessorPath(),
+                new[] { "/c", "ping -n 30 127.0.0.1 > nul" },
+                InactivityTimeout: TimeSpan.FromMilliseconds(500)),
+            CancellationToken.None);
+
+        Assert.True(result.TimedOut);
+        Assert.False(result.WasCancelled);
+        Assert.True(result.Duration < TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task RunAsync_DoesNotTimeOutWhileProcessProducesOutput()
+    {
+        var runner = new ProcessRunner();
+
+        var result = await runner.RunAsync(
+            new ProcessRunOptions(
+                GetCommandProcessorPath(),
+                new[] { "/c", "for /l %i in (1,1,5) do (echo tick %i & ping -n 2 127.0.0.1 > nul)" },
+                InactivityTimeout: TimeSpan.FromSeconds(3)),
+            CancellationToken.None);
+
+        Assert.False(result.TimedOut);
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("tick 5", result.StandardOutput);
+    }
+
     private static string GetCommandProcessorPath()
     {
         return Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";

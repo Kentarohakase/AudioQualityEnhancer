@@ -11,4 +11,5 @@ internal sealed record ProcessRunOptions(
     string FileName,
     IReadOnlyList<string> Arguments,
     Action<string>? StandardOutputLine = null,
-    Action<string>? StandardErrorLine = null);
+    Action<string>? StandardErrorLine = null,
+    TimeSpan? InactivityTimeout = null);
