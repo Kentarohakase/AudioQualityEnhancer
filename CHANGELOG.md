@@ -4,13 +4,25 @@
 
 ### Added
 
+- Added a selectable loudness target (-14 LUFS streaming, -16 LUFS podcast, -23 LUFS EBU R128 broadcast) with the preset default as the automatic fallback; result validation checks against the selected target.
+- Added an optional adaptive noise tracking mode for the noise reduction presets for material with varying background noise.
 - Added safe cleanup for stale processed-preview WAV files.
 - Added tests covering processed-preview cache invalidation for filter options and selected audio streams.
 - Added settings persistence tests for corrupt, missing and non-writable settings paths.
 
 ### Changed
 
+- Mono sources are now normalized with a dual-mono EBU R128 measurement so they no longer end up about 3 LU too loud.
+- Lossy export formats now get extra true-peak headroom (-2.0 dBTP instead of -1.5 dBTP) because lossy encoding can push peaks above the limited value.
+- The preset preview now uses the same two-pass linear loudness normalization as the export and renders in 24-bit.
+- The preset preview of longer sources now plays the loudest section instead of always the first 20 seconds.
+- Adding multiple files now runs the analyses in parallel, and FFmpeg/FFprobe discovery results are cached for faster batch processing.
+- The main view model is organized into feature-focused partial classes; log output is batched into fewer UI updates during processing.
 - Missing output loudness/peak diagnostics now produce a warning for loudness-changing presets.
+
+### Fixed
+
+- Fixed loudness-normalized exports being written at 192 kHz instead of the source sample rate (oversized WAV/FLAC files, 96 kHz AAC).
 
 ## 0.13.1 - 2026-06-04
 

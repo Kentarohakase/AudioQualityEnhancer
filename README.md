@@ -14,8 +14,9 @@ Wichtig: Das Tool kann Audio besser klingen lassen, Lautheit anpassen und störe
 - passende Presets und Ausgabeformate anhand der Analyse vorschlagen
 - Musik oder Sprache per Preset verbessern
 - Podcast- und Voiceover-Spuren mit eigenen Sprach-Presets aufbereiten
+- das Loudness-Ziel wählen (Streaming, Podcast oder EBU R128 Broadcast)
 - das gewählte Preset als kurze A/B-Vorschau rendern und vor dem Export anhören
-- Rauschen vorsichtig reduzieren
+- Rauschen vorsichtig reduzieren, optional mit adaptiver Rauschverfolgung
 - Audiospur ohne Re-Encoding extrahieren, wenn es sinnvoll möglich ist
 - Original und Ergebnis direkt anhören
 - Ergebnis nach dem Export technisch prüfen und als Bericht speichern
@@ -105,6 +106,15 @@ Speichert als FLAC. Das ist gut zum Aufbewahren nach der Bearbeitung, macht eine
 ### Alltag Export
 
 Für fertige Dateien mit guter Qualität und vernünftiger Dateigröße.
+
+## Verarbeitungsoptionen
+
+- **Zwei-Pass-Loudness:** Misst die Lautheit erst und wendet sie dann linear an. Das klingt sauberer als die einfache Variante und ist standardmäßig aktiv.
+- **Loudness-Ziel:** Standardmäßig nutzt jedes Preset ein sinnvolles Ziel (-14 LUFS für Musik, -16 LUFS für Sprache). Wer für Broadcast arbeitet, kann stattdessen -23 LUFS (EBU R128) wählen.
+- **Adaptive Rauschverfolgung:** Passt den Rauschfilter laufend an, wenn sich das Hintergrundrauschen ändert. Für gleichmäßiges Rauschen ist der Standardmodus die sicherere Wahl.
+- **A/B-Vorschau:** Rendert bei längeren Dateien automatisch den lautesten Abschnitt und nutzt dieselbe Loudness-Verarbeitung wie der spätere Export.
+
+Mono-Quellen werden automatisch korrekt gemessen (Dual-Mono nach EBU R128). Bei verlustbehafteten Zielformaten wie MP3, AAC und Opus lässt die App etwas mehr True-Peak-Reserve, damit nach dem Encoding kein Clipping entsteht.
 
 ## Ausgabeformate
 
