@@ -516,4 +516,6 @@
   <data name="Loudness_Broadcast" xml:space="preserve"><value>-23 LUFS (EBU R128 Broadcast)</value></data>
   <data name="Checkbox_NoiseTracking" xml:space="preserve"><value>Adaptive Rauschverfolgung</value></data>
   <data name="Log_PreviewSegmentFormat" xml:space="preserve"><value>Vorschau-Abschnitt: lautester Bereich ab {0:0} Sekunden.</value></data>
+  <data name="Error_FFmpegTimeout" xml:space="preserve"><value>FFmpeg hat zu lange nicht reagiert und wurde beendet.</value></data>
+  <data name="Error_InsufficientDiskSpaceFormat" xml:space="preserve"><value>Zu wenig freier Speicherplatz im Ausgabeordner (benötigt etwa {0} MB, frei {1} MB).</value></data>
 </root>

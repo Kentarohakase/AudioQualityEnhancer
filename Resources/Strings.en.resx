@@ -515,4 +515,6 @@
   <data name="Loudness_Broadcast" xml:space="preserve"><value>-23 LUFS (EBU R128 broadcast)</value></data>
   <data name="Checkbox_NoiseTracking" xml:space="preserve"><value>Adaptive noise tracking</value></data>
   <data name="Log_PreviewSegmentFormat" xml:space="preserve"><value>Preview segment: loudest section starting at {0:0} seconds.</value></data>
+  <data name="Error_FFmpegTimeout" xml:space="preserve"><value>FFmpeg stopped responding and was terminated.</value></data>
+  <data name="Error_InsufficientDiskSpaceFormat" xml:space="preserve"><value>Not enough free disk space in the output folder (about {0} MB needed, {1} MB free).</value></data>
 </root>

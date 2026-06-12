@@ -97,6 +97,12 @@ public sealed class AudioProcessingService
             sourceInfo = analysis.Value;
         }
 
+        var diskSpaceCheck = EnsureSufficientDiskSpace(options.OutputDirectory, EstimateOutputSizeBytes(options, sourceInfo));
+        if (diskSpaceCheck.IsFailure)
+        {
+            return Result<ProcessResult>.Failure(diskSpaceCheck.ErrorMessage ?? LocalizationService.Instance["Error_OutputFolderNotWritable"], diskSpaceCheck.Exception);
+        }
+
         Report(progress, 10, LocalizationService.Instance["Phase_PreparingProcessing"]);
         var outputPlan = BuildOutputPlan(options, sourceInfo);
         if (outputPlan.IsFailure || outputPlan.Value is null)
@@ -252,6 +258,70 @@ public sealed class AudioProcessingService
             filterPlan.PreLoudnessFilters,
             filterPlan.LoudnessSettings,
             filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness));
+    }
+
+    /// <summary>
+    /// Rough output size estimate in bytes, used only for the free-space check.
+    /// Estimates err on the small side so the check never blocks a feasible export.
+    /// </summary>
+    internal static long EstimateOutputSizeBytes(ProcessingOptions options, AudioInfo sourceInfo)
+    {
+        if (options.Preset.IsCopyOnly)
+        {
+            return sourceInfo.FileSizeBytes;
+        }
+
+        var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
+        var durationSeconds = sourceInfo.Duration?.TotalSeconds ?? 0;
+        if (durationSeconds <= 0)
+        {
+            return sourceInfo.FileSizeBytes;
+        }
+
+        var channels = Math.Max(1, options.AudioStream?.Channels ?? sourceInfo.Channels ?? 2);
+        var sampleRate = options.AudioStream?.SampleRate ?? sourceInfo.SampleRate ?? 48_000;
+        var bytesPerSecond = exportFormat.Id switch
+        {
+            "premiere_pro" => 48_000d * channels * 3,
+            "wav24" => (double)sampleRate * channels * 3,
+            "flac" => sampleRate * channels * 3 * 0.65,
+            "mp3_320" => 40_000d,
+            "aac_256" => 32_000d,
+            "opus_160" => 20_000d,
+            "opus_192" => 24_000d,
+            _ => (double)sampleRate * channels * 3
+        };
+
+        return (long)(durationSeconds * bytesPerSecond);
+    }
+
+    internal static Result EnsureSufficientDiskSpace(string outputDirectory, long estimatedBytes)
+    {
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(outputDirectory));
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return Result.Success();
+            }
+
+            var drive = new DriveInfo(root);
+            var requiredBytes = estimatedBytes + 32 * 1024 * 1024;
+            if (drive.AvailableFreeSpace < requiredBytes)
+            {
+                var neededMb = requiredBytes / (1024 * 1024);
+                var freeMb = drive.AvailableFreeSpace / (1024 * 1024);
+                return Result.Failure(LocalizationService.Instance.Format("Error_InsufficientDiskSpaceFormat", neededMb, freeMb));
+            }
+
+            return Result.Success();
+        }
+        catch
+        {
+            // UNC shares and exotic mounts have no reliable free-space query; the
+            // writability probe already ran, so processing proceeds without the check.
+            return Result.Success();
+        }
     }
 
     internal static Result EnsureOutputDirectoryWritable(string outputDirectory)
