@@ -7,9 +7,11 @@ internal static class AudioFilterPlanner
 {
     public static AudioFilterPlan BuildPlan(ProcessingOptions options)
     {
+        var dualMono = IsMonoSource(options);
+
         if (options.Preset.Id == AudioPreset.Music.Id)
         {
-            var loudness = new LoudnessSettings("-14", "-1.5", "11");
+            var loudness = new LoudnessSettings("-14", "-1.5", "11", dualMono);
             return new AudioFilterPlan(
                 BuildLoudnormFilter(Array.Empty<string>(), loudness, null, printJson: false),
                 Array.Empty<string>(),
@@ -33,7 +35,7 @@ internal static class AudioFilterPlanner
                 preFilters.Add("acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250");
             }
 
-            var loudness = new LoudnessSettings("-16", "-1.5", "11");
+            var loudness = new LoudnessSettings("-16", "-1.5", "11", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
@@ -47,7 +49,7 @@ internal static class AudioFilterPlanner
                 "deesser=i=0.25:m=0.5:f=0.5",
                 "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=250"
             };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9");
+            var loudness = new LoudnessSettings("-16", "-1.5", "9", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
@@ -60,7 +62,7 @@ internal static class AudioFilterPlanner
                 "deesser=i=0.25:m=0.5:f=0.5",
                 "acompressor=threshold=-20dB:ratio=2:attack=20:release=250"
             };
-            var loudness = new LoudnessSettings("-16", "-1.5", "9");
+            var loudness = new LoudnessSettings("-16", "-1.5", "9", dualMono);
             return new AudioFilterPlan(BuildLoudnormFilter(preFilters, loudness, null, printJson: false), preFilters, loudness);
         }
 
@@ -73,6 +75,12 @@ internal static class AudioFilterPlanner
         return new AudioFilterPlan(string.Empty, Array.Empty<string>(), null);
     }
 
+    private static bool IsMonoSource(ProcessingOptions options)
+    {
+        var channels = options.AudioStream?.Channels ?? options.SourceInfo?.Channels;
+        return channels == 1;
+    }
+
     public static string BuildLoudnormFilter(
         IReadOnlyList<string> preFilters,
         LoudnessSettings settings,
@@ -83,6 +91,13 @@ internal static class AudioFilterPlanner
         var loudnorm = string.Create(
             CultureInfo.InvariantCulture,
             $"loudnorm=I={settings.IntegratedLufs}:TP={settings.TruePeakDb}:LRA={settings.LoudnessRange}");
+
+        if (settings.DualMono)
+        {
+            // Mono material is normally played back over both speakers; without this
+            // flag the EBU R128 measurement would normalize it about 3 LU too loud.
+            loudnorm += ":dual_mono=true";
+        }
 
         if (stats is not null)
         {
@@ -108,7 +123,7 @@ internal sealed record AudioFilterPlan(
     public bool HasFilters => !string.IsNullOrWhiteSpace(FilterGraph);
 }
 
-internal sealed record LoudnessSettings(string IntegratedLufs, string TruePeakDb, string LoudnessRange);
+internal sealed record LoudnessSettings(string IntegratedLufs, string TruePeakDb, string LoudnessRange, bool DualMono = false);
 
 internal sealed record LoudnormMeasuredStats(
     string InputIntegrated,

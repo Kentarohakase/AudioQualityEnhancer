@@ -178,6 +178,94 @@ public sealed class AudioProcessingProfileTests
     }
 
     [Fact]
+    public void MonoSource_AddsDualMonoToLoudnessNormalization()
+    {
+        using var info = new AudioInfo { Codec = "mp3", Channels = 1 };
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.PodcastVoice,
+            ExportFormat = ExportFormat.Aac_256,
+            SourceInfo = info,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.EndsWith("loudnorm=I=-16:TP=-1.5:LRA=9:dual_mono=true", preview, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StereoSource_DoesNotAddDualMonoToLoudnessNormalization()
+    {
+        using var info = new AudioInfo { Codec = "mp3", Channels = 2 };
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.PodcastVoice,
+            ExportFormat = ExportFormat.Aac_256,
+            SourceInfo = info,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.DoesNotContain("dual_mono", preview, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildRenderPlan_RestoresSourceSampleRateAfterLoudnorm()
+    {
+        var plan = AudioProcessingService.BuildRenderPlan(
+            "input.wav",
+            "output.flac",
+            new[] { "-c:a", "flac" },
+            "loudnorm=I=-14:TP=-1.5:LRA=11",
+            audioStream: null,
+            outputSampleRate: 44100);
+
+        var args = plan.Arguments.ToList();
+        var sampleRateIndex = args.IndexOf("-ar");
+        Assert.True(sampleRateIndex >= 0);
+        Assert.Equal("44100", args[sampleRateIndex + 1]);
+        Assert.True(sampleRateIndex < args.IndexOf("-c:a"), "-ar must come before codec arguments so export formats can override it");
+    }
+
+    [Fact]
+    public void BuildRenderPlan_WithoutSampleRate_DoesNotAddSampleRateArgument()
+    {
+        var plan = AudioProcessingService.BuildRenderPlan(
+            "input.wav",
+            "output.flac",
+            new[] { "-c:a", "flac" },
+            "afftdn=nf=-25",
+            audioStream: null);
+
+        Assert.DoesNotContain("-ar", plan.Arguments);
+    }
+
+    [Fact]
+    public void ResolveLoudnessOutputSampleRate_PrefersStreamRateAndRequiresLoudness()
+    {
+        var stream = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(10), string.Empty, string.Empty, string.Empty);
+        using var info = new AudioInfo { Codec = "mp3", SampleRate = 44_100 };
+
+        Assert.Equal(48_000, AudioProcessingService.ResolveLoudnessOutputSampleRate(usesLoudness: true, stream, info));
+        Assert.Equal(44_100, AudioProcessingService.ResolveLoudnessOutputSampleRate(usesLoudness: true, audioStream: null, info));
+        Assert.Null(AudioProcessingService.ResolveLoudnessOutputSampleRate(usesLoudness: false, stream, info));
+        Assert.Null(AudioProcessingService.ResolveLoudnessOutputSampleRate(usesLoudness: true, audioStream: null, sourceInfo: null));
+    }
+
+    [Fact]
+    public void PreviewRenderArguments_RestoreSourceSampleRateAfterLoudnorm()
+    {
+        var args = AudioProcessedPreviewService.BuildRenderArguments(
+            "input.wav",
+            "preview.wav",
+            "loudnorm=I=-16:TP=-1.5:LRA=9",
+            audioStream: null,
+            outputSampleRate: 44100).ToList();
+
+        var sampleRateIndex = args.IndexOf("-ar");
+        Assert.True(sampleRateIndex >= 0);
+        Assert.Equal("44100", args[sampleRateIndex + 1]);
+    }
+
+    [Fact]
     public void ResolveAudioStream_FallsBackToSelectedSourceStreamForInvalidRequest()
     {
         var first = new AudioStreamInfo(1, 0, "aac", "AAC", 128_000, 48_000, 2, TimeSpan.FromSeconds(10), "deu", "Deutsch", string.Empty);

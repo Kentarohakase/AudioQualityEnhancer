@@ -46,7 +46,11 @@ internal sealed class AudioProcessedPreviewService
         var audioStream = options.SourceInfo is null
             ? options.AudioStream
             : AudioProcessingService.ResolveAudioStream(options.AudioStream, options.SourceInfo);
-        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterPlan.FilterGraph, audioStream);
+        var outputSampleRate = AudioProcessingService.ResolveLoudnessOutputSampleRate(
+            filterPlan.LoudnessSettings is not null,
+            audioStream,
+            options.SourceInfo);
+        var arguments = BuildRenderArguments(options.InputPath, outputPath, filterPlan.FilterGraph, audioStream, outputSampleRate);
         var duration = ResolveProgressDuration(options.SourceInfo);
 
         log?.Invoke(LocalizationService.Instance.Format("Log_ProcessedPreviewStartingFormat", PreviewDuration.TotalSeconds));
@@ -89,13 +93,20 @@ internal sealed class AudioProcessedPreviewService
         string inputPath,
         string outputPath,
         string filterGraph,
-        AudioStreamInfo? audioStream)
+        AudioStreamInfo? audioStream,
+        int? outputSampleRate = null)
     {
         var args = AudioProcessingService.BuildInputArguments(inputPath, audioStream);
         args.Add("-t");
         args.Add(PreviewDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
         args.Add("-af");
         args.Add(filterGraph);
+        if (outputSampleRate is > 0)
+        {
+            args.Add("-ar");
+            args.Add(outputSampleRate.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
         args.Add("-c:a");
         args.Add("pcm_s16le");
         args.Add("-f");

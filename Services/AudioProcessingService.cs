@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using AudioQualityEnhancer.Models;
 
@@ -133,7 +134,8 @@ public sealed class AudioProcessingService
         }
 
         var renderStream = ResolveAudioStream(options.AudioStream, sourceInfo);
-        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph, renderStream);
+        var outputSampleRate = ResolveLoudnessOutputSampleRate(plan.LoudnessSettings is not null, renderStream, sourceInfo);
+        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph, renderStream, outputSampleRate);
         if (plan.ShouldUseTwoPassLoudness)
         {
             _logService.Info(LocalizationService.Instance.Format("Log_RenderFilterFormat", filterGraph));
@@ -278,9 +280,10 @@ public sealed class AudioProcessingService
         string outputPath,
         IReadOnlyList<string> codecArguments,
         string filterGraph,
-        AudioStreamInfo? audioStream)
+        AudioStreamInfo? audioStream,
+        int? outputSampleRate = null)
     {
-        return BuildRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream).Arguments;
+        return BuildRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream, outputSampleRate).Arguments;
     }
 
     internal static FFmpegRenderPlan BuildRenderPlan(
@@ -288,7 +291,8 @@ public sealed class AudioProcessingService
         string outputPath,
         IReadOnlyList<string> codecArguments,
         string filterGraph,
-        AudioStreamInfo? audioStream)
+        AudioStreamInfo? audioStream,
+        int? outputSampleRate = null)
     {
         var args = BuildInputArguments(inputPath, audioStream);
 
@@ -298,9 +302,29 @@ public sealed class AudioProcessingService
             args.Add(filterGraph);
         }
 
+        if (outputSampleRate is > 0)
+        {
+            args.Add("-ar");
+            args.Add(outputSampleRate.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
         args.AddRange(codecArguments);
         args.Add(outputPath);
         return new FFmpegRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream?.FFmpegMapSpecifier ?? "0:a:0", args);
+    }
+
+    // FFmpeg's loudnorm filter resamples internally and outputs 192 kHz; without an
+    // explicit output rate every normalized export would inherit that. Export formats
+    // with their own -ar (e.g. Premiere Pro) still win because their arguments come later.
+    internal static int? ResolveLoudnessOutputSampleRate(bool usesLoudness, AudioStreamInfo? audioStream, AudioInfo? sourceInfo)
+    {
+        if (!usesLoudness)
+        {
+            return null;
+        }
+
+        var sampleRate = audioStream?.SampleRate ?? sourceInfo?.SampleRate;
+        return sampleRate is > 0 ? sampleRate : null;
     }
 
     private static IReadOnlyList<string> BuildLoudnessAnalysisArguments(string inputPath, string filterGraph, AudioStreamInfo? audioStream)
