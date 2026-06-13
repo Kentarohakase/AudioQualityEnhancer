@@ -50,6 +50,24 @@
   <data name="Button_ClearLog" xml:space="preserve"><value>Clear log</value></data>
   <data name="Button_ApplySuggestion" xml:space="preserve"><value>Apply</value></data>
 
+  <data name="Field_YouTubeUrl" xml:space="preserve"><value>Video/audio URL</value></data>
+  <data name="Button_DownloadUrl" xml:space="preserve"><value>Download</value></data>
+  <data name="Hint_UrlResponsibility" xml:space="preserve"><value>Only for content you have the necessary rights to. Complying with the relevant terms of service is your responsibility.</value></data>
+  <data name="Phase_Download" xml:space="preserve"><value>Download</value></data>
+  <data name="Status_Downloading" xml:space="preserve"><value>Downloading audio...</value></data>
+  <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download started: {0}</value></data>
+  <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download finished: {0}</value></data>
+  <data name="Log_YtDlpUpdating" xml:space="preserve"><value>Updating yt-dlp...</value></data>
+  <data name="Error_YtDlpUnavailable" xml:space="preserve"><value>yt-dlp was not found. The URL download needs yt-dlp.</value></data>
+  <data name="Error_YtDlpTimeout" xml:space="preserve"><value>yt-dlp stopped responding and was terminated.</value></data>
+  <data name="Error_YtDlpOutdated" xml:space="preserve"><value>yt-dlp may be out of date. Please update it and try again.</value></data>
+  <data name="Error_DownloadFailed" xml:space="preserve"><value>Download failed.</value></data>
+  <data name="Error_DownloadFailedFormat" xml:space="preserve"><value>Download failed (yt-dlp code {0}).</value></data>
+  <data name="Error_DownloadNoNetwork" xml:space="preserve"><value>Could not reach the server. Please check the internet connection.</value></data>
+  <data name="Error_DownloadUnavailable" xml:space="preserve"><value>The video is not available (private, blocked or removed).</value></data>
+  <data name="Error_DownloadFileMissing" xml:space="preserve"><value>The downloaded file could not be found.</value></data>
+  <data name="Error_DownloadInvalidUrl" xml:space="preserve"><value>Please enter a valid http(s) URL.</value></data>
+
   <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
   <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
   <data name="Field_BitRate" xml:space="preserve"><value>Bit rate</value></data>

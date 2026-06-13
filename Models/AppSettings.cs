@@ -28,6 +28,10 @@ public sealed record AppSettings
 
     public bool EnableNoiseTracking { get; init; } = false;
 
+    public bool YtDlpAutoUpdate { get; init; } = true;
+
+    public string YtDlpLastUpdateCheckUtc { get; init; } = string.Empty;
+
     public double WindowWidth { get; init; }
 
     public double WindowHeight { get; init; }

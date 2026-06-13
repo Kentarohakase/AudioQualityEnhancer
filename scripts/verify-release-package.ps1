@@ -105,7 +105,7 @@ function Test-ZipEntries {
         }
 
         if ($MinToolBytes -gt 0) {
-            foreach ($toolName in @("Tools\ffmpeg.exe", "Tools\ffprobe.exe")) {
+            foreach ($toolName in @("Tools\ffmpeg.exe", "Tools\ffprobe.exe", "Tools\yt-dlp.exe")) {
                 $toolEntry = $zip.Entries | Where-Object { $_.FullName.Replace("/", "\") -eq $toolName } | Select-Object -First 1
                 if ($null -eq $toolEntry) {
                     throw "$toolName missing in $(Split-Path -Leaf $ZipPath)."
@@ -139,7 +139,7 @@ Test-ZipEntries `
 if ($RequireFFmpegPackage -or (Test-Path -LiteralPath $ffmpegZip)) {
     Test-ZipEntries `
         -ZipPath $ffmpegZip `
-        -RequiredEntries ($baseEntries + @("Tools\ffmpeg.exe", "Tools\ffprobe.exe", "Tools\FFMPEG_VERSION.txt")) `
+        -RequiredEntries ($baseEntries + @("Tools\ffmpeg.exe", "Tools\ffprobe.exe", "Tools\yt-dlp.exe", "Tools\FFMPEG_VERSION.txt")) `
         -ValidateVersionFile `
         -MinToolBytes $MinBundledToolBytes
 }

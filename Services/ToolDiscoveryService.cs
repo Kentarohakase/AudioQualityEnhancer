@@ -14,7 +14,7 @@ public sealed class ToolDiscoveryService
         return GetOrLocateTool(toolName).ExecutablePath;
     }
 
-    public async Task<ToolStatus> GetStatusAsync(string toolName, CancellationToken cancellationToken)
+    public async Task<ToolStatus> GetStatusAsync(string toolName, CancellationToken cancellationToken, string versionArgument = "-version")
     {
         var location = GetOrLocateTool(toolName);
 
@@ -27,7 +27,7 @@ public sealed class ToolDiscoveryService
             }
         }
 
-        var status = await ProbeToolAsync(toolName, location, cancellationToken);
+        var status = await ProbeToolAsync(toolName, location, versionArgument, cancellationToken);
         if (status.IsAvailable)
         {
             lock (_cacheLock)
@@ -39,7 +39,7 @@ public sealed class ToolDiscoveryService
         return status;
     }
 
-    private static async Task<ToolStatus> ProbeToolAsync(string toolName, ToolLocation location, CancellationToken cancellationToken)
+    private static async Task<ToolStatus> ProbeToolAsync(string toolName, ToolLocation location, string versionArgument, CancellationToken cancellationToken)
     {
         try
         {
@@ -52,7 +52,7 @@ public sealed class ToolDiscoveryService
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            process.StartInfo.ArgumentList.Add("-version");
+            process.StartInfo.ArgumentList.Add(versionArgument);
 
             process.Start();
             var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
@@ -120,9 +120,26 @@ public sealed class ToolDiscoveryService
         return location;
     }
 
+    public static string GetUserToolsDirectory()
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AudioQualityEnhancer",
+            "tools");
+    }
+
     private static ToolLocation LocateTool(string toolName)
     {
         var exeName = $"{toolName}.exe";
+
+        // A writable per-user tools folder takes precedence so an auto-updated tool
+        // (the bundled app folder is read-only under asInvoker) is preferred.
+        var userToolPath = Path.Combine(GetUserToolsDirectory(), exeName);
+        if (File.Exists(userToolPath))
+        {
+            return new ToolLocation(userToolPath, "Benutzer-Tools");
+        }
+
         var appLocalPath = Path.Combine(AppContext.BaseDirectory, exeName);
         if (File.Exists(appLocalPath))
         {

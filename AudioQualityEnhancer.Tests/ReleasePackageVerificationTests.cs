@@ -108,6 +108,7 @@ public sealed class ReleasePackageVerificationTests
                 AddEntry(archive, "Tools/README.md", "test");
                 AddEntry(archive, "Tools/ffmpeg.exe", "shim");
                 AddEntry(archive, "Tools/ffprobe.exe", "shim");
+                AddEntry(archive, "Tools/yt-dlp.exe", "shim");
                 AddEntry(archive, "Tools/FFMPEG_VERSION.txt", "ffmpeg version test");
             }
             WriteChecksumFile(ffmpegZipPath);

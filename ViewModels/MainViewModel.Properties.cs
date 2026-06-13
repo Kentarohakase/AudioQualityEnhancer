@@ -60,6 +60,8 @@ public sealed partial class MainViewModel
 
     public ICommand SelectFileCommand => _selectFileCommand;
 
+    public ICommand DownloadFromUrlCommand => _downloadFromUrlCommand;
+
     public ICommand AnalyzeDiagnosticsCommand => _analyzeDiagnosticsCommand;
 
     public ICommand SelectOutputFolderCommand => _selectOutputFolderCommand;
@@ -113,6 +115,18 @@ public sealed partial class MainViewModel
             {
                 InvalidateProcessedPreview();
                 RaiseCommandStates();
+            }
+        }
+    }
+
+    public string YouTubeUrl
+    {
+        get => _youTubeUrl;
+        set
+        {
+            if (SetProperty(ref _youTubeUrl, value))
+            {
+                _downloadFromUrlCommand.RaiseCanExecuteChanged();
             }
         }
     }

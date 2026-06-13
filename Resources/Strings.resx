@@ -50,6 +50,24 @@
   <data name="Button_ClearLog" xml:space="preserve"><value>Log leeren</value></data>
   <data name="Button_ApplySuggestion" xml:space="preserve"><value>Übernehmen</value></data>
 
+  <data name="Field_YouTubeUrl" xml:space="preserve"><value>Video-/Audio-URL</value></data>
+  <data name="Button_DownloadUrl" xml:space="preserve"><value>Herunterladen</value></data>
+  <data name="Hint_UrlResponsibility" xml:space="preserve"><value>Nur für Inhalte, an denen du die nötigen Rechte hast. Die Einhaltung der Nutzungsbedingungen liegt in deiner Verantwortung.</value></data>
+  <data name="Phase_Download" xml:space="preserve"><value>Download</value></data>
+  <data name="Status_Downloading" xml:space="preserve"><value>Lade Audio herunter...</value></data>
+  <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download gestartet: {0}</value></data>
+  <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download abgeschlossen: {0}</value></data>
+  <data name="Log_YtDlpUpdating" xml:space="preserve"><value>yt-dlp wird aktualisiert...</value></data>
+  <data name="Error_YtDlpUnavailable" xml:space="preserve"><value>yt-dlp wurde nicht gefunden. Für den URL-Download wird yt-dlp benötigt.</value></data>
+  <data name="Error_YtDlpTimeout" xml:space="preserve"><value>yt-dlp hat zu lange nicht reagiert und wurde beendet.</value></data>
+  <data name="Error_YtDlpOutdated" xml:space="preserve"><value>yt-dlp ist möglicherweise veraltet. Bitte aktualisieren und erneut versuchen.</value></data>
+  <data name="Error_DownloadFailed" xml:space="preserve"><value>Download fehlgeschlagen.</value></data>
+  <data name="Error_DownloadFailedFormat" xml:space="preserve"><value>Download fehlgeschlagen (yt-dlp-Code {0}).</value></data>
+  <data name="Error_DownloadNoNetwork" xml:space="preserve"><value>Keine Verbindung zum Server. Bitte die Internetverbindung prüfen.</value></data>
+  <data name="Error_DownloadUnavailable" xml:space="preserve"><value>Das Video ist nicht verfügbar (privat, gesperrt oder entfernt).</value></data>
+  <data name="Error_DownloadFileMissing" xml:space="preserve"><value>Die heruntergeladene Datei wurde nicht gefunden.</value></data>
+  <data name="Error_DownloadInvalidUrl" xml:space="preserve"><value>Bitte eine gültige http(s)-URL eingeben.</value></data>
+
   <data name="Field_Codec" xml:space="preserve"><value>Codec</value></data>
   <data name="Field_Container" xml:space="preserve"><value>Container</value></data>
   <data name="Field_BitRate" xml:space="preserve"><value>Bitrate</value></data>

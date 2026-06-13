@@ -37,6 +37,28 @@
                 </StackPanel>
             </Border>
 
+            <TextBlock Text="{Binding [Field_YouTubeUrl], Source={x:Static loc:LocalizationService.Instance}}"
+                       Style="{StaticResource LabelStyle}"
+                       Margin="0,0,0,4" />
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{Binding YouTubeUrl, UpdateSourceTrigger=PropertyChanged}"
+                         VerticalContentAlignment="Center" />
+                <Button Grid.Column="2"
+                        Content="{Binding [Button_DownloadUrl], Source={x:Static loc:LocalizationService.Instance}}"
+                        Command="{Binding DownloadFromUrlCommand}" />
+            </Grid>
+            <TextBlock Text="{Binding [Hint_UrlResponsibility], Source={x:Static loc:LocalizationService.Instance}}"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,12" />
+
             <Grid Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

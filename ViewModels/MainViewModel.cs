@@ -28,7 +28,9 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly BatchQueueViewService _batchQueueViewService;
     private readonly SettingsService _settingsService;
     private readonly ShellInteractionService _shellInteractionService;
+    private readonly YtDlpDownloadService _ytDlpDownloadService;
     private readonly AsyncRelayCommand _selectFileCommand;
+    private readonly AsyncRelayCommand _downloadFromUrlCommand;
     private readonly AsyncRelayCommand _analyzeDiagnosticsCommand;
     private readonly RelayCommand _selectOutputFolderCommand;
     private readonly AsyncRelayCommand _startCommand;
@@ -55,6 +57,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private ToolStatus? _ffmpegStatus;
     private ToolStatus? _ffprobeStatus;
     private string _inputPath = string.Empty;
+    private string _youTubeUrl = string.Empty;
     private string _outputDirectory = string.Empty;
     private AudioInfo? _audioInfo;
     private AudioDiagnostics? _audioDiagnostics;
@@ -78,6 +81,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private ThemeOption _selectedTheme = ThemeOption.Light;
     private LoudnessTargetOption _selectedLoudnessTarget = LoudnessTargetOption.Auto;
     private bool _enableNoiseTracking;
+    private bool _ytDlpAutoUpdate = true;
+    private string _ytDlpLastUpdateCheckUtc = string.Empty;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -129,6 +134,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         _batchQueueViewService = new BatchQueueViewService(_batchQueueService);
         _settingsService = App.SettingsService;
         _shellInteractionService = new ShellInteractionService();
+        _ytDlpDownloadService = new YtDlpDownloadService(_toolDiscoveryService, _fileNameService, processRunner);
 
         _statusText = LocalizationService.Instance["Status_Ready"];
         _toolStatusText = LocalizationService.Instance["Tools_Checking"];
@@ -153,6 +159,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         BatchItemsView.Filter = FilterBatchItem;
 
         _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
+        _downloadFromUrlCommand = new AsyncRelayCommand(DownloadFromUrlAsync, CanDownloadFromUrl);
         _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics);
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
         _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
@@ -200,6 +207,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         NoiseReductionFloor = settings.NoiseReductionFloor;
         SelectedLoudnessTarget = LoudnessTargetOption.All.FirstOrDefault(t => t.Id == settings.LoudnessTargetId) ?? LoudnessTargetOption.Auto;
         EnableNoiseTracking = settings.EnableNoiseTracking;
+        _ytDlpAutoUpdate = settings.YtDlpAutoUpdate;
+        _ytDlpLastUpdateCheckUtc = settings.YtDlpLastUpdateCheckUtc;
         WindowWidth = settings.WindowWidth;
         WindowHeight = settings.WindowHeight;
         WindowMaximized = settings.WindowMaximized;
@@ -229,6 +238,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             NoiseReductionFloor = NoiseReductionFloor,
             LoudnessTargetId = SelectedLoudnessTarget?.Id ?? LoudnessTargetOption.Auto.Id,
             EnableNoiseTracking = EnableNoiseTracking,
+            YtDlpAutoUpdate = _ytDlpAutoUpdate,
+            YtDlpLastUpdateCheckUtc = _ytDlpLastUpdateCheckUtc,
             WindowWidth = WindowWidth,
             WindowHeight = WindowHeight,
             WindowMaximized = WindowMaximized
@@ -267,6 +278,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             _logService.Warning(_ffprobeStatus.ErrorMessage ?? LocalizationService.Instance["Log_FFprobeUnavailable"]);
         }
+
+        _ = PrepareYtDlpAsync();
     }
 
     private void OnLogAdded(object? sender, string line)
@@ -383,6 +396,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private void RaiseCommandStates()
     {
         _selectFileCommand.RaiseCanExecuteChanged();
+        _downloadFromUrlCommand.RaiseCanExecuteChanged();
         _analyzeDiagnosticsCommand.RaiseCanExecuteChanged();
         _selectOutputFolderCommand.RaiseCanExecuteChanged();
         _startCommand.RaiseCanExecuteChanged();

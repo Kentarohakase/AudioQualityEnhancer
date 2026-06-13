@@ -20,4 +20,15 @@ AudioQualityEnhancer release packages are provided in two variants:
 - Packages without FFmpeg do not include `ffmpeg.exe` or `ffprobe.exe`. Users can install FFmpeg separately or place the tools in the `Tools` folder.
 - Packages with FFmpeg include `ffmpeg.exe` and `ffprobe.exe` in the `Tools` folder for convenience. Version details for the bundled binaries are included in `Tools/FFMPEG_VERSION.txt`.
 
+## yt-dlp
+
+AudioQualityEnhancer can call `yt-dlp.exe` as an external program to download the audio of a user-provided URL. yt-dlp is not part of the AudioQualityEnhancer source code.
+
+Project:
+
+- yt-dlp: https://github.com/yt-dlp/yt-dlp
+- License: The Unlicense (public domain) - https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE
+
+Packages with FFmpeg include `yt-dlp.exe` in the `Tools` folder, and the application keeps it up to date in a writable per-user folder. Downloading content can be subject to the terms of service of the source website and to copyright law; using this feature responsibly is the user's responsibility.
+
 This notice is provided for transparency about third-party software used by AudioQualityEnhancer.

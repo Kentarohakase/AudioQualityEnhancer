@@ -138,6 +138,11 @@ if ($IncludeFFmpeg) {
     ) |
         Where-Object { $_ -notmatch "[A-Za-z]:\\" } |
         Set-Content -LiteralPath $versionFile -Encoding UTF8
+
+    # Bundle yt-dlp for the URL download feature; the app keeps it up to date in a
+    # writable per-user folder at runtime.
+    $ytDlpPath = Join-Path $stageDir "Tools\yt-dlp.exe"
+    Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $ytDlpPath -UseBasicParsing
 }
 
 Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $zipPath -Force
