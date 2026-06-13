@@ -55,8 +55,12 @@
   <data name="Hint_UrlResponsibility" xml:space="preserve"><value>Only for content you have the necessary rights to. Complying with the relevant terms of service is your responsibility.</value></data>
   <data name="Phase_Download" xml:space="preserve"><value>Download</value></data>
   <data name="Status_Downloading" xml:space="preserve"><value>Downloading audio...</value></data>
+  <data name="Checkbox_SplitChapters" xml:space="preserve"><value>Split chapters into separate tracks</value></data>
+  <data name="Checkbox_RemoveSponsor" xml:space="preserve"><value>Remove sponsor/ad segments (SponsorBlock)</value></data>
   <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download started: {0}</value></data>
   <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download finished: {0}</value></data>
+  <data name="Log_DownloadDoneCountFormat" xml:space="preserve"><value>Download finished: {0} files.</value></data>
+  <data name="Log_DownloadQualityNote" xml:space="preserve"><value>Kept the original stream - no extra lossy encoding. Your preset determines the output quality.</value></data>
   <data name="Log_YtDlpUpdating" xml:space="preserve"><value>Updating yt-dlp...</value></data>
   <data name="Error_YtDlpUnavailable" xml:space="preserve"><value>yt-dlp was not found. The URL download needs yt-dlp.</value></data>
   <data name="Error_YtDlpTimeout" xml:space="preserve"><value>yt-dlp stopped responding and was terminated.</value></data>

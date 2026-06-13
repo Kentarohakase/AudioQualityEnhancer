@@ -55,8 +55,12 @@
   <data name="Hint_UrlResponsibility" xml:space="preserve"><value>Nur für Inhalte, an denen du die nötigen Rechte hast. Die Einhaltung der Nutzungsbedingungen liegt in deiner Verantwortung.</value></data>
   <data name="Phase_Download" xml:space="preserve"><value>Download</value></data>
   <data name="Status_Downloading" xml:space="preserve"><value>Lade Audio herunter...</value></data>
+  <data name="Checkbox_SplitChapters" xml:space="preserve"><value>Kapitel in einzelne Tracks aufteilen</value></data>
+  <data name="Checkbox_RemoveSponsor" xml:space="preserve"><value>Werbe-/Sponsor-Segmente entfernen (SponsorBlock)</value></data>
   <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download gestartet: {0}</value></data>
   <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download abgeschlossen: {0}</value></data>
+  <data name="Log_DownloadDoneCountFormat" xml:space="preserve"><value>Download abgeschlossen: {0} Dateien.</value></data>
+  <data name="Log_DownloadQualityNote" xml:space="preserve"><value>Originalstream übernommen - keine erneute verlustbehaftete Kodierung. Die Ausgabequalität bestimmt dein Preset.</value></data>
   <data name="Log_YtDlpUpdating" xml:space="preserve"><value>yt-dlp wird aktualisiert...</value></data>
   <data name="Error_YtDlpUnavailable" xml:space="preserve"><value>yt-dlp wurde nicht gefunden. Für den URL-Download wird yt-dlp benötigt.</value></data>
   <data name="Error_YtDlpTimeout" xml:space="preserve"><value>yt-dlp hat zu lange nicht reagiert und wurde beendet.</value></data>

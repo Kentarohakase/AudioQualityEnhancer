@@ -57,7 +57,13 @@
                        Foreground="{DynamicResource MutedTextBrush}"
                        FontSize="11"
                        TextWrapping="Wrap"
-                       Margin="0,0,0,12" />
+                       Margin="0,0,0,8" />
+            <CheckBox Content="{Binding [Checkbox_SplitChapters], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding SplitChapters}"
+                      Margin="0,0,0,4" />
+            <CheckBox Content="{Binding [Checkbox_RemoveSponsor], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding RemoveSponsorSegments}"
+                      Margin="0,0,0,12" />
 
             <Grid Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>

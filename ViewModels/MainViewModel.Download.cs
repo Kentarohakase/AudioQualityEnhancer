@@ -27,12 +27,14 @@ public sealed partial class MainViewModel
         SetProcessingPhase("Phase_Download");
         SetStatus("Status_Downloading");
 
-        Result<string> result;
+        Result<IReadOnlyList<string>> result;
         try
         {
             result = await _ytDlpDownloadService.DownloadAsync(
                 url,
                 targetDirectory,
+                SplitChapters,
+                RemoveSponsorSegments,
                 _logService.Info,
                 value => ProgressValue = value,
                 _processingCancellation.Token);
@@ -44,13 +46,16 @@ public sealed partial class MainViewModel
             _processingCancellation = null;
         }
 
-        if (result.IsSuccess && result.Value is not null)
+        if (result.IsSuccess && result.Value is { Count: > 0 } files)
         {
             ProgressValue = 100;
             SetProcessingPhase("Phase_Ready");
-            _logService.Info(LocalizationService.Instance.Format("Log_DownloadDoneFormat", Path.GetFileName(result.Value)));
+            _logService.Info(LocalizationService.Instance["Log_DownloadQualityNote"]);
+            _logService.Info(files.Count == 1
+                ? LocalizationService.Instance.Format("Log_DownloadDoneFormat", Path.GetFileName(files[0]))
+                : LocalizationService.Instance.Format("Log_DownloadDoneCountFormat", files.Count));
             YouTubeUrl = string.Empty;
-            await LoadInputFilesAsync(new[] { result.Value });
+            await LoadInputFilesAsync(files);
             return;
         }
 

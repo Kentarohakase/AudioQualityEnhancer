@@ -83,6 +83,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _enableNoiseTracking;
     private bool _ytDlpAutoUpdate = true;
     private string _ytDlpLastUpdateCheckUtc = string.Empty;
+    private bool _splitChapters;
+    private bool _removeSponsorSegments;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -209,6 +211,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         EnableNoiseTracking = settings.EnableNoiseTracking;
         _ytDlpAutoUpdate = settings.YtDlpAutoUpdate;
         _ytDlpLastUpdateCheckUtc = settings.YtDlpLastUpdateCheckUtc;
+        SplitChapters = settings.SplitChapters;
+        RemoveSponsorSegments = settings.RemoveSponsorSegments;
         WindowWidth = settings.WindowWidth;
         WindowHeight = settings.WindowHeight;
         WindowMaximized = settings.WindowMaximized;
@@ -240,6 +244,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             EnableNoiseTracking = EnableNoiseTracking,
             YtDlpAutoUpdate = _ytDlpAutoUpdate,
             YtDlpLastUpdateCheckUtc = _ytDlpLastUpdateCheckUtc,
+            SplitChapters = SplitChapters,
+            RemoveSponsorSegments = RemoveSponsorSegments,
             WindowWidth = WindowWidth,
             WindowHeight = WindowHeight,
             WindowMaximized = WindowMaximized

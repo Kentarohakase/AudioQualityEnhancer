@@ -32,6 +32,10 @@ public sealed record AppSettings
 
     public string YtDlpLastUpdateCheckUtc { get; init; } = string.Empty;
 
+    public bool SplitChapters { get; init; } = false;
+
+    public bool RemoveSponsorSegments { get; init; } = false;
+
     public double WindowWidth { get; init; }
 
     public double WindowHeight { get; init; }

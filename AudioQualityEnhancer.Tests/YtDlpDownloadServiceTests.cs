@@ -9,19 +9,42 @@ public sealed class YtDlpDownloadServiceTests
     [Fact]
     public void BuildArguments_DownloadsBestAudioAndRemuxesWithoutReencoding()
     {
-        var args = YtDlpDownloadService.BuildArguments(
+        var args = YtDlpDownloadService.BuildArguments(new YtDlpDownloadRequest(
             "https://example.com/watch?v=abc",
             @"C:\Tools",
-            @"C:\out\%(title)s.%(ext)s");
+            @"C:\out\%(title)s.%(ext)s",
+            @"C:\out\chapters\%(section_number)s.%(ext)s",
+            SplitChapters: false,
+            RemoveSponsorSegments: false));
 
         Assert.Contains("--no-playlist", args);
         Assert.Contains("bestaudio/best", args);
+        Assert.Contains("--embed-metadata", args);
+        Assert.Contains("--embed-thumbnail", args);
         Assert.DoesNotContain("--audio-format", args);
+        Assert.DoesNotContain("--split-chapters", args);
+        Assert.DoesNotContain("--sponsorblock-remove", args);
         Assert.Equal("https://example.com/watch?v=abc", args[^1]);
 
         AssertFollowedBy(args, "--remux-video", "ogg/m4a/mka");
         AssertFollowedBy(args, "--ffmpeg-location", @"C:\Tools");
         AssertFollowedBy(args, "-o", @"C:\out\%(title)s.%(ext)s");
+    }
+
+    [Fact]
+    public void BuildArguments_AddsSplitChaptersAndSponsorBlockWhenRequested()
+    {
+        var args = YtDlpDownloadService.BuildArguments(new YtDlpDownloadRequest(
+            "https://example.com/v",
+            @"C:\Tools",
+            @"C:\out\%(title)s.%(ext)s",
+            @"C:\out\chapters\%(section_number)s.%(ext)s",
+            SplitChapters: true,
+            RemoveSponsorSegments: true));
+
+        Assert.Contains("--split-chapters", args);
+        Assert.Contains(@"chapter:C:\out\chapters\%(section_number)s.%(ext)s", args);
+        AssertFollowedBy(args, "--sponsorblock-remove", "default");
     }
 
     [Theory]

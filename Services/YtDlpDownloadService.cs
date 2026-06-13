@@ -4,6 +4,14 @@ using AudioQualityEnhancer.Models;
 
 namespace AudioQualityEnhancer.Services;
 
+internal sealed record YtDlpDownloadRequest(
+    string Url,
+    string FfmpegDirectory,
+    string OutputTemplate,
+    string? ChapterTemplate,
+    bool SplitChapters,
+    bool RemoveSponsorSegments);
+
 // Downloads the best audio stream of a single URL with yt-dlp, remuxing (without
 // re-encoding) into a container the app supports, then leaves it to the normal
 // pipeline to normalize and export.
@@ -44,22 +52,24 @@ public sealed partial class YtDlpDownloadService
             : Result.Failure(status.ErrorMessage ?? LocalizationService.Instance["Error_YtDlpUnavailable"]);
     }
 
-    public async Task<Result<string>> DownloadAsync(
+    public async Task<Result<IReadOnlyList<string>>> DownloadAsync(
         string url,
         string targetDirectory,
+        bool splitChapters,
+        bool removeSponsorSegments,
         Action<string>? log,
         Action<double>? progress,
         CancellationToken cancellationToken)
     {
         if (!IsLikelyValidUrl(url))
         {
-            return Result<string>.Failure(LocalizationService.Instance["Error_DownloadInvalidUrl"]);
+            return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_DownloadInvalidUrl"]);
         }
 
         var availability = await CheckAvailabilityAsync(cancellationToken);
         if (availability.IsFailure)
         {
-            return Result<string>.Failure(availability.ErrorMessage ?? LocalizationService.Instance["Error_YtDlpUnavailable"]);
+            return Result<IReadOnlyList<string>>.Failure(availability.ErrorMessage ?? LocalizationService.Instance["Error_YtDlpUnavailable"]);
         }
 
         string ffmpegDirectory;
@@ -73,9 +83,20 @@ public sealed partial class YtDlpDownloadService
         }
 
         Directory.CreateDirectory(targetDirectory);
-        var outputTemplate = Path.Combine(targetDirectory, "%(title).150B [%(id)s].%(ext)s");
-        var arguments = BuildArguments(url.Trim(), ffmpegDirectory, outputTemplate);
-        var capturedPaths = new List<string>();
+
+        // Download into an isolated working folder so the produced files (one, or many
+        // when splitting chapters) are trivial to collect, then move them into place.
+        var workDirectory = Path.Combine(targetDirectory, $"{FileNameService.TemporaryFilePrefix}dl_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(workDirectory);
+
+        var request = new YtDlpDownloadRequest(
+            url.Trim(),
+            ffmpegDirectory,
+            Path.Combine(workDirectory, "%(title).150B [%(id)s].%(ext)s"),
+            Path.Combine(workDirectory, "chapters", "%(section_number)03d - %(section_title).100B.%(ext)s"),
+            splitChapters,
+            removeSponsorSegments);
+        var arguments = BuildArguments(request);
 
         try
         {
@@ -86,11 +107,6 @@ public sealed partial class YtDlpDownloadService
                     arguments,
                     line =>
                     {
-                        if (TryCaptureFilePath(line, capturedPaths))
-                        {
-                            return;
-                        }
-
                         if (!TryReportProgress(line, progress))
                         {
                             log?.Invoke(line);
@@ -102,35 +118,39 @@ public sealed partial class YtDlpDownloadService
 
             if (result.TimedOut)
             {
-                return Result<string>.Failure(LocalizationService.Instance["Error_YtDlpTimeout"]);
+                return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_YtDlpTimeout"]);
             }
 
             if (result.WasCancelled)
             {
-                return Result<string>.Failure(LocalizationService.Instance["Error_ProcessingCancelled"]);
+                return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_ProcessingCancelled"]);
             }
 
             if (result.ExitCode != 0)
             {
-                return Result<string>.Failure(CreateExitErrorMessage(result));
+                return Result<IReadOnlyList<string>>.Failure(CreateExitErrorMessage(result));
             }
 
-            var downloadedFile = ResolveDownloadedFile(capturedPaths, targetDirectory);
-            if (downloadedFile is null)
+            var files = CollectDownloadedFiles(workDirectory, splitChapters, targetDirectory);
+            if (files.Count == 0)
             {
-                return Result<string>.Failure(LocalizationService.Instance["Error_DownloadFileMissing"]);
+                return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_DownloadFileMissing"]);
             }
 
             progress?.Invoke(100);
-            return Result<string>.Success(downloadedFile);
+            return Result<IReadOnlyList<string>>.Success(files);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
-            return Result<string>.Failure(LocalizationService.Instance["Error_YtDlpUnavailable"], ex);
+            return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_YtDlpUnavailable"], ex);
         }
         catch (Exception ex)
         {
-            return Result<string>.Failure(LocalizationService.Instance["Error_DownloadFailed"], ex);
+            return Result<IReadOnlyList<string>>.Failure(LocalizationService.Instance["Error_DownloadFailed"], ex);
+        }
+        finally
+        {
+            TryDeleteDirectory(workDirectory);
         }
     }
 
@@ -168,9 +188,9 @@ public sealed partial class YtDlpDownloadService
         return now;
     }
 
-    internal static IReadOnlyList<string> BuildArguments(string url, string ffmpegDirectory, string outputTemplate)
+    internal static IReadOnlyList<string> BuildArguments(YtDlpDownloadRequest request)
     {
-        return new List<string>
+        var args = new List<string>
         {
             "--no-playlist",
             "-f",
@@ -178,17 +198,33 @@ public sealed partial class YtDlpDownloadService
             "--remux-video",
             "ogg/m4a/mka",
             "--ffmpeg-location",
-            ffmpegDirectory,
+            request.FfmpegDirectory,
             "--embed-metadata",
+            "--embed-thumbnail",
             "--no-part",
-            "--newline",
-            "--no-simulate",
-            "--print",
-            "after_move:filepath",
-            "-o",
-            outputTemplate,
-            url
+            "--newline"
         };
+
+        if (request.RemoveSponsorSegments)
+        {
+            args.Add("--sponsorblock-remove");
+            args.Add("default");
+        }
+
+        if (request.SplitChapters)
+        {
+            args.Add("--split-chapters");
+            if (!string.IsNullOrWhiteSpace(request.ChapterTemplate))
+            {
+                args.Add("-o");
+                args.Add($"chapter:{request.ChapterTemplate}");
+            }
+        }
+
+        args.Add("-o");
+        args.Add(request.OutputTemplate);
+        args.Add(request.Url);
+        return args;
     }
 
     internal static bool IsLikelyValidUrl(string? url)
@@ -232,30 +268,6 @@ public sealed partial class YtDlpDownloadService
         return candidates.Any(candidate => value.Contains(candidate, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool TryCaptureFilePath(string line, List<string> capturedPaths)
-    {
-        var trimmed = line.Trim();
-        if (trimmed.Length == 0 || !Path.IsPathRooted(trimmed))
-        {
-            return false;
-        }
-
-        try
-        {
-            if (File.Exists(trimmed))
-            {
-                capturedPaths.Add(trimmed);
-                return true;
-            }
-        }
-        catch
-        {
-            // Not a usable path; fall through and let it be logged.
-        }
-
-        return false;
-    }
-
     private static bool TryReportProgress(string line, Action<double>? progress)
     {
         if (progress is null)
@@ -277,25 +289,51 @@ public sealed partial class YtDlpDownloadService
         return true;
     }
 
-    private string? ResolveDownloadedFile(IReadOnlyList<string> capturedPaths, string targetDirectory)
+    private IReadOnlyList<string> CollectDownloadedFiles(string workDirectory, bool splitChapters, string targetDirectory)
     {
-        for (var i = capturedPaths.Count - 1; i >= 0; i--)
+        var chapterDirectory = Path.Combine(workDirectory, "chapters");
+
+        // When splitting produced chapter files, take those; otherwise (no chapters in
+        // the source, or splitting off) take the single full-length file.
+        var sourceFiles = splitChapters
+            && Directory.Exists(chapterDirectory)
+            && Directory.EnumerateFiles(chapterDirectory).Any(_fileNameService.IsSupportedInputFile)
+            ? Directory.EnumerateFiles(chapterDirectory)
+            : Directory.EnumerateFiles(workDirectory);
+
+        var moved = new List<string>();
+        foreach (var file in sourceFiles
+            .Where(_fileNameService.IsSupportedInputFile)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
-            if (File.Exists(capturedPaths[i]))
+            var destination = MoveIntoDirectory(file, targetDirectory);
+            if (destination is not null)
             {
-                return capturedPaths[i];
+                moved.Add(destination);
             }
         }
 
+        return moved;
+    }
+
+    private static string? MoveIntoDirectory(string sourceFile, string targetDirectory)
+    {
         try
         {
-            return Directory
-                .EnumerateFiles(targetDirectory)
-                .Where(_fileNameService.IsSupportedInputFile)
-                .Select(path => new FileInfo(path))
-                .OrderByDescending(file => file.LastWriteTimeUtc)
-                .Select(file => file.FullName)
-                .FirstOrDefault();
+            var fileName = Path.GetFileName(sourceFile);
+            var baseName = Path.GetFileNameWithoutExtension(fileName);
+            var extension = Path.GetExtension(fileName);
+            var destination = Path.Combine(targetDirectory, fileName);
+
+            var index = 1;
+            while (File.Exists(destination))
+            {
+                destination = Path.Combine(targetDirectory, $"{baseName} ({index}){extension}");
+                index++;
+            }
+
+            File.Move(sourceFile, destination);
+            return destination;
         }
         catch
         {
@@ -360,6 +398,21 @@ public sealed partial class YtDlpDownloadService
         };
 
         return candidates.FirstOrDefault(File.Exists);
+    }
+
+    private static void TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+        catch
+        {
+            // Leftover working folders are cleaned up on a later run; never fail here.
+        }
     }
 
     [GeneratedRegex(@"\[download\]\s+(\d{1,3}(?:\.\d+)?)%", RegexOptions.IgnoreCase)]

@@ -131,6 +131,18 @@ public sealed partial class MainViewModel
         }
     }
 
+    public bool SplitChapters
+    {
+        get => _splitChapters;
+        set => SetProperty(ref _splitChapters, value);
+    }
+
+    public bool RemoveSponsorSegments
+    {
+        get => _removeSponsorSegments;
+        set => SetProperty(ref _removeSponsorSegments, value);
+    }
+
     public string OutputDirectory
     {
         get => _outputDirectory;
