@@ -149,6 +149,12 @@ public sealed partial class MainViewModel
         set => SetProperty(ref _downloadOriginalOnly, value);
     }
 
+    public bool DownloadPlaylist
+    {
+        get => _downloadPlaylist;
+        set => SetProperty(ref _downloadPlaylist, value);
+    }
+
     public string OutputDirectory
     {
         get => _outputDirectory;

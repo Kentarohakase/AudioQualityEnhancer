@@ -47,6 +47,24 @@ public sealed class YtDlpDownloadServiceTests
         AssertFollowedBy(args, "--sponsorblock-remove", "default");
     }
 
+    [Fact]
+    public void BuildArguments_DownloadsWholePlaylistAndIgnoresChapterSplitWhenRequested()
+    {
+        var args = YtDlpDownloadService.BuildArguments(new YtDlpDownloadRequest(
+            "https://example.com/playlist",
+            @"C:\Tools",
+            @"C:\out\%(title)s.%(ext)s",
+            @"C:\out\chapters\%(section_number)s.%(ext)s",
+            SplitChapters: true,
+            RemoveSponsorSegments: false,
+            DownloadPlaylist: true));
+
+        Assert.Contains("--yes-playlist", args);
+        Assert.DoesNotContain("--no-playlist", args);
+        Assert.DoesNotContain("--split-chapters", args);
+        AssertFollowedBy(args, "--playlist-end", "100");
+    }
+
     [Theory]
     [InlineData("https://www.youtube.com/watch?v=abc", true)]
     [InlineData("http://example.com/a", true)]

@@ -220,6 +220,7 @@ public sealed partial class MainViewModel
             SetStatus("Status_AnalysisDone");
             _logService.Info(LocalizationService.Instance.Format("Log_CodecFormat", result.Value.CodecDisplay));
             _logService.Info(LocalizationService.Instance.Format("Log_ContainerFormat", result.Value.ContainerDisplay));
+            _logService.Info(LocalizationService.Instance.Format("Log_SourceQualityFormat", result.Value.BitRateDisplay, result.Value.SampleRateDisplay, result.Value.ChannelsDisplay));
 
             if (result.Value.IsLikelyLossy)
             {

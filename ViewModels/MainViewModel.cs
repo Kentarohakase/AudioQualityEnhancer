@@ -86,6 +86,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _splitChapters;
     private bool _removeSponsorSegments;
     private bool _downloadOriginalOnly;
+    private bool _downloadPlaylist;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -215,6 +216,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         SplitChapters = settings.SplitChapters;
         RemoveSponsorSegments = settings.RemoveSponsorSegments;
         DownloadOriginalOnly = settings.DownloadOriginalOnly;
+        DownloadPlaylist = settings.DownloadPlaylist;
         WindowWidth = settings.WindowWidth;
         WindowHeight = settings.WindowHeight;
         WindowMaximized = settings.WindowMaximized;
@@ -249,6 +251,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             SplitChapters = SplitChapters,
             RemoveSponsorSegments = RemoveSponsorSegments,
             DownloadOriginalOnly = DownloadOriginalOnly,
+            DownloadPlaylist = DownloadPlaylist,
             WindowWidth = WindowWidth,
             WindowHeight = WindowHeight,
             WindowMaximized = WindowMaximized

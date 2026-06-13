@@ -10,7 +10,8 @@ internal sealed record YtDlpDownloadRequest(
     string OutputTemplate,
     string? ChapterTemplate,
     bool SplitChapters,
-    bool RemoveSponsorSegments);
+    bool RemoveSponsorSegments,
+    bool DownloadPlaylist = false);
 
 // Downloads the best audio stream of a single URL with yt-dlp, remuxing (without
 // re-encoding) into a container the app supports, then leaves it to the normal
@@ -57,6 +58,7 @@ public sealed partial class YtDlpDownloadService
         string targetDirectory,
         bool splitChapters,
         bool removeSponsorSegments,
+        bool downloadPlaylist,
         Action<string>? log,
         Action<double>? progress,
         CancellationToken cancellationToken)
@@ -95,7 +97,8 @@ public sealed partial class YtDlpDownloadService
             Path.Combine(workDirectory, "%(title).150B [%(id)s].%(ext)s"),
             Path.Combine(workDirectory, "chapters", "%(section_number)03d - %(section_title).100B.%(ext)s"),
             splitChapters,
-            removeSponsorSegments);
+            removeSponsorSegments,
+            downloadPlaylist);
         var arguments = BuildArguments(request);
 
         try
@@ -190,9 +193,21 @@ public sealed partial class YtDlpDownloadService
 
     internal static IReadOnlyList<string> BuildArguments(YtDlpDownloadRequest request)
     {
-        var args = new List<string>
+        var args = new List<string>();
+
+        if (request.DownloadPlaylist)
         {
-            "--no-playlist",
+            args.Add("--yes-playlist");
+            args.Add("--playlist-end");
+            args.Add("100");
+        }
+        else
+        {
+            args.Add("--no-playlist");
+        }
+
+        args.AddRange(new[]
+        {
             "-f",
             "bestaudio/best",
             "--remux-video",
@@ -203,7 +218,7 @@ public sealed partial class YtDlpDownloadService
             "--embed-thumbnail",
             "--no-part",
             "--newline"
-        };
+        });
 
         if (request.RemoveSponsorSegments)
         {
@@ -211,7 +226,8 @@ public sealed partial class YtDlpDownloadService
             args.Add("default");
         }
 
-        if (request.SplitChapters)
+        // Chapter splitting and playlist mode don't combine cleanly; playlist wins.
+        if (request.SplitChapters && !request.DownloadPlaylist)
         {
             args.Add("--split-chapters");
             if (!string.IsNullOrWhiteSpace(request.ChapterTemplate))

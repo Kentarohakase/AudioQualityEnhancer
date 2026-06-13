@@ -35,6 +35,7 @@ public sealed partial class MainViewModel
                 targetDirectory,
                 SplitChapters,
                 RemoveSponsorSegments,
+                DownloadPlaylist,
                 _logService.Info,
                 value => ProgressValue = value,
                 _processingCancellation.Token);

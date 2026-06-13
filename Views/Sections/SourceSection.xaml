@@ -58,6 +58,9 @@
                        FontSize="11"
                        TextWrapping="Wrap"
                        Margin="0,0,0,8" />
+            <CheckBox Content="{Binding [Checkbox_DownloadPlaylist], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding DownloadPlaylist}"
+                      Margin="0,0,0,4" />
             <CheckBox Content="{Binding [Checkbox_SplitChapters], Source={x:Static loc:LocalizationService.Instance}}"
                       IsChecked="{Binding SplitChapters}"
                       Margin="0,0,0,4" />

@@ -58,7 +58,9 @@
   <data name="Checkbox_SplitChapters" xml:space="preserve"><value>Split chapters into separate tracks</value></data>
   <data name="Checkbox_RemoveSponsor" xml:space="preserve"><value>Remove sponsor/ad segments (SponsorBlock)</value></data>
   <data name="Checkbox_DownloadOriginalOnly" xml:space="preserve"><value>Download best original only (no processing)</value></data>
+  <data name="Checkbox_DownloadPlaylist" xml:space="preserve"><value>Download the whole playlist (up to 100 items)</value></data>
   <data name="Status_DownloadOriginalSaved" xml:space="preserve"><value>Original saved.</value></data>
+  <data name="Log_SourceQualityFormat" xml:space="preserve"><value>Source quality: {0} · {1} · {2}</value></data>
   <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download started: {0}</value></data>
   <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download finished: {0}</value></data>
   <data name="Log_DownloadDoneCountFormat" xml:space="preserve"><value>Download finished: {0} files.</value></data>

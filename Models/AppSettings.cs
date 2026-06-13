@@ -38,6 +38,8 @@ public sealed record AppSettings
 
     public bool DownloadOriginalOnly { get; init; } = false;
 
+    public bool DownloadPlaylist { get; init; } = false;
+
     public double WindowWidth { get; init; }
 
     public double WindowHeight { get; init; }

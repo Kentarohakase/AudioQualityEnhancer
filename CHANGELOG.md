@@ -5,6 +5,8 @@
 ### Added
 
 - Added a "download best original only" option for the URL download: saves the best available audio stream to the output folder without running it through the preset pipeline, for when you just want the untouched original.
+- Added playlist support to the URL download: an optional mode downloads every entry of a playlist (up to 100) and adds them all to the queue.
+- Source analysis now logs the source quality (bitrate, sample rate, channels) so the original quality is visible before processing.
 
 ## 0.15.0 - 2026-06-13
 
