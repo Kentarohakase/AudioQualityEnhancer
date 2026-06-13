@@ -34,6 +34,28 @@ public sealed class FileNameService
         return SupportedInputExtensions.Contains(Path.GetExtension(path));
     }
 
+    private static readonly IReadOnlySet<string> AudioOnlyExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp3",
+        ".wav",
+        ".flac",
+        ".m4a",
+        ".aac",
+        ".ogg",
+        ".opus",
+        ".mka"
+    };
+
+    /// <summary>
+    /// True for audio-only containers (i.e. not a video container like .mp4/.mkv). Used to
+    /// decide whether an attached cover-art picture can be safely carried through, since for
+    /// real video sources the first video stream is the movie, not a cover.
+    /// </summary>
+    public bool IsAudioOnlyContainer(string path)
+    {
+        return AudioOnlyExtensions.Contains(Path.GetExtension(path));
+    }
+
     /// <summary>
     /// Expands dropped paths so folders contribute their supported files (recursively,
     /// sorted for a stable queue order) while plain file paths pass through unchanged.

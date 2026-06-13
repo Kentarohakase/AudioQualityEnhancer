@@ -141,7 +141,7 @@ public sealed class AudioProcessingService
 
         var renderStream = ResolveAudioStream(options.AudioStream, sourceInfo);
         var outputSampleRate = ResolveLoudnessOutputSampleRate(plan.LoudnessSettings is not null, renderStream, sourceInfo);
-        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph, renderStream, outputSampleRate);
+        var ffmpegArguments = BuildRenderArguments(options.InputPath, tempOutputPath, plan.FFmpegArguments, filterGraph, renderStream, outputSampleRate, plan.IncludeCoverArt);
         if (plan.ShouldUseTwoPassLoudness)
         {
             _logService.Info(LocalizationService.Instance.Format("Log_RenderFilterFormat", filterGraph));
@@ -234,7 +234,7 @@ public sealed class AudioProcessingService
 
             _logService.Info(LocalizationService.Instance.Format("Log_LosslessExtractionFormat", suggestion.Reason));
             var outputPath = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, "extracted", suggestion.Extension);
-            return Result<OutputPlan>.Success(new OutputPlan(outputPath, new[] { "-c:a", "copy" }, string.Empty, Array.Empty<string>(), null, false));
+            return Result<OutputPlan>.Success(new OutputPlan(outputPath, new[] { "-c:a", "copy" }, string.Empty, Array.Empty<string>(), null, false, false));
         }
 
         var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
@@ -250,6 +250,7 @@ public sealed class AudioProcessingService
                 : options.Preset.Id;
         var outputPathForTranscode = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, suffix, exportFormat.Extension);
         var filterPlan = AudioFilterPlanner.BuildPlan(options);
+        var includeCoverArt = exportFormat.SupportsCoverArt && _fileNameService.IsAudioOnlyContainer(options.InputPath);
 
         return Result<OutputPlan>.Success(new OutputPlan(
             outputPathForTranscode,
@@ -257,7 +258,8 @@ public sealed class AudioProcessingService
             filterPlan.FilterGraph,
             filterPlan.PreLoudnessFilters,
             filterPlan.LoudnessSettings,
-            filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness));
+            filterPlan.LoudnessSettings is not null && options.UseTwoPassLoudness,
+            includeCoverArt));
     }
 
     /// <summary>
@@ -351,9 +353,10 @@ public sealed class AudioProcessingService
         IReadOnlyList<string> codecArguments,
         string filterGraph,
         AudioStreamInfo? audioStream,
-        int? outputSampleRate = null)
+        int? outputSampleRate = null,
+        bool includeCoverArt = false)
     {
-        return BuildRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream, outputSampleRate).Arguments;
+        return BuildRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream, outputSampleRate, includeCoverArt).Arguments;
     }
 
     internal static FFmpegRenderPlan BuildRenderPlan(
@@ -362,9 +365,10 @@ public sealed class AudioProcessingService
         IReadOnlyList<string> codecArguments,
         string filterGraph,
         AudioStreamInfo? audioStream,
-        int? outputSampleRate = null)
+        int? outputSampleRate = null,
+        bool includeCoverArt = false)
     {
-        var args = BuildInputArguments(inputPath, audioStream);
+        var args = BuildInputArguments(inputPath, audioStream, includeCoverArt: includeCoverArt);
 
         if (!string.IsNullOrWhiteSpace(filterGraph))
         {
@@ -379,6 +383,13 @@ public sealed class AudioProcessingService
         }
 
         args.AddRange(codecArguments);
+
+        if (includeCoverArt)
+        {
+            args.Add("-c:v");
+            args.Add("copy");
+        }
+
         args.Add(outputPath);
         return new FFmpegRenderPlan(inputPath, outputPath, codecArguments, filterGraph, audioStream?.FFmpegMapSpecifier ?? "0:a:0", args);
     }
@@ -408,7 +419,7 @@ public sealed class AudioProcessingService
         return args;
     }
 
-    internal static List<string> BuildInputArguments(string inputPath, AudioStreamInfo? audioStream, TimeSpan? seekStart = null)
+    internal static List<string> BuildInputArguments(string inputPath, AudioStreamInfo? audioStream, TimeSpan? seekStart = null, bool includeCoverArt = false)
     {
         var args = new List<string>
         {
@@ -427,16 +438,25 @@ public sealed class AudioProcessingService
             args.Add(seek.TotalSeconds.ToString("0.##", CultureInfo.InvariantCulture));
         }
 
-        args.AddRange(new[]
+        args.Add("-i");
+        args.Add(inputPath);
+        args.Add("-map");
+        args.Add(audioStream?.FFmpegMapSpecifier ?? "0:a:0");
+
+        if (includeCoverArt)
         {
-            "-i",
-            inputPath,
-            "-map",
-            audioStream?.FFmpegMapSpecifier ?? "0:a:0",
-            "-vn",
-            "-sn",
-            "-dn"
-        });
+            // Carry an attached cover-art picture through (optional with '?'); for audio
+            // sources the first video stream is the cover rather than real video.
+            args.Add("-map");
+            args.Add("0:v:0?");
+        }
+        else
+        {
+            args.Add("-vn");
+        }
+
+        args.Add("-sn");
+        args.Add("-dn");
 
         return args;
     }
@@ -571,7 +591,8 @@ public sealed class AudioProcessingService
         string FilterGraph,
         IReadOnlyList<string> PreLoudnessFilters,
         LoudnessSettings? LoudnessSettings,
-        bool ShouldUseTwoPassLoudness);
+        bool ShouldUseTwoPassLoudness,
+        bool IncludeCoverArt);
 
 }
 

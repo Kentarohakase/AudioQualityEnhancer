@@ -6,6 +6,7 @@
 
 - Added a URL audio download: paste a video/audio URL to fetch the best available audio stream with yt-dlp, which is then analyzed and exported through the normal preset pipeline (loudness normalization, true-peak limiting, format choice). The stream is remuxed without re-encoding to avoid an extra lossy step. yt-dlp is bundled in the with-ffmpeg package and kept up to date in a writable per-user folder.
 - The URL download embeds title/artist metadata and cover art into the downloaded source, can optionally split a video into per-chapter tracks, and can optionally remove sponsor/ad segments via SponsorBlock. A log note states that the original stream is kept without an extra lossy encode.
+- Embedded cover art is now carried through to the exported file for containers that support it (FLAC, MP3, M4A) when the source is an audio file; metadata tags are preserved as before.
 
 ### Fixed
 

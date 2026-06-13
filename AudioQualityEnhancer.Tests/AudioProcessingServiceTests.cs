@@ -28,6 +28,62 @@ public sealed class AudioProcessingServiceTests
     }
 
     [Fact]
+    public void BuildRenderPlan_CarriesCoverArtWhenRequested()
+    {
+        var plan = AudioProcessingService.BuildRenderPlan(
+            @"C:\in\song.flac",
+            @"C:\out\song_music.flac",
+            new[] { "-c:a", "flac" },
+            filterGraph: string.Empty,
+            audioStream: null,
+            outputSampleRate: null,
+            includeCoverArt: true);
+
+        Assert.Contains("0:v:0?", plan.Arguments);
+        Assert.DoesNotContain("-vn", plan.Arguments);
+
+        var videoCodecIndex = plan.Arguments.ToList().IndexOf("-c:v");
+        Assert.True(videoCodecIndex >= 0 && plan.Arguments[videoCodecIndex + 1] == "copy");
+    }
+
+    [Fact]
+    public void BuildRenderPlan_DropsVideoWhenCoverArtNotRequested()
+    {
+        var plan = AudioProcessingService.BuildRenderPlan(
+            @"C:\in\song.flac",
+            @"C:\out\song_music.flac",
+            new[] { "-c:a", "flac" },
+            filterGraph: string.Empty,
+            audioStream: null);
+
+        Assert.Contains("-vn", plan.Arguments);
+        Assert.DoesNotContain("0:v:0?", plan.Arguments);
+        Assert.DoesNotContain("-c:v", plan.Arguments);
+    }
+
+    [Fact]
+    public void IsAudioOnlyContainer_DistinguishesAudioFromVideoContainers()
+    {
+        var service = new FileNameService();
+
+        Assert.True(service.IsAudioOnlyContainer("song.flac"));
+        Assert.True(service.IsAudioOnlyContainer("clip.m4a"));
+        Assert.False(service.IsAudioOnlyContainer("movie.mp4"));
+        Assert.False(service.IsAudioOnlyContainer("movie.mkv"));
+    }
+
+    [Fact]
+    public void ExportFormats_AdvertiseCoverArtSupportForTaggableContainersOnly()
+    {
+        Assert.True(ExportFormat.Flac.SupportsCoverArt);
+        Assert.True(ExportFormat.Mp3_320.SupportsCoverArt);
+        Assert.True(ExportFormat.Aac_256.SupportsCoverArt);
+        Assert.False(ExportFormat.Wav24.SupportsCoverArt);
+        Assert.False(ExportFormat.PremierePro.SupportsCoverArt);
+        Assert.False(ExportFormat.Opus_160.SupportsCoverArt);
+    }
+
+    [Fact]
     public void EstimateOutputSizeBytes_FallsBackToSourceSizeForCopyAndUnknownDuration()
     {
         using var copyInfo = new AudioInfo { Codec = "mp3", FileSizeBytes = 5_000_000, Duration = TimeSpan.FromSeconds(60) };

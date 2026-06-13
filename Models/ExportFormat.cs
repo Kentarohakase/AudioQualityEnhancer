@@ -11,7 +11,8 @@ public sealed class ExportFormat : INotifyPropertyChanged
         string extension,
         string descriptionKey,
         IReadOnlyList<string> ffmpegArguments,
-        bool isLossless)
+        bool isLossless,
+        bool supportsCoverArt = false)
     {
         Id = id;
         DisplayNameKey = displayNameKey;
@@ -19,6 +20,7 @@ public sealed class ExportFormat : INotifyPropertyChanged
         DescriptionKey = descriptionKey;
         FFmpegArguments = ffmpegArguments;
         IsLossless = isLossless;
+        SupportsCoverArt = supportsCoverArt;
         LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
     }
 
@@ -39,6 +41,9 @@ public sealed class ExportFormat : INotifyPropertyChanged
     public IReadOnlyList<string> FFmpegArguments { get; }
 
     public bool IsLossless { get; }
+
+    /// <summary>Whether the container can carry an embedded cover-art picture stream.</summary>
+    public bool SupportsCoverArt { get; }
 
     public override string ToString() => DisplayName;
 
@@ -72,7 +77,8 @@ public sealed class ExportFormat : INotifyPropertyChanged
         ".flac",
         "ExportFormat_Flac_Description",
         new[] { "-c:a", "flac", "-compression_level", "8" },
-        isLossless: true);
+        isLossless: true,
+        supportsCoverArt: true);
 
     public static ExportFormat PremierePro { get; } = new(
         "premiere_pro",
@@ -88,7 +94,8 @@ public sealed class ExportFormat : INotifyPropertyChanged
         ".mp3",
         "ExportFormat_Mp3_Description",
         new[] { "-c:a", "libmp3lame", "-b:a", "320k" },
-        isLossless: false);
+        isLossless: false,
+        supportsCoverArt: true);
 
     public static ExportFormat Aac_256 { get; } = new(
         "aac_256",
@@ -96,7 +103,8 @@ public sealed class ExportFormat : INotifyPropertyChanged
         ".m4a",
         "ExportFormat_Aac_Description",
         new[] { "-c:a", "aac", "-b:a", "256k" },
-        isLossless: false);
+        isLossless: false,
+        supportsCoverArt: true);
 
     public static ExportFormat Opus_160 { get; } = new(
         "opus_160",
