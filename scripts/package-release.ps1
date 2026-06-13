@@ -25,6 +25,47 @@ function Assert-InRoot {
     }
 }
 
+function Resolve-ToolBinary {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [long]$MinBytes = 5MB
+    )
+
+    $command = Get-Command $Name -ErrorAction Stop
+    $resolved = Get-Item -LiteralPath $command.Source
+
+    # A real, statically linked binary (for example an FFmpeg build on PATH) is large
+    # enough to bundle as-is.
+    if ($resolved.Length -ge $MinBytes) {
+        return $resolved.FullName
+    }
+
+    # Otherwise the command on PATH is almost certainly a small redirector shim (such as
+    # the Chocolatey stub in chocolatey\bin). Bundling that shim produces a package that
+    # cannot run on another machine, so locate the real binary in the Chocolatey library.
+    $libRoots = @()
+    if ($env:ChocolateyInstall) {
+        $libRoots += (Join-Path $env:ChocolateyInstall "lib")
+    }
+    $libRoots += "C:\ProgramData\chocolatey\lib"
+
+    foreach ($libRoot in ($libRoots | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $libRoot)) {
+            continue
+        }
+
+        $candidate = Get-ChildItem -LiteralPath $libRoot -Recurse -Filter $Name -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Length -ge $MinBytes } |
+            Sort-Object Length -Descending |
+            Select-Object -First 1
+        if ($null -ne $candidate) {
+            return $candidate.FullName
+        }
+    }
+
+    throw "Could not resolve a real '$Name' binary. Only a shim ($($resolved.Length) bytes) was found on PATH and no full binary was located under the Chocolatey library."
+}
+
 New-Item -ItemType Directory -Force -Path $artifactsDir | Out-Null
 
 dotnet publish AudioQualityEnhancer.csproj -c Release -r $Runtime --self-contained true `
@@ -65,16 +106,16 @@ Copy-Item -LiteralPath (Join-Path $root "THIRD_PARTY_NOTICES.md") -Destination $
 Copy-Item -LiteralPath (Join-Path $root "Tools\README.md") -Destination (Join-Path $stageDir "Tools\README.md")
 
 if ($IncludeFFmpeg) {
-    $ffmpeg = Get-Command "ffmpeg.exe" -ErrorAction Stop
-    $ffprobe = Get-Command "ffprobe.exe" -ErrorAction Stop
+    $ffmpegSource = Resolve-ToolBinary -Name "ffmpeg.exe"
+    $ffprobeSource = Resolve-ToolBinary -Name "ffprobe.exe"
 
-    Copy-Item -LiteralPath $ffmpeg.Source -Destination (Join-Path $stageDir "Tools\ffmpeg.exe")
-    Copy-Item -LiteralPath $ffprobe.Source -Destination (Join-Path $stageDir "Tools\ffprobe.exe")
+    Copy-Item -LiteralPath $ffmpegSource -Destination (Join-Path $stageDir "Tools\ffmpeg.exe")
+    Copy-Item -LiteralPath $ffprobeSource -Destination (Join-Path $stageDir "Tools\ffprobe.exe")
 
     $versionFile = Join-Path $stageDir "Tools\FFMPEG_VERSION.txt"
     $packageDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    $ffmpegVersion = & $ffmpeg.Source -version
-    $ffprobeVersion = & $ffprobe.Source -version
+    $ffmpegVersion = & $ffmpegSource -version
+    $ffprobeVersion = & $ffprobeSource -version
 
     @(
         "FFmpeg/FFprobe bundle information"

@@ -4,7 +4,9 @@ param(
 
     [string]$Runtime = "win-x64",
 
-    [switch]$RequireFFmpegPackage
+    [switch]$RequireFFmpegPackage,
+
+    [long]$MinBundledToolBytes = 5MB
 )
 
 $ErrorActionPreference = "Stop"
@@ -52,7 +54,8 @@ function Test-ZipEntries {
         [string]$ZipPath,
         [string[]]$RequiredEntries,
         [string[]]$ForbiddenEntries = @(),
-        [switch]$ValidateVersionFile
+        [switch]$ValidateVersionFile,
+        [long]$MinToolBytes = 0
     )
 
     if (-not (Test-Path -LiteralPath $ZipPath)) {
@@ -100,6 +103,19 @@ function Test-ZipEntries {
                 throw "Tools\FFMPEG_VERSION.txt contains a local Windows path."
             }
         }
+
+        if ($MinToolBytes -gt 0) {
+            foreach ($toolName in @("Tools\ffmpeg.exe", "Tools\ffprobe.exe")) {
+                $toolEntry = $zip.Entries | Where-Object { $_.FullName.Replace("/", "\") -eq $toolName } | Select-Object -First 1
+                if ($null -eq $toolEntry) {
+                    throw "$toolName missing in $(Split-Path -Leaf $ZipPath)."
+                }
+
+                if ($toolEntry.Length -lt $MinToolBytes) {
+                    throw "$toolName in $(Split-Path -Leaf $ZipPath) is only $($toolEntry.Length) bytes; expected a real binary of at least $MinToolBytes bytes (a PATH shim was likely bundled instead of FFmpeg)."
+                }
+            }
+        }
     }
     finally {
         $zip.Dispose()
@@ -124,7 +140,8 @@ if ($RequireFFmpegPackage -or (Test-Path -LiteralPath $ffmpegZip)) {
     Test-ZipEntries `
         -ZipPath $ffmpegZip `
         -RequiredEntries ($baseEntries + @("Tools\ffmpeg.exe", "Tools\ffprobe.exe", "Tools\FFMPEG_VERSION.txt")) `
-        -ValidateVersionFile
+        -ValidateVersionFile `
+        -MinToolBytes $MinBundledToolBytes
 }
 
 Write-Host "Release package verification passed for version $Version."

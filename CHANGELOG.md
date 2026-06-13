@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Release packaging now bundles the real FFmpeg/FFprobe binaries instead of a Chocolatey PATH shim, and package verification rejects shim-sized tool binaries so the with-ffmpeg package always contains a working FFmpeg.
+
 ## 0.14.0 - 2026-06-12
 
 ### Added

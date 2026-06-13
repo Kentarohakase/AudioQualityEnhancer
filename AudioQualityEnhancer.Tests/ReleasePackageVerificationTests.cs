@@ -74,6 +74,55 @@ public sealed class ReleasePackageVerificationTests
         }
     }
 
+    [Fact]
+    public void VerifyReleasePackage_FailsWhenBundledFfmpegIsShimSized()
+    {
+        var version = $"unit-shim-ffmpeg-{Guid.NewGuid():N}";
+        var artifactsDirectory = Path.Combine(TestPaths.RepositoryRoot, "artifacts");
+        var plainZipPath = Path.Combine(artifactsDirectory, $"AudioQualityEnhancer-{version}-win-x64.zip");
+        var ffmpegZipPath = Path.Combine(artifactsDirectory, $"AudioQualityEnhancer-{version}-win-x64-with-ffmpeg.zip");
+        Directory.CreateDirectory(artifactsDirectory);
+
+        try
+        {
+            DeletePackageArtifacts(version);
+
+            using (var archive = ZipFile.Open(plainZipPath, ZipArchiveMode.Create))
+            {
+                AddEntry(archive, "AudioQualityEnhancer.exe", "test");
+                AddEntry(archive, "README.md", "test");
+                AddEntry(archive, "LICENSE", "test");
+                AddEntry(archive, "CHANGELOG.md", "test");
+                AddEntry(archive, "THIRD_PARTY_NOTICES.md", "notice");
+                AddEntry(archive, "Tools/README.md", "test");
+            }
+            WriteChecksumFile(plainZipPath);
+
+            using (var archive = ZipFile.Open(ffmpegZipPath, ZipArchiveMode.Create))
+            {
+                AddEntry(archive, "AudioQualityEnhancer.exe", "test");
+                AddEntry(archive, "README.md", "test");
+                AddEntry(archive, "LICENSE", "test");
+                AddEntry(archive, "CHANGELOG.md", "test");
+                AddEntry(archive, "THIRD_PARTY_NOTICES.md", "notice");
+                AddEntry(archive, "Tools/README.md", "test");
+                AddEntry(archive, "Tools/ffmpeg.exe", "shim");
+                AddEntry(archive, "Tools/ffprobe.exe", "shim");
+                AddEntry(archive, "Tools/FFMPEG_VERSION.txt", "ffmpeg version test");
+            }
+            WriteChecksumFile(ffmpegZipPath);
+
+            var result = RunVerifyScript(version, requireFFmpegPackage: true);
+
+            Assert.NotEqual(0, result.ExitCode);
+            Assert.False(string.IsNullOrWhiteSpace(result.CombinedOutput));
+        }
+        finally
+        {
+            DeletePackageArtifacts(version);
+        }
+    }
+
     private static void AddEntry(ZipArchive archive, string entryName, string content)
     {
         var entry = archive.CreateEntry(entryName);
@@ -111,7 +160,7 @@ public sealed class ReleasePackageVerificationTests
         }
     }
 
-    private static ScriptResult RunVerifyScript(string version)
+    private static ScriptResult RunVerifyScript(string version, bool requireFFmpegPackage = false)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
@@ -130,6 +179,10 @@ public sealed class ReleasePackageVerificationTests
         process.StartInfo.ArgumentList.Add(Path.Combine(TestPaths.RepositoryRoot, "scripts", "verify-release-package.ps1"));
         process.StartInfo.ArgumentList.Add("-Version");
         process.StartInfo.ArgumentList.Add(version);
+        if (requireFFmpegPackage)
+        {
+            process.StartInfo.ArgumentList.Add("-RequireFFmpegPackage");
+        }
 
         process.Start();
         var output = process.StandardOutput.ReadToEnd();
