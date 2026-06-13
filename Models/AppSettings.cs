@@ -40,6 +40,10 @@ public sealed record AppSettings
 
     public bool DownloadPlaylist { get; init; } = false;
 
+    public bool CheckForUpdates { get; init; } = true;
+
+    public string AppUpdateLastCheckUtc { get; init; } = string.Empty;
+
     public double WindowWidth { get; init; }
 
     public double WindowHeight { get; init; }

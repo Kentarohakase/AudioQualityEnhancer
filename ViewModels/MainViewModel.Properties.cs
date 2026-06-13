@@ -62,6 +62,8 @@ public sealed partial class MainViewModel
 
     public ICommand DownloadFromUrlCommand => _downloadFromUrlCommand;
 
+    public ICommand OpenUpdateCommand => _openUpdateCommand;
+
     public ICommand AnalyzeDiagnosticsCommand => _analyzeDiagnosticsCommand;
 
     public ICommand SelectOutputFolderCommand => _selectOutputFolderCommand;
@@ -153,6 +155,24 @@ public sealed partial class MainViewModel
     {
         get => _downloadPlaylist;
         set => SetProperty(ref _downloadPlaylist, value);
+    }
+
+    public bool IsUpdateAvailable
+    {
+        get => _isUpdateAvailable;
+        private set
+        {
+            if (SetProperty(ref _isUpdateAvailable, value))
+            {
+                _openUpdateCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string UpdateNoticeText
+    {
+        get => _updateNoticeText;
+        private set => SetProperty(ref _updateNoticeText, value);
     }
 
     public string OutputDirectory

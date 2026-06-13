@@ -8,6 +8,7 @@
   <data name="MainWindow_Title" xml:space="preserve"><value>Audio Quality Enhancer</value></data>
   <data name="MainWindow_Subtitle" xml:space="preserve"><value>Analyse, schonende Bearbeitung und Export mit FFmpeg</value></data>
   <data name="Tools_Checking" xml:space="preserve"><value>Werkzeuge werden geprüft...</value></data>
+  <data name="Update_AvailableFormat" xml:space="preserve"><value>Update {0} verfügbar</value></data>
 
   <data name="Section_Source" xml:space="preserve"><value>Quelle</value></data>
   <data name="Section_Analysis" xml:space="preserve"><value>Analyse</value></data>

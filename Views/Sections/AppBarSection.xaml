@@ -22,6 +22,10 @@
             <StackPanel DockPanel.Dock="Right"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
+                <Button Content="{Binding UpdateNoticeText}"
+                        Command="{Binding OpenUpdateCommand}"
+                        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVis}}"
+                        Margin="0,0,16,0" />
                 <TextBlock Text="{Binding ToolStatusText}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            FontSize="12"

@@ -29,6 +29,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly SettingsService _settingsService;
     private readonly ShellInteractionService _shellInteractionService;
     private readonly YtDlpDownloadService _ytDlpDownloadService;
+    private readonly AppUpdateService _appUpdateService;
     private readonly AsyncRelayCommand _selectFileCommand;
     private readonly AsyncRelayCommand _downloadFromUrlCommand;
     private readonly AsyncRelayCommand _analyzeDiagnosticsCommand;
@@ -53,6 +54,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _copyLogCommand;
     private readonly RelayCommand _clearLogCommand;
     private readonly RelayCommand<AudioProfileSuggestion> _applyProfileSuggestionCommand;
+    private readonly RelayCommand _openUpdateCommand;
 
     private ToolStatus? _ffmpegStatus;
     private ToolStatus? _ffprobeStatus;
@@ -87,6 +89,11 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _removeSponsorSegments;
     private bool _downloadOriginalOnly;
     private bool _downloadPlaylist;
+    private bool _checkForUpdates = true;
+    private string _appUpdateLastCheckUtc = string.Empty;
+    private bool _isUpdateAvailable;
+    private string _updateNoticeText = string.Empty;
+    private string _updateUrl = string.Empty;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -139,6 +146,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         _settingsService = App.SettingsService;
         _shellInteractionService = new ShellInteractionService();
         _ytDlpDownloadService = new YtDlpDownloadService(_toolDiscoveryService, _fileNameService, processRunner);
+        _appUpdateService = new AppUpdateService();
 
         _statusText = LocalizationService.Instance["Status_Ready"];
         _toolStatusText = LocalizationService.Instance["Tools_Checking"];
@@ -186,6 +194,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         _copyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(LogText));
         _clearLogCommand = new RelayCommand(ClearLog, () => !IsBusy && !string.IsNullOrWhiteSpace(LogText));
         _applyProfileSuggestionCommand = new RelayCommand<AudioProfileSuggestion>(ApplyProfileSuggestion, suggestion => !IsBusy && suggestion is not null);
+        _openUpdateCommand = new RelayCommand(OpenUpdate, () => IsUpdateAvailable);
 
         ApplySettings(_settingsService.Load());
         UpdateQualityNotice();
@@ -217,6 +226,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         RemoveSponsorSegments = settings.RemoveSponsorSegments;
         DownloadOriginalOnly = settings.DownloadOriginalOnly;
         DownloadPlaylist = settings.DownloadPlaylist;
+        _checkForUpdates = settings.CheckForUpdates;
+        _appUpdateLastCheckUtc = settings.AppUpdateLastCheckUtc;
         WindowWidth = settings.WindowWidth;
         WindowHeight = settings.WindowHeight;
         WindowMaximized = settings.WindowMaximized;
@@ -252,6 +263,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             RemoveSponsorSegments = RemoveSponsorSegments,
             DownloadOriginalOnly = DownloadOriginalOnly,
             DownloadPlaylist = DownloadPlaylist,
+            CheckForUpdates = _checkForUpdates,
+            AppUpdateLastCheckUtc = _appUpdateLastCheckUtc,
             WindowWidth = WindowWidth,
             WindowHeight = WindowHeight,
             WindowMaximized = WindowMaximized
@@ -292,6 +305,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _ = PrepareYtDlpAsync();
+        _ = CheckForAppUpdateAsync();
     }
 
     private void OnLogAdded(object? sender, string line)
@@ -409,6 +423,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _selectFileCommand.RaiseCanExecuteChanged();
         _downloadFromUrlCommand.RaiseCanExecuteChanged();
+        _openUpdateCommand.RaiseCanExecuteChanged();
         _analyzeDiagnosticsCommand.RaiseCanExecuteChanged();
         _selectOutputFolderCommand.RaiseCanExecuteChanged();
         _startCommand.RaiseCanExecuteChanged();

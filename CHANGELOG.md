@@ -5,6 +5,7 @@
 ### Added
 
 - A video/audio URL can now be dropped onto the window to fill the download field.
+- Added an update check: on startup (at most once a day) the app asks GitHub for the latest release and shows a notice that links to the download when a newer version is available. It can be turned off in the settings file.
 
 ## 0.16.0 - 2026-06-13
 
