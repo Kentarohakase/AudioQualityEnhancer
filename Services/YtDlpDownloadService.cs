@@ -325,7 +325,7 @@ public sealed partial class YtDlpDownloadService
         return true;
     }
 
-    private IReadOnlyList<string> CollectDownloadedFiles(string workDirectory, bool splitChapters, string targetDirectory)
+    internal IReadOnlyList<string> CollectDownloadedFiles(string workDirectory, bool splitChapters, string targetDirectory)
     {
         var chapterDirectory = Path.Combine(workDirectory, "chapters");
 

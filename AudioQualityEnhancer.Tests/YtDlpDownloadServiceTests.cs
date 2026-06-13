@@ -120,6 +120,115 @@ public sealed class YtDlpDownloadServiceTests
         Assert.Equal("Download failed (yt-dlp code 2).", message);
     }
 
+    [Fact]
+    public void CollectDownloadedFiles_MovesRootAudioFilesAndIgnoresNonAudio()
+    {
+        var root = TestPaths.CreateTempDirectory();
+        try
+        {
+            var work = Path.Combine(root, "work");
+            var target = Path.Combine(root, "out");
+            Directory.CreateDirectory(work);
+            Directory.CreateDirectory(target);
+            File.WriteAllText(Path.Combine(work, "song.mp3"), "x");
+            File.WriteAllText(Path.Combine(work, "song.flac"), "x");
+            File.WriteAllText(Path.Combine(work, "thumb.jpg"), "x");
+
+            var result = NewService().CollectDownloadedFiles(work, splitChapters: false, target);
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, p => Assert.True(File.Exists(p)));
+            Assert.All(result, p => Assert.Equal(
+                Path.GetFullPath(target),
+                Path.GetFullPath(Path.GetDirectoryName(p)!)));
+            Assert.DoesNotContain(result, p => p.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CollectDownloadedFiles_PrefersChapterFilesWhenSplitting()
+    {
+        var root = TestPaths.CreateTempDirectory();
+        try
+        {
+            var work = Path.Combine(root, "work");
+            var chapters = Path.Combine(work, "chapters");
+            var target = Path.Combine(root, "out");
+            Directory.CreateDirectory(chapters);
+            Directory.CreateDirectory(target);
+            File.WriteAllText(Path.Combine(work, "full.m4a"), "x");
+            File.WriteAllText(Path.Combine(chapters, "01 - a.m4a"), "x");
+            File.WriteAllText(Path.Combine(chapters, "02 - b.m4a"), "x");
+
+            var result = NewService().CollectDownloadedFiles(work, splitChapters: true, target);
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, p => Assert.Contains(" - ", Path.GetFileName(p)));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CollectDownloadedFiles_FallsBackToRootWhenSplittingYieldsNoChapters()
+    {
+        var root = TestPaths.CreateTempDirectory();
+        try
+        {
+            var work = Path.Combine(root, "work");
+            var target = Path.Combine(root, "out");
+            Directory.CreateDirectory(work);
+            Directory.CreateDirectory(target);
+            File.WriteAllText(Path.Combine(work, "full.opus"), "x");
+
+            var result = NewService().CollectDownloadedFiles(work, splitChapters: true, target);
+
+            Assert.Single(result);
+            Assert.EndsWith("full.opus", result[0]);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CollectDownloadedFiles_AvoidsCollisionsInTargetDirectory()
+    {
+        var root = TestPaths.CreateTempDirectory();
+        try
+        {
+            var work = Path.Combine(root, "work");
+            var target = Path.Combine(root, "out");
+            Directory.CreateDirectory(work);
+            Directory.CreateDirectory(target);
+            File.WriteAllText(Path.Combine(target, "song.mp3"), "existing");
+            File.WriteAllText(Path.Combine(work, "song.mp3"), "new");
+
+            var result = NewService().CollectDownloadedFiles(work, splitChapters: false, target);
+
+            Assert.Single(result);
+            Assert.EndsWith("song (1).mp3", result[0]);
+            Assert.True(File.Exists(Path.Combine(target, "song.mp3")));
+            Assert.True(File.Exists(Path.Combine(target, "song (1).mp3")));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static YtDlpDownloadService NewService()
+    {
+        return new YtDlpDownloadService(new ToolDiscoveryService(), new FileNameService());
+    }
+
     private static void AssertFollowedBy(IReadOnlyList<string> args, string flag, string expectedValue)
     {
         var index = -1;
