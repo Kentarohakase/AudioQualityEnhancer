@@ -143,6 +143,12 @@ public sealed partial class MainViewModel
         set => SetProperty(ref _removeSponsorSegments, value);
     }
 
+    public bool DownloadOriginalOnly
+    {
+        get => _downloadOriginalOnly;
+        set => SetProperty(ref _downloadOriginalOnly, value);
+    }
+
     public string OutputDirectory
     {
         get => _outputDirectory;

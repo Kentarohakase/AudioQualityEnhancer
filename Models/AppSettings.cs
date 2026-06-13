@@ -36,6 +36,8 @@ public sealed record AppSettings
 
     public bool RemoveSponsorSegments { get; init; } = false;
 
+    public bool DownloadOriginalOnly { get; init; } = false;
+
     public double WindowWidth { get; init; }
 
     public double WindowHeight { get; init; }

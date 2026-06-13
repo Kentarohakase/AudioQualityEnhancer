@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a "download best original only" option for the URL download: saves the best available audio stream to the output folder without running it through the preset pipeline, for when you just want the untouched original.
+
 ## 0.15.0 - 2026-06-13
 
 ### Added

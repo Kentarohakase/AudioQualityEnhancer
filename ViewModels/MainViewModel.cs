@@ -85,6 +85,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _ytDlpLastUpdateCheckUtc = string.Empty;
     private bool _splitChapters;
     private bool _removeSponsorSegments;
+    private bool _downloadOriginalOnly;
     private string _lastOutputPath = string.Empty;
     private string _lastReportPath = string.Empty;
     private double _progressValue;
@@ -213,6 +214,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         _ytDlpLastUpdateCheckUtc = settings.YtDlpLastUpdateCheckUtc;
         SplitChapters = settings.SplitChapters;
         RemoveSponsorSegments = settings.RemoveSponsorSegments;
+        DownloadOriginalOnly = settings.DownloadOriginalOnly;
         WindowWidth = settings.WindowWidth;
         WindowHeight = settings.WindowHeight;
         WindowMaximized = settings.WindowMaximized;
@@ -246,6 +248,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             YtDlpLastUpdateCheckUtc = _ytDlpLastUpdateCheckUtc,
             SplitChapters = SplitChapters,
             RemoveSponsorSegments = RemoveSponsorSegments,
+            DownloadOriginalOnly = DownloadOriginalOnly,
             WindowWidth = WindowWidth,
             WindowHeight = WindowHeight,
             WindowMaximized = WindowMaximized

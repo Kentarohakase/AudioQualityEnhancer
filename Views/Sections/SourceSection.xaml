@@ -63,6 +63,9 @@
                       Margin="0,0,0,4" />
             <CheckBox Content="{Binding [Checkbox_RemoveSponsor], Source={x:Static loc:LocalizationService.Instance}}"
                       IsChecked="{Binding RemoveSponsorSegments}"
+                      Margin="0,0,0,4" />
+            <CheckBox Content="{Binding [Checkbox_DownloadOriginalOnly], Source={x:Static loc:LocalizationService.Instance}}"
+                      IsChecked="{Binding DownloadOriginalOnly}"
                       Margin="0,0,0,12" />
 
             <Grid Margin="0,0,0,10">

@@ -57,6 +57,8 @@
   <data name="Status_Downloading" xml:space="preserve"><value>Lade Audio herunter...</value></data>
   <data name="Checkbox_SplitChapters" xml:space="preserve"><value>Kapitel in einzelne Tracks aufteilen</value></data>
   <data name="Checkbox_RemoveSponsor" xml:space="preserve"><value>Werbe-/Sponsor-Segmente entfernen (SponsorBlock)</value></data>
+  <data name="Checkbox_DownloadOriginalOnly" xml:space="preserve"><value>Nur bestes Original herunterladen (keine Verarbeitung)</value></data>
+  <data name="Status_DownloadOriginalSaved" xml:space="preserve"><value>Original gespeichert.</value></data>
   <data name="Log_DownloadStartedFormat" xml:space="preserve"><value>Download gestartet: {0}</value></data>
   <data name="Log_DownloadDoneFormat" xml:space="preserve"><value>Download abgeschlossen: {0}</value></data>
   <data name="Log_DownloadDoneCountFormat" xml:space="preserve"><value>Download abgeschlossen: {0} Dateien.</value></data>

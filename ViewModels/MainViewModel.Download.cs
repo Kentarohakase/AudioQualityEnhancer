@@ -55,6 +55,15 @@ public sealed partial class MainViewModel
                 ? LocalizationService.Instance.Format("Log_DownloadDoneFormat", Path.GetFileName(files[0]))
                 : LocalizationService.Instance.Format("Log_DownloadDoneCountFormat", files.Count));
             YouTubeUrl = string.Empty;
+
+            if (DownloadOriginalOnly)
+            {
+                // Keep the untouched original: skip the analyze/enhance queue entirely.
+                LastOutputPath = files[0];
+                SetStatus("Status_DownloadOriginalSaved");
+                return;
+            }
+
             await LoadInputFilesAsync(files);
             return;
         }
