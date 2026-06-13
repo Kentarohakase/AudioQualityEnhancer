@@ -23,6 +23,7 @@
   <data name="Hint_DropFiles" xml:space="preserve"><value>Dateien hier ablegen</value></data>
   <data name="Hint_DropFilesOrSelect" xml:space="preserve"><value>oder mehrere Dateien über den Button auswählen</value></data>
   <data name="Hint_DropFileOrSelect" xml:space="preserve"><value>oder über den Button auswählen</value></data>
+  <data name="Hint_DropUrl" xml:space="preserve"><value>oder eine Video-/Audio-URL hierher ziehen</value></data>
 
   <data name="Button_SelectFile" xml:space="preserve"><value>Datei auswählen</value></data>
   <data name="Button_PlaySource" xml:space="preserve"><value>Original anhören</value></data>

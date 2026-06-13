@@ -23,6 +23,7 @@
   <data name="Hint_DropFileOrSelect" xml:space="preserve"><value>or use the button to select one</value></data>
   <data name="Hint_DropFiles" xml:space="preserve"><value>Drop files here</value></data>
   <data name="Hint_DropFilesOrSelect" xml:space="preserve"><value>or use the button to select multiple files</value></data>
+  <data name="Hint_DropUrl" xml:space="preserve"><value>or drag a video/audio URL here</value></data>
 
   <data name="Button_SelectFile" xml:space="preserve"><value>Select file</value></data>
   <data name="Button_SelectFiles" xml:space="preserve"><value>Add files</value></data>

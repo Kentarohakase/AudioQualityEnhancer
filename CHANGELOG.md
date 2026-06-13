@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- A video/audio URL can now be dropped onto the window to fill the download field.
+
 ## 0.16.0 - 2026-06-13
 
 ### Added

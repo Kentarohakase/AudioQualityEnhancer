@@ -77,6 +77,18 @@ public sealed class YtDlpDownloadServiceTests
         Assert.Equal(expected, YtDlpDownloadService.IsLikelyValidUrl(url));
     }
 
+    [Theory]
+    [InlineData("https://www.youtube.com/watch?v=abc", "https://www.youtube.com/watch?v=abc")]
+    [InlineData("  https://example.com/x  ", "https://example.com/x")]
+    [InlineData("look: https://example.com/y here", "https://example.com/y")]
+    [InlineData("no link in here", null)]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void ExtractFirstUrl_ReturnsFirstHttpUrlOrNull(string? text, string? expected)
+    {
+        Assert.Equal(expected, YtDlpDownloadService.ExtractFirstUrl(text));
+    }
+
     [Fact]
     public void CreateExitErrorMessage_AddsFriendlyDetailForNoNetwork()
     {

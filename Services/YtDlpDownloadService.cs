@@ -250,6 +250,26 @@ public sealed partial class YtDlpDownloadService
             && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
+    /// <summary>Returns the first http(s) URL found in arbitrary dropped/pasted text, or null.</summary>
+    internal static string? ExtractFirstUrl(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var separators = new[] { ' ', '\t', '\r', '\n', '"', '\'', '<', '>' };
+        foreach (var token in text.Split(separators, StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (IsLikelyValidUrl(token))
+            {
+                return token.Trim();
+            }
+        }
+
+        return null;
+    }
+
     internal static string CreateExitErrorMessage(ProcessResult result)
     {
         var detail = ResolveFriendlyErrorDetail(result.StandardError + Environment.NewLine + result.StandardOutput);

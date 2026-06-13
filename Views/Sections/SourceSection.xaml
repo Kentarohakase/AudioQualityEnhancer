@@ -34,6 +34,11 @@
                                FontSize="12"
                                Margin="0,3,0,0"
                                HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding [Hint_DropUrl], Source={x:Static loc:LocalizationService.Instance}}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="12"
+                               Margin="0,3,0,0"
+                               HorizontalAlignment="Center" />
                 </StackPanel>
             </Border>
 

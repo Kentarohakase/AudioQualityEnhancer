@@ -52,26 +52,31 @@ public partial class MainWindow : Window
 
     private void MainWindow_OnDragEnter(object sender, System.Windows.DragEventArgs e)
     {
-        e.Effects = IsSupportedFileDrop(e) ? System.Windows.DragDropEffects.Copy : System.Windows.DragDropEffects.None;
+        e.Effects = IsSupportedFileDrop(e) || TryGetDroppedUrl(e, out _)
+            ? System.Windows.DragDropEffects.Copy
+            : System.Windows.DragDropEffects.None;
         e.Handled = true;
     }
 
     private async void MainWindow_OnDrop(object sender, System.Windows.DragEventArgs e)
     {
-        if (!HasFileDrop(e))
+        if (HasFileDrop(e))
         {
+            var files = e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[];
+            if (files is { Length: > 0 })
+            {
+                await _viewModel.LoadInputFilesAsync(_fileNameService.ExpandInputPaths(files));
+            }
+
             e.Handled = true;
             return;
         }
 
-        var files = e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[];
-        if (files is null || files.Length == 0)
+        if (TryGetDroppedUrl(e, out var url))
         {
-            e.Handled = true;
-            return;
+            _viewModel.YouTubeUrl = url;
         }
 
-        await _viewModel.LoadInputFilesAsync(_fileNameService.ExpandInputPaths(files));
         e.Handled = true;
     }
 
@@ -98,6 +103,30 @@ public partial class MainWindow : Window
 
         return e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[]
                ?? Array.Empty<string>();
+    }
+
+    private static bool TryGetDroppedUrl(System.Windows.DragEventArgs e, out string url)
+    {
+        url = string.Empty;
+
+        string? text = null;
+        if (e.Data.GetDataPresent(System.Windows.DataFormats.UnicodeText))
+        {
+            text = e.Data.GetData(System.Windows.DataFormats.UnicodeText) as string;
+        }
+        else if (e.Data.GetDataPresent(System.Windows.DataFormats.Text))
+        {
+            text = e.Data.GetData(System.Windows.DataFormats.Text) as string;
+        }
+
+        var extracted = YtDlpDownloadService.ExtractFirstUrl(text);
+        if (string.IsNullOrEmpty(extracted))
+        {
+            return false;
+        }
+
+        url = extracted;
+        return true;
     }
 
     protected override void OnClosed(EventArgs e)
