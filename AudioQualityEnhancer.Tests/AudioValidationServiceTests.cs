@@ -80,6 +80,30 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void CreateValidationResult_CriticalReportFailsAndPreservesReport()
+    {
+        var report = CreateComparisonReport(AudioComparisonStatus.Critical);
+
+        var result = AudioValidationService.CreateValidationResult(report);
+
+        Assert.True(result.IsFailure);
+        Assert.Same(report, result.Value);
+        Assert.Equal(report.Summary, result.ErrorMessage);
+    }
+
+    [Fact]
+    public void CreateValidationResult_WarningReportSucceedsAndPreservesReport()
+    {
+        var report = CreateComparisonReport(AudioComparisonStatus.Warning);
+
+        var result = AudioValidationService.CreateValidationResult(report);
+
+        Assert.True(result.IsSuccess);
+        Assert.Same(report, result.Value);
+        Assert.Null(result.ErrorMessage);
+    }
+
+    [Fact]
     public void BuildReport_DurationMismatchIsCriticalWhenLarge()
     {
         using var source = CreateInfo("flac", isLossy: false, duration: TimeSpan.FromSeconds(60));
@@ -348,6 +372,20 @@ public sealed class AudioValidationServiceTests
             Preset = preset,
             ExportFormat = exportFormat
         };
+    }
+
+    private static AudioComparisonReport CreateComparisonReport(AudioComparisonStatus status)
+    {
+        return new AudioComparisonReport(
+            status,
+            status.ToString(),
+            $"{status} summary",
+            @"C:\audio\output.flac",
+            outputInfo: null,
+            outputDiagnostics: null,
+            findings: Array.Empty<AudioComparisonFinding>(),
+            metrics: Array.Empty<AudioComparisonMetric>(),
+            outputDiagnosticsSkipped: false);
     }
 
     private static AudioInfo CreateInfo(
