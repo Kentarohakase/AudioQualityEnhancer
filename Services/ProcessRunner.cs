@@ -6,6 +6,9 @@ namespace AudioQualityEnhancer.Services;
 
 internal sealed class ProcessRunner : IProcessRunner
 {
+    private static readonly TimeSpan TerminationWaitTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan ReaderDrainTimeout = TimeSpan.FromSeconds(2);
+
     public async Task<ProcessResult> RunAsync(ProcessRunOptions options, CancellationToken cancellationToken)
     {
         using var process = new Process();
@@ -66,6 +69,10 @@ internal sealed class ProcessRunner : IProcessRunner
         };
 
         using var watchdogStop = new CancellationTokenSource();
+        using var timeoutCancellation = new CancellationTokenSource();
+        using var exitCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            timeoutCancellation.Token);
         Task? watchdogTask = null;
 
         try
@@ -80,27 +87,39 @@ internal sealed class ProcessRunner : IProcessRunner
                     process,
                     inactivityTimeout,
                     () => Interlocked.Read(ref lastActivityTimestamp),
-                    () => Interlocked.Exchange(ref timedOutFlag, 1),
+                    () =>
+                    {
+                        Interlocked.Exchange(ref timedOutFlag, 1);
+                        timeoutCancellation.Cancel();
+                    },
                     watchdogStop.Token);
             }
 
-            await process.WaitForExitAsync(cancellationToken);
-            await Task.WhenAll(outputClosed.Task, errorClosed.Task);
+            await process.WaitForExitAsync(exitCancellation.Token).ConfigureAwait(false);
+            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task).ConfigureAwait(false);
 
             return CreateResult(process, stdout, stderr, startedAt, wasCancelled: false, timedOut: timedOutFlag == 1);
         }
         catch (OperationCanceledException)
         {
+            var timedOut = timedOutFlag == 1;
             TryKill(process);
-            await TryWaitForReadersAsync(outputClosed.Task, errorClosed.Task);
-            return CreateResult(process, stdout, stderr, startedAt, wasCancelled: true, timedOut: timedOutFlag == 1);
+            await TryWaitForExitAsync(process).ConfigureAwait(false);
+            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task).ConfigureAwait(false);
+            return CreateResult(
+                process,
+                stdout,
+                stderr,
+                startedAt,
+                wasCancelled: !timedOut && cancellationToken.IsCancellationRequested,
+                timedOut);
         }
         finally
         {
             watchdogStop.Cancel();
             if (watchdogTask is not null)
             {
-                await watchdogTask;
+                await watchdogTask.ConfigureAwait(false);
             }
         }
     }
@@ -121,7 +140,12 @@ internal sealed class ProcessRunner : IProcessRunner
         {
             while (!stopToken.IsCancellationRequested)
             {
-                await Task.Delay(interval, stopToken);
+                await Task.Delay(interval, stopToken).ConfigureAwait(false);
+                if (HasExited(process))
+                {
+                    return;
+                }
+
                 var idleTime = Stopwatch.GetElapsedTime(getLastActivityTimestamp());
                 if (idleTime >= timeout)
                 {
@@ -147,11 +171,19 @@ internal sealed class ProcessRunner : IProcessRunner
     {
         return new ProcessResult(
             TryGetExitCode(process, wasCancelled || timedOut ? -1 : 0),
-            stdout.ToString(),
-            stderr.ToString(),
+            Snapshot(stdout),
+            Snapshot(stderr),
             DateTimeOffset.Now - startedAt,
             wasCancelled,
             TimedOut: timedOut);
+    }
+
+    private static string Snapshot(StringBuilder value)
+    {
+        lock (value)
+        {
+            return value.ToString();
+        }
     }
 
     private static int TryGetExitCode(Process process, int fallback)
@@ -166,15 +198,64 @@ internal sealed class ProcessRunner : IProcessRunner
         }
     }
 
-    private static async Task TryWaitForReadersAsync(Task outputClosed, Task errorClosed)
+    private static async Task TryWaitForExitAsync(Process process)
+    {
+        var startedAt = Stopwatch.GetTimestamp();
+        while (!HasExited(process) && Stopwatch.GetElapsedTime(startedAt) < TerminationWaitTimeout)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(25)).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task TryWaitForReadersAsync(Process process, Task outputClosed, Task errorClosed)
     {
         try
         {
-            await Task.WhenAll(outputClosed, errorClosed).WaitAsync(TimeSpan.FromSeconds(2));
+            await Task.WhenAll(outputClosed, errorClosed).WaitAsync(ReaderDrainTimeout).ConfigureAwait(false);
+            return;
         }
         catch
         {
             // Best effort drain after cancellation.
+        }
+
+        TryCancelOutputRead(process);
+        TryCancelErrorRead(process);
+    }
+
+    private static bool HasExited(Process process)
+    {
+        try
+        {
+            return process.HasExited;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private static void TryCancelOutputRead(Process process)
+    {
+        try
+        {
+            process.CancelOutputRead();
+        }
+        catch
+        {
+            // The reader is already closed or was never started.
+        }
+    }
+
+    private static void TryCancelErrorRead(Process process)
+    {
+        try
+        {
+            process.CancelErrorRead();
+        }
+        catch
+        {
+            // The reader is already closed or was never started.
         }
     }
 
