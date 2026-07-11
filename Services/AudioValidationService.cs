@@ -88,7 +88,14 @@ public sealed class AudioValidationService
             outputPath);
 
         _logService.Info(LocalizationService.Instance.Format("Log_ValidationCompleteFormat", reportResult.StatusText));
-        return Result<AudioComparisonReport>.Success(reportResult);
+        return CreateValidationResult(reportResult);
+    }
+
+    internal static Result<AudioComparisonReport> CreateValidationResult(AudioComparisonReport report)
+    {
+        return report.Status == AudioComparisonStatus.Critical
+            ? Result<AudioComparisonReport>.Failure(report.Summary, value: report)
+            : Result<AudioComparisonReport>.Success(report);
     }
 
     internal static Result ValidateOutputFile(string outputPath)
