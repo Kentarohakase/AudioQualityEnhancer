@@ -170,19 +170,19 @@ Die Tests prüfen Parser, Dateilogik, Batch-Logik, Analyse-Bewertung, FFmpeg-Arg
 Portable ZIP ohne FFmpeg:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.16.0
+.\scripts\package-release.ps1 -Version <version>
 ```
 
 Portable ZIP mit FFmpeg und FFprobe:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 0.16.0 -IncludeFFmpeg
+.\scripts\package-release.ps1 -Version <version> -IncludeFFmpeg
 ```
 
 Pakete prüfen:
 
 ```powershell
-.\scripts\verify-release-package.ps1 -Version 0.16.0 -RequireFFmpegPackage
+.\scripts\verify-release-package.ps1 -Version <version> -RequireFFmpegPackage
 ```
 
 Die fertigen ZIP-Dateien liegen danach in `artifacts`. Zu jedem ZIP wird eine passende `.sha256.txt`-Datei erzeugt.
@@ -190,7 +190,7 @@ Die fertigen ZIP-Dateien liegen danach in `artifacts`. Zu jedem ZIP wird eine pa
 Checksum eines Downloads prüfen:
 
 ```powershell
-Get-FileHash .\AudioQualityEnhancer-0.16.0-win-x64.zip -Algorithm SHA256
+Get-FileHash .\AudioQualityEnhancer-<version>-win-x64.zip -Algorithm SHA256
 ```
 
 Der angezeigte SHA256-Wert muss zum Inhalt der passenden `.sha256.txt`-Datei im Release passen.

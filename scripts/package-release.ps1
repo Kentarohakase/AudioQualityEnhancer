@@ -1,5 +1,7 @@
 param(
-    [string]$Version = "0.2.0",
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$Version,
     [string]$Runtime = "win-x64",
     [switch]$IncludeFFmpeg
 )
