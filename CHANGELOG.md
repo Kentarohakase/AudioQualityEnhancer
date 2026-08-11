@@ -24,6 +24,7 @@
 - The queue no longer re-evaluates every button and rebuilds the summary on each FFmpeg progress tick, so the window stays responsive during a batch export.
 - The startup checks for yt-dlp and for a new release are stopped when the window closes and no longer write into a closed window; an unexpected failure in either is logged instead of being swallowed.
 - A tool that is missing or does not answer is remembered for half a minute instead of being probed again on every call, where each attempt cost the full probe timeout.
+- A cancelled update check is reported as a cancellation instead of as "no update available".
 
 ## 0.17.0 - 2026-06-13
 

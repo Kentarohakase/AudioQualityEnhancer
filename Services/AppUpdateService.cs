@@ -58,6 +58,12 @@ public sealed class AppUpdateService
             var url = root.TryGetProperty("html_url", out var urlElement) ? urlElement.GetString() : null;
             return new AppUpdateInfo(latest.ToString(), ResolveReleaseUrl(url));
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // A caller that cancels wants to know it was cancelled, not that there is
+            // no update. Its own timeout still surfaces as "no update" below.
+            throw;
+        }
         catch
         {
             // Update checks are best effort and must never disrupt startup (offline, rate limit, ...).
