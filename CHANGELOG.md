@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.17.0 - 2026-06-13
+## Unreleased
+
+### Fixed
+
+- A result validation that ends with a critical finding now fails the affected file instead of reporting it as exported successfully. The report stays attached to the item, so the findings remain visible in the validation panel.
+- A run that was stopped is no longer misreported: an inactivity timeout now ends the wait for the process directly and is reported as a timeout, while only an actual user cancellation is reported as one.
+- After a process is terminated the app waits briefly for it to exit and stops the output readers before reading what was captured, so the collected output can no longer be read while it is still being written.
+
+### Changed
+
+- The release packaging script now requires an explicit `-Version` in `major.minor.patch` form instead of falling back to a stale default version.
 
 ### Added
 
