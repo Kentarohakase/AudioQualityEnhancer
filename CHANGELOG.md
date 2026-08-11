@@ -8,6 +8,9 @@
 - A run that was stopped is no longer misreported: an inactivity timeout now ends the wait for the process directly and is reported as a timeout, while only an actual user cancellation is reported as one.
 - After a process is terminated the app waits briefly for it to exit and stops the output readers before reading what was captured, so the collected output can no longer be read while it is still being written.
 - Result validation no longer expects 48 kHz when the Premiere profile is selected but the preset does not use it: the archive preset forces FLAC and a stream copy keeps the source format, so both reported a sample-rate warning for a correct export. A stream copy also no longer claims that a lossy source was written to a lossless format.
+- An unexpected error in an asynchronous command (start, download, analysis, retry, preview) is now logged and shown as status instead of shutting the app down; cancelling a running command is treated as a normal outcome.
+- A log file that cannot be written after a batch run (read-only or full output folder) is reported as a warning instead of ending the session through the crash handler. The exported files are already finished at that point.
+- The crash handler no longer fails when the crash log itself cannot be written and shows the error without a log path in that case.
 
 ### Changed
 
