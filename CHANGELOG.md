@@ -11,6 +11,9 @@
 - An unexpected error in an asynchronous command (start, download, analysis, retry, preview) is now logged and shown as status instead of shutting the app down; cancelling a running command is treated as a normal outcome.
 - A log file that cannot be written after a batch run (read-only or full output folder) is reported as a warning instead of ending the session through the crash handler. The exported files are already finished at that point.
 - The crash handler no longer fails when the crash log itself cannot be written and shows the error without a log path in that case.
+- Adding files no longer leaves the window in a half-usable state: while a dropped folder is analyzed, Cancel is available, Start is disabled and further drops are rejected, and the analysis can now actually be stopped.
+- The processed preview render can be cancelled as well; it is a full FFmpeg pass and previously had to run to completion.
+- The tool source shown in the app bar is translated instead of always appearing in German.
 
 ### Changed
 
@@ -18,6 +21,9 @@
 - The tool check for FFmpeg, FFprobe and yt-dlp is bounded by a timeout: a binary that never answers is terminated and reported as unavailable instead of blocking the startup check indefinitely.
 - Reading the remaining tool output after a process exits is bounded as well, so a pipe that a child process keeps open cannot hang a run.
 - The update check accepts only an https link to the project host from the release API and otherwise falls back to the known releases page, because the link is handed to the shell when it is opened.
+- The queue no longer re-evaluates every button and rebuilds the summary on each FFmpeg progress tick, so the window stays responsive during a batch export.
+- The startup checks for yt-dlp and for a new release are stopped when the window closes and no longer write into a closed window; an unexpected failure in either is logged instead of being swallowed.
+- A tool that is missing or does not answer is remembered for half a minute instead of being probed again on every call, where each attempt cost the full probe timeout.
 
 ## 0.17.0 - 2026-06-13
 
