@@ -113,8 +113,7 @@ public sealed partial class MainViewModel
 
             if (SaveLogFile)
             {
-                var logPath = await _logService.SaveAsync(OutputDirectory, "audio-quality-enhancer-batch", CancellationToken.None);
-                _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
+                await TrySaveBatchLogAsync();
             }
 
             if (SaveReportFile)
@@ -185,6 +184,23 @@ public sealed partial class MainViewModel
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Saves the run log without ever failing the run: the files are already exported,
+    /// so a read-only or full output folder is reported as a warning, not as a crash.
+    /// </summary>
+    private async Task TrySaveBatchLogAsync()
+    {
+        try
+        {
+            var logPath = await _logService.SaveAsync(OutputDirectory, "audio-quality-enhancer-batch", CancellationToken.None);
+            _logService.Info(LocalizationService.Instance.Format("Log_LogSavedFormat", logPath));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            _logService.Warning(LocalizationService.Instance["Error_LogSaveFailed"]);
+        }
     }
 
     private async Task SaveQualityReportAsync(CancellationToken cancellationToken)
