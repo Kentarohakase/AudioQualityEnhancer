@@ -170,19 +170,19 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         BatchItemsView = CollectionViewSource.GetDefaultView(BatchItems);
         BatchItemsView.Filter = FilterBatchItem;
 
-        _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy);
-        _downloadFromUrlCommand = new AsyncRelayCommand(DownloadFromUrlAsync, CanDownloadFromUrl);
-        _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics);
+        _selectFileCommand = new AsyncRelayCommand(SelectFileAsync, () => !IsBusy, HandleCommandError);
+        _downloadFromUrlCommand = new AsyncRelayCommand(DownloadFromUrlAsync, CanDownloadFromUrl, HandleCommandError);
+        _analyzeDiagnosticsCommand = new AsyncRelayCommand(AnalyzeDiagnosticsAsync, CanAnalyzeDiagnostics, HandleCommandError);
         _selectOutputFolderCommand = new RelayCommand(SelectOutputFolder, () => !IsBusy);
-        _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing);
+        _startCommand = new AsyncRelayCommand(StartProcessingAsync, CanStartProcessing, HandleCommandError);
         _cancelCommand = new RelayCommand(CancelProcessing, () => IsBusy);
         _removeSelectedFileCommand = new RelayCommand(RemoveSelectedFile, () => !IsBusy && SelectedBatchItem is not null);
         _clearFinishedFilesCommand = new RelayCommand(ClearFinishedFiles, () => !IsBusy && _batchQueueService.GetFinishedItems(BatchItems).Count > 0);
-        _retrySelectedFileCommand = new AsyncRelayCommand(RetrySelectedFileAsync, CanRetrySelectedFile);
-        _retryFailedFilesCommand = new AsyncRelayCommand(RetryFailedFilesAsync, CanRetryFailedFiles);
+        _retrySelectedFileCommand = new AsyncRelayCommand(RetrySelectedFileAsync, CanRetrySelectedFile, HandleCommandError);
+        _retryFailedFilesCommand = new AsyncRelayCommand(RetryFailedFilesAsync, CanRetryFailedFiles, HandleCommandError);
         _playSourceCommand = new RelayCommand(PlaySourcePreview, () => !IsBusy && File.Exists(InputPath));
         _playOutputCommand = new RelayCommand(PlayOutputPreview, () => !IsBusy && File.Exists(LastOutputPath));
-        _renderProcessedPreviewCommand = new AsyncRelayCommand(RenderProcessedPreviewAsync, CanRenderProcessedPreview);
+        _renderProcessedPreviewCommand = new AsyncRelayCommand(RenderProcessedPreviewAsync, CanRenderProcessedPreview, HandleCommandError);
         _playProcessedPreviewCommand = new RelayCommand(PlayProcessedPreview, CanPlayProcessedPreview);
         _stopPreviewCommand = new RelayCommand(StopPreview);
         _openOutputFolderCommand = new RelayCommand(OpenOutputFolder, () => Directory.Exists(OutputDirectory));
@@ -417,6 +417,20 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         return arguments.Length == 0
             ? LocalizationService.Instance[resourceKey]
             : LocalizationService.Instance.Format(resourceKey, arguments);
+    }
+
+    /// <summary>
+    /// Last line of defence for asynchronous commands: an unexpected failure is logged
+    /// and shown as status instead of ending the session through the crash handler.
+    /// </summary>
+    private void HandleCommandError(Exception exception)
+    {
+        IsBusy = false;
+        SetProcessingPhase("Phase_Error");
+        SetStatus("Error_UnexpectedFormat", exception.Message);
+        _logService.Error(LocalizationService.Instance.Format(
+            "Error_UnexpectedFormat",
+            $"{exception.GetType().Name}: {exception.Message}"));
     }
 
     private void RaiseCommandStates()

@@ -34,11 +34,22 @@ public partial class App : System.Windows.Application
     {
         var logPath = WriteCrashLog(e.Exception);
         var loc = LocalizationService.Instance;
-        System.Windows.MessageBox.Show(
-            $"{loc["Error_AppCrash"]}{Environment.NewLine}{Environment.NewLine}{loc["Error_CrashLogSaved"]}{Environment.NewLine}{logPath}",
-            "Audio Quality Enhancer",
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Error);
+        var message = logPath is null
+            ? loc["Error_AppCrash"]
+            : $"{loc["Error_AppCrash"]}{Environment.NewLine}{Environment.NewLine}{loc["Error_CrashLogSaved"]}{Environment.NewLine}{logPath}";
+
+        try
+        {
+            System.Windows.MessageBox.Show(
+                message,
+                "Audio Quality Enhancer",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+        catch
+        {
+            // Reporting the crash must never prevent the orderly shutdown below.
+        }
 
         e.Handled = true;
         Current.Shutdown(-1);
@@ -58,17 +69,27 @@ public partial class App : System.Windows.Application
         e.SetObserved();
     }
 
-    private static string WriteCrashLog(Exception exception)
+    /// <summary>Writes the crash log and returns its path, or null if it could not be written.</summary>
+    private static string? WriteCrashLog(Exception exception)
     {
-        var logDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AudioQualityEnhancer",
-            "Logs");
+        try
+        {
+            var logDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "AudioQualityEnhancer",
+                "Logs");
 
-        Directory.CreateDirectory(logDirectory);
+            Directory.CreateDirectory(logDirectory);
 
-        var logPath = Path.Combine(logDirectory, $"crash_{DateTime.Now:yyyyMMdd_HHmmss}.log");
-        File.WriteAllText(logPath, exception.ToString());
-        return logPath;
+            var logPath = Path.Combine(logDirectory, $"crash_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+            File.WriteAllText(logPath, exception.ToString());
+            return logPath;
+        }
+        catch
+        {
+            // A failing crash log (read-only profile, full disk) must not throw inside
+            // the crash handler and turn a handled error into a hard termination.
+            return null;
+        }
     }
 }
