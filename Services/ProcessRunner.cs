@@ -7,7 +7,13 @@ namespace AudioQualityEnhancer.Services;
 internal sealed class ProcessRunner : IProcessRunner
 {
     private static readonly TimeSpan TerminationWaitTimeout = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan ReaderDrainTimeout = TimeSpan.FromSeconds(2);
+
+    // The output readers normally finish right after the process exits. A child process
+    // that inherited the pipes can keep them open, so the drain is bounded: generous on
+    // the normal path (the last lines carry the loudness measurements) and short after
+    // a cancellation, where the remaining output is discarded anyway.
+    private static readonly TimeSpan ReaderDrainTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan CancelDrainTimeout = TimeSpan.FromSeconds(2);
 
     public async Task<ProcessResult> RunAsync(ProcessRunOptions options, CancellationToken cancellationToken)
     {
@@ -96,7 +102,7 @@ internal sealed class ProcessRunner : IProcessRunner
             }
 
             await process.WaitForExitAsync(exitCancellation.Token).ConfigureAwait(false);
-            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task).ConfigureAwait(false);
+            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task, ReaderDrainTimeout).ConfigureAwait(false);
 
             return CreateResult(process, stdout, stderr, startedAt, wasCancelled: false, timedOut: timedOutFlag == 1);
         }
@@ -105,7 +111,7 @@ internal sealed class ProcessRunner : IProcessRunner
             var timedOut = timedOutFlag == 1;
             TryKill(process);
             await TryWaitForExitAsync(process).ConfigureAwait(false);
-            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task).ConfigureAwait(false);
+            await TryWaitForReadersAsync(process, outputClosed.Task, errorClosed.Task, CancelDrainTimeout).ConfigureAwait(false);
             return CreateResult(
                 process,
                 stdout,
@@ -207,16 +213,16 @@ internal sealed class ProcessRunner : IProcessRunner
         }
     }
 
-    private static async Task TryWaitForReadersAsync(Process process, Task outputClosed, Task errorClosed)
+    private static async Task TryWaitForReadersAsync(Process process, Task outputClosed, Task errorClosed, TimeSpan timeout)
     {
         try
         {
-            await Task.WhenAll(outputClosed, errorClosed).WaitAsync(ReaderDrainTimeout).ConfigureAwait(false);
+            await Task.WhenAll(outputClosed, errorClosed).WaitAsync(timeout).ConfigureAwait(false);
             return;
         }
         catch
         {
-            // Best effort drain after cancellation.
+            // Best effort drain; a reader that never closes must not hang the run.
         }
 
         TryCancelOutputRead(process);

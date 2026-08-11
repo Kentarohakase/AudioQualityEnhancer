@@ -5,6 +5,11 @@ namespace AudioQualityEnhancer.Services;
 
 public sealed class ToolDiscoveryService
 {
+    // The probe only runs "<tool> -version". A binary that never answers (broken
+    // download, unreachable network path) would otherwise block the startup check
+    // forever, so it is bounded and reported as unavailable instead.
+    internal static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(20);
+
     private readonly object _cacheLock = new();
     private readonly Dictionary<string, ToolLocation> _locationCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ToolStatus> _statusCache = new(StringComparer.OrdinalIgnoreCase);
@@ -41,23 +46,26 @@ public sealed class ToolDiscoveryService
 
     private static async Task<ToolStatus> ProbeToolAsync(string toolName, ToolLocation location, string versionArgument, CancellationToken cancellationToken)
     {
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo
+        {
+            FileName = location.ExecutablePath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        process.StartInfo.ArgumentList.Add(versionArgument);
+
+        using var probeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        probeCancellation.CancelAfter(ProbeTimeout);
+
         try
         {
-            using var process = new Process();
-            process.StartInfo = new ProcessStartInfo
-            {
-                FileName = location.ExecutablePath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            process.StartInfo.ArgumentList.Add(versionArgument);
-
             process.Start();
-            var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-            await process.WaitForExitAsync(cancellationToken);
+            var outputTask = process.StandardOutput.ReadToEndAsync(probeCancellation.Token);
+            var errorTask = process.StandardError.ReadToEndAsync(probeCancellation.Token);
+            await process.WaitForExitAsync(probeCancellation.Token);
 
             var output = await outputTask;
             var error = await errorTask;
@@ -76,6 +84,22 @@ public sealed class ToolDiscoveryService
                 versionLine,
                 LocalizationService.Instance.Format("Error_ToolExitCodeFormat", toolName, process.ExitCode));
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            TryKill(process);
+            return new ToolStatus(
+                toolName,
+                location.ExecutablePath,
+                location.Source,
+                false,
+                null,
+                LocalizationService.Instance.Format("Error_ToolTimeoutFormat", toolName));
+        }
+        catch (OperationCanceledException)
+        {
+            TryKill(process);
+            throw;
+        }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
             return new ToolStatus(
@@ -85,6 +109,21 @@ public sealed class ToolDiscoveryService
                 false,
                 null,
                 LocalizationService.Instance.Format("Error_ToolNotFoundFormat", toolName));
+        }
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch
+        {
+            // The probe result is already decided; cleanup must never throw on top of it.
         }
     }
 
