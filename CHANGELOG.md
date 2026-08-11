@@ -7,10 +7,13 @@
 - A result validation that ends with a critical finding now fails the affected file instead of reporting it as exported successfully. The report stays attached to the item, so the findings remain visible in the validation panel.
 - A run that was stopped is no longer misreported: an inactivity timeout now ends the wait for the process directly and is reported as a timeout, while only an actual user cancellation is reported as one.
 - After a process is terminated the app waits briefly for it to exit and stops the output readers before reading what was captured, so the collected output can no longer be read while it is still being written.
+- Result validation no longer expects 48 kHz when the Premiere profile is selected but the preset does not use it: the archive preset forces FLAC and a stream copy keeps the source format, so both reported a sample-rate warning for a correct export. A stream copy also no longer claims that a lossy source was written to a lossless format.
 
 ### Changed
 
 - The release packaging script now requires an explicit `-Version` in `major.minor.patch` form instead of falling back to a stale default version.
+
+## 0.17.0 - 2026-06-13
 
 ### Added
 
