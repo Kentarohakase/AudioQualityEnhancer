@@ -18,6 +18,39 @@ public sealed partial class ResourceTests
         Assert.Empty(englishKeys.Except(germanKeys));
     }
 
+    /// <summary>
+    /// Several texts are looked up under a key that is composed from an enum value, so a
+    /// new enum member ships "!Key!" to the user with no compiler error to stop it. This
+    /// walks every member of every enum used that way and resolves the keys it produces.
+    /// </summary>
+    [Theory]
+    [InlineData("de")]
+    [InlineData("en")]
+    public void ComposedResourceKeys_ResolveForEveryEnumValue(string cultureName)
+    {
+        LocalizationService.Instance.Culture = CultureInfo.GetCultureInfo(cultureName);
+
+        var keys = new List<string>();
+        keys.AddRange(ComposeKeys<AudioAnalysisStatus>("AnalysisStatus_{0}", "AnalysisSummary_{0}"));
+        keys.AddRange(ComposeKeys<AudioInsightSeverity>("AnalysisSeverity_{0}"));
+        keys.AddRange(ComposeKeys<AudioAnalysisFindingKind>("AnalysisFinding_{0}_Title", "AnalysisFinding_{0}_Message"));
+        keys.AddRange(ComposeKeys<AudioComparisonStatus>("ValidationStatus_{0}", "ValidationSummary_{0}"));
+        keys.AddRange(ComposeKeys<AudioComparisonFindingKind>("ValidationFinding_{0}_Title", "ValidationFinding_{0}_Message"));
+        keys.AddRange(ComposeKeys<BatchProcessingStatus>("BatchStatus_{0}"));
+
+        // A recommendation only accompanies an actual finding, so the "no issues" kind
+        // deliberately has no recommendation text.
+        keys.AddRange(Enum.GetValues<AudioAnalysisFindingKind>()
+            .Where(kind => kind != AudioAnalysisFindingKind.NoIssues)
+            .Select(kind => $"AnalysisRecommendation_{kind}"));
+
+        var unresolved = keys
+            .Where(key => MissingResourceRegex().IsMatch(LocalizationService.Instance[key]))
+            .ToArray();
+
+        Assert.Empty(unresolved);
+    }
+
     [Theory]
     [InlineData("de")]
     [InlineData("en")]
@@ -148,6 +181,13 @@ public sealed partial class ResourceTests
         {
             Assert.DoesNotMatch(MissingResourceRegex(), value);
         }
+    }
+
+    private static IEnumerable<string> ComposeKeys<TEnum>(params string[] formats)
+        where TEnum : struct, Enum
+    {
+        return Enum.GetValues<TEnum>()
+            .SelectMany(value => formats.Select(format => string.Format(CultureInfo.InvariantCulture, format, value)));
     }
 
     private static IReadOnlySet<string> LoadResourceKeys(string fileName)
