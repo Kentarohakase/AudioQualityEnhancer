@@ -176,6 +176,51 @@ public sealed class AudioValidationServiceTests
     }
 
     [Fact]
+    public void BuildReport_ArchivePresetKeepsSourceSampleRateWithPremiereSelected()
+    {
+        using var source = CreateInfo("flac", isLossy: false, sampleRate: 44_100);
+        using var output = CreateInfo("flac", isLossy: false, sampleRate: 44_100);
+        using var diagnostics = new AudioDiagnostics
+        {
+            IntegratedLoudnessLufs = -14,
+            TruePeakDb = -2
+        };
+
+        // The archive preset forces FLAC, so the selected Premiere profile (48 kHz)
+        // must not be validated against.
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.ArchiveExport, ExportFormat.PremierePro),
+            source,
+            output,
+            sourceDiagnostics: null,
+            diagnostics,
+            outputDiagnosticsSkipped: false,
+            outputPath: @"C:\audio\song_archive_flac.flac");
+
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.SampleRateMismatch);
+    }
+
+    [Fact]
+    public void BuildReport_StreamCopyKeepsSourceSampleRateWithPremiereSelected()
+    {
+        using var source = CreateInfo("mp3", isLossy: true, sampleRate: 44_100);
+        using var output = CreateInfo("mp3", isLossy: true, sampleRate: 44_100);
+
+        var report = AudioValidationService.BuildReport(
+            CreateOptions(source, AudioPreset.ExtractCopy, ExportFormat.PremierePro),
+            source,
+            output,
+            sourceDiagnostics: null,
+            outputDiagnostics: null,
+            outputDiagnosticsSkipped: true,
+            outputPath: @"C:\audio\song_extracted.mp3");
+
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.SampleRateMismatch);
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.LossyToLossless);
+        Assert.Contains(report.Findings, finding => finding.Kind == AudioComparisonFindingKind.StreamCopyMetadataOnly);
+    }
+
+    [Fact]
     public void BuildReport_ChannelCountChangeCreatesWarning()
     {
         using var source = CreateInfo("wav", isLossy: false, channels: 6);

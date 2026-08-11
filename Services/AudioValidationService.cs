@@ -128,8 +128,10 @@ public sealed class AudioValidationService
         AddPeakFindings(outputDiagnostics, findings);
         AddLoudnessFinding(options, outputDiagnostics, findings);
 
+        // A stream copy keeps the source codec, so the selected export format says
+        // nothing about the result and the lossless note would be misleading.
         var effectiveExportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
-        if (sourceInfo.IsLikelyLossy && effectiveExportFormat.IsLossless)
+        if (!options.Preset.IsCopyOnly && sourceInfo.IsLikelyLossy && effectiveExportFormat.IsLossless)
         {
             AddFinding(findings, AudioComparisonFindingKind.LossyToLossless, AudioInsightSeverity.Info);
         }
@@ -416,7 +418,15 @@ public sealed class AudioValidationService
 
     private static int? GetExpectedSampleRate(ProcessingOptions options)
     {
-        return options.ExportFormat.Id == ExportFormat.PremierePro.Id ? 48_000 : null;
+        // A stream copy keeps the source rate no matter which export format is selected,
+        // and the archive preset forces FLAC, so both must not expect the Premiere rate.
+        if (options.Preset.IsCopyOnly)
+        {
+            return null;
+        }
+
+        var exportFormat = ExportFormat.ResolveForPreset(options.Preset, options.ExportFormat);
+        return exportFormat.Id == ExportFormat.PremierePro.Id ? 48_000 : null;
     }
 
     private static bool CodecsMatch(string expectedCodec, string actualCodec)
