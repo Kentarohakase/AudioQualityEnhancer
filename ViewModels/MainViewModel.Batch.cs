@@ -117,14 +117,24 @@ public sealed partial class MainViewModel
         var needsAnalysis = preparedItems.Where(item => item.AudioInfo is null).ToArray();
         if (needsAnalysis.Length > 0)
         {
+            _analysisCancellation?.Dispose();
+            _analysisCancellation = new CancellationTokenSource();
             IsBusy = true;
             try
             {
-                await AnalyzeBatchItemsAsync(needsAnalysis, CancellationToken.None);
+                await AnalyzeBatchItemsAsync(needsAnalysis, _analysisCancellation.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                SetProcessingPhase("Phase_Cancel");
+                SetStatus("Error_AnalysisCancelled");
+                return 0;
             }
             finally
             {
                 IsBusy = false;
+                _analysisCancellation.Dispose();
+                _analysisCancellation = null;
             }
         }
 
@@ -212,8 +222,11 @@ public sealed partial class MainViewModel
             }
         }
 
-        UpdateBatchSummary();
-        RaiseCommandStates();
+        if (BatchQueueStateChanged(e.PropertyName))
+        {
+            UpdateBatchSummary();
+            RaiseCommandStates();
+        }
 
         if (ReferenceEquals(sender, SelectedBatchItem))
         {
@@ -233,6 +246,20 @@ public sealed partial class MainViewModel
             nameof(BatchProcessingItem.Status) or
             nameof(BatchProcessingItem.HasComparisonWarnings) or
             nameof(BatchProcessingItem.ComparisonReport);
+    }
+
+    // Progress is written on every FFmpeg progress tick of every running item. It feeds
+    // neither the summary counts (they only look at Status and ComparisonReport) nor any
+    // command predicate, so it must not trigger the expensive refresh: RaiseCommandStates
+    // makes WPF re-evaluate 24 predicates on the UI thread, several of which touch the
+    // file system or build a filter plan.
+    private static bool BatchQueueStateChanged(string? propertyName)
+    {
+        return propertyName is null or
+            nameof(BatchProcessingItem.Status) or
+            nameof(BatchProcessingItem.HasComparisonWarnings) or
+            nameof(BatchProcessingItem.ComparisonReport) or
+            nameof(BatchProcessingItem.OutputPath);
     }
 
     private int GetVisibleIndex(BatchProcessingItem item)

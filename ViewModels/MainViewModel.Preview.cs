@@ -32,6 +32,12 @@ public sealed partial class MainViewModel
 
         InvalidateProcessedPreview();
         _isProcessedPreviewRendering = true;
+
+        // The render is a full FFmpeg pass over the loudest section, so it runs as a busy
+        // phase like the deep analysis does. That is what makes Cancel reach it at all.
+        _previewRenderCancellation?.Dispose();
+        _previewRenderCancellation = new CancellationTokenSource();
+        IsBusy = true;
         RaiseCommandStates();
 
         try
@@ -41,7 +47,7 @@ public sealed partial class MainViewModel
                 options,
                 _logService.Info,
                 null,
-                CancellationToken.None);
+                _previewRenderCancellation.Token);
 
             if (result.IsFailure || result.Value is null)
             {
@@ -61,9 +67,17 @@ public sealed partial class MainViewModel
             SetStatus("Status_ProcessedPreviewReadyFormat", Path.GetFileName(_processedPreviewPath));
             _logService.Info(LocalizationService.Instance.Format("Log_ProcessedPreviewReadyFormat", _processedPreviewPath));
         }
+        catch (OperationCanceledException)
+        {
+            SetProcessingPhase("Phase_Cancel");
+            SetStatus("Error_ProcessingCancelled");
+        }
         finally
         {
             _isProcessedPreviewRendering = false;
+            IsBusy = false;
+            _previewRenderCancellation.Dispose();
+            _previewRenderCancellation = null;
             RaiseCommandStates();
         }
     }

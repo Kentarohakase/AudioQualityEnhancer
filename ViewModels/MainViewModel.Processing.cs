@@ -136,6 +136,8 @@ public sealed partial class MainViewModel
         SetProcessingPhase("Phase_Cancel");
         _processingCancellation?.Cancel();
         _diagnosticsCancellation?.Cancel();
+        _analysisCancellation?.Cancel();
+        _previewRenderCancellation?.Cancel();
     }
 
     private async Task<bool> ValidateProcessedItemAsync(BatchProcessingItem item, CancellationToken cancellationToken)

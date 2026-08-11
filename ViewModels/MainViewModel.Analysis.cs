@@ -63,9 +63,29 @@ public sealed partial class MainViewModel
         }
 
         _logService.Info(LocalizationService.Instance.Format("Log_BatchAddedFilesFormat", addResult.AddedItems.Count));
-        await AnalyzeBatchItemsAsync(addResult.AddedItems, CancellationToken.None);
 
-        SetStatus("Status_BatchReadyFormat", _batchQueueService.GetProcessableItems(BatchItems).Count);
+        // The analysis of a dropped folder can take a while, so it runs as a busy phase:
+        // that keeps Cancel enabled, Start disabled and further drops out until it ends.
+        _analysisCancellation?.Dispose();
+        _analysisCancellation = new CancellationTokenSource();
+        IsBusy = true;
+
+        try
+        {
+            await AnalyzeBatchItemsAsync(addResult.AddedItems, _analysisCancellation.Token);
+            SetStatus("Status_BatchReadyFormat", _batchQueueService.GetProcessableItems(BatchItems).Count);
+        }
+        catch (OperationCanceledException)
+        {
+            SetProcessingPhase("Phase_Cancel");
+            SetStatus("Error_AnalysisCancelled");
+        }
+        finally
+        {
+            IsBusy = false;
+            _analysisCancellation.Dispose();
+            _analysisCancellation = null;
+        }
     }
 
     private async Task SelectFileAsync()
