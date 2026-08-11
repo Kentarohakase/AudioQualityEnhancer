@@ -15,6 +15,8 @@
 ### Changed
 
 - The release packaging script now requires an explicit `-Version` in `major.minor.patch` form instead of falling back to a stale default version.
+- The tool check for FFmpeg, FFprobe and yt-dlp is bounded by a timeout: a binary that never answers is terminated and reported as unavailable instead of blocking the startup check indefinitely.
+- Reading the remaining tool output after a process exits is bounded as well, so a pipe that a child process keeps open cannot hang a run.
 
 ## 0.17.0 - 2026-06-13
 

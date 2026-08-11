@@ -546,6 +546,7 @@
   <data name="Log_PreviewSegmentFormat" xml:space="preserve"><value>Vorschau-Abschnitt: lautester Bereich ab {0:0} Sekunden.</value></data>
   <data name="Error_FFmpegTimeout" xml:space="preserve"><value>FFmpeg hat zu lange nicht reagiert und wurde beendet.</value></data>
   <data name="Error_InsufficientDiskSpaceFormat" xml:space="preserve"><value>Zu wenig freier Speicherplatz im Ausgabeordner (benötigt etwa {0} MB, frei {1} MB).</value></data>
+  <data name="Error_ToolTimeoutFormat" xml:space="preserve"><value>{0} hat beim Prüfen nicht rechtzeitig geantwortet.</value></data>
   <data name="Error_LogSaveFailed" xml:space="preserve"><value>Die Logdatei konnte nicht gespeichert werden. Die Ausgabedateien sind davon nicht betroffen.</value></data>
   <data name="Error_UnexpectedFormat" xml:space="preserve"><value>Unerwarteter Fehler: {0}</value></data>
 </root>
