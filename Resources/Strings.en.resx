@@ -520,6 +520,11 @@
   <data name="ToolStatus_Found" xml:space="preserve"><value>{0}: found ({1})</value></data>
   <data name="ToolStatus_NotFound" xml:space="preserve"><value>{0}: not found</value></data>
 
+  <data name="ToolSource_UserTools" xml:space="preserve"><value>user tools</value></data>
+  <data name="ToolSource_AppFolder" xml:space="preserve"><value>app folder</value></data>
+  <data name="ToolSource_ToolsFolder" xml:space="preserve"><value>tools folder</value></data>
+  <data name="ToolSource_Path" xml:space="preserve"><value>PATH</value></data>
+
   <data name="Dialog_SelectFile_Title" xml:space="preserve"><value>Select audio or video file</value></data>
   <data name="Dialog_SelectFolder_Title" xml:space="preserve"><value>Select output folder</value></data>
   <data name="Dialog_FilterAudio" xml:space="preserve"><value>Audio and video files</value></data>

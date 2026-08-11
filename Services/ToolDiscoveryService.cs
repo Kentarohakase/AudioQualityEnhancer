@@ -10,9 +10,15 @@ public sealed class ToolDiscoveryService
     // forever, so it is bounded and reported as unavailable instead.
     internal static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(20);
 
+    // A failed probe used to be repeated on every call. Together with the bounded probe
+    // that costs the full timeout each time, so failures are cached as well - but only
+    // briefly, so a tool that is installed while the app runs is still picked up.
+    internal static readonly TimeSpan FailedStatusCacheDuration = TimeSpan.FromSeconds(30);
+
     private readonly object _cacheLock = new();
     private readonly Dictionary<string, ToolLocation> _locationCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ToolStatus> _statusCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, FailedStatus> _failedStatusCache = new(StringComparer.OrdinalIgnoreCase);
 
     public string ResolveExecutable(string toolName)
     {
@@ -30,14 +36,27 @@ public sealed class ToolDiscoveryService
             {
                 return cachedStatus;
             }
+
+            if (_failedStatusCache.TryGetValue(toolName, out var cachedFailure) &&
+                string.Equals(cachedFailure.Status.ExecutablePath, location.ExecutablePath, StringComparison.OrdinalIgnoreCase) &&
+                Stopwatch.GetElapsedTime(cachedFailure.Timestamp) < FailedStatusCacheDuration)
+            {
+                return cachedFailure.Status;
+            }
         }
 
         var status = await ProbeToolAsync(toolName, location, versionArgument, cancellationToken);
-        if (status.IsAvailable)
+
+        lock (_cacheLock)
         {
-            lock (_cacheLock)
+            if (status.IsAvailable)
             {
                 _statusCache[toolName] = status;
+                _failedStatusCache.Remove(toolName);
+            }
+            else
+            {
+                _failedStatusCache[toolName] = new FailedStatus(status, Stopwatch.GetTimestamp());
             }
         }
 
@@ -73,13 +92,13 @@ public sealed class ToolDiscoveryService
 
             if (process.ExitCode == 0)
             {
-                return new ToolStatus(toolName, location.ExecutablePath, location.Source, true, versionLine, null);
+                return new ToolStatus(toolName, location.ExecutablePath, location.SourceKey, true, versionLine, null);
             }
 
             return new ToolStatus(
                 toolName,
                 location.ExecutablePath,
-                location.Source,
+                location.SourceKey,
                 false,
                 versionLine,
                 LocalizationService.Instance.Format("Error_ToolExitCodeFormat", toolName, process.ExitCode));
@@ -90,7 +109,7 @@ public sealed class ToolDiscoveryService
             return new ToolStatus(
                 toolName,
                 location.ExecutablePath,
-                location.Source,
+                location.SourceKey,
                 false,
                 null,
                 LocalizationService.Instance.Format("Error_ToolTimeoutFormat", toolName));
@@ -105,7 +124,7 @@ public sealed class ToolDiscoveryService
             return new ToolStatus(
                 toolName,
                 location.ExecutablePath,
-                location.Source,
+                location.SourceKey,
                 false,
                 null,
                 LocalizationService.Instance.Format("Error_ToolNotFoundFormat", toolName));
@@ -176,28 +195,28 @@ public sealed class ToolDiscoveryService
         var userToolPath = Path.Combine(GetUserToolsDirectory(), exeName);
         if (File.Exists(userToolPath))
         {
-            return new ToolLocation(userToolPath, "Benutzer-Tools");
+            return new ToolLocation(userToolPath, "ToolSource_UserTools");
         }
 
         var appLocalPath = Path.Combine(AppContext.BaseDirectory, exeName);
         if (File.Exists(appLocalPath))
         {
-            return new ToolLocation(appLocalPath, "App-Ordner");
+            return new ToolLocation(appLocalPath, "ToolSource_AppFolder");
         }
 
         var toolsPath = Path.Combine(AppContext.BaseDirectory, "Tools", exeName);
         if (File.Exists(toolsPath))
         {
-            return new ToolLocation(toolsPath, "Tools-Ordner");
+            return new ToolLocation(toolsPath, "ToolSource_ToolsFolder");
         }
 
         var pathTool = FindInPath(exeName);
         if (pathTool is not null)
         {
-            return new ToolLocation(pathTool, "PATH");
+            return new ToolLocation(pathTool, "ToolSource_Path");
         }
 
-        return new ToolLocation(exeName, "PATH");
+        return new ToolLocation(exeName, "ToolSource_Path");
     }
 
     private static string? FindInPath(string exeName)
@@ -241,5 +260,7 @@ public sealed class ToolDiscoveryService
         return null;
     }
 
-    private sealed record ToolLocation(string ExecutablePath, string Source);
+    private sealed record ToolLocation(string ExecutablePath, string SourceKey);
+
+    private sealed record FailedStatus(ToolStatus Status, long Timestamp);
 }

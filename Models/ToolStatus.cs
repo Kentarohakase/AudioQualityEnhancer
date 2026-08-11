@@ -7,14 +7,14 @@ public sealed class ToolStatus
     public ToolStatus(
         string name,
         string executablePath,
-        string source,
+        string sourceKey,
         bool isAvailable,
         string? versionLine,
         string? errorMessage)
     {
         Name = name;
         ExecutablePath = executablePath;
-        Source = source;
+        SourceKey = sourceKey;
         IsAvailable = isAvailable;
         VersionLine = versionLine;
         ErrorMessage = errorMessage;
@@ -24,7 +24,8 @@ public sealed class ToolStatus
 
     public string ExecutablePath { get; }
 
-    public string Source { get; }
+    /// <summary>Resource key of the place the tool was found in, resolved on display.</summary>
+    public string SourceKey { get; }
 
     public bool IsAvailable { get; }
 
@@ -33,6 +34,6 @@ public sealed class ToolStatus
     public string? ErrorMessage { get; }
 
     public string DisplayText => IsAvailable
-        ? LocalizationService.Instance.Format("ToolStatus_Found", Name, Source)
+        ? LocalizationService.Instance.Format("ToolStatus_Found", Name, LocalizationService.Instance[SourceKey])
         : LocalizationService.Instance.Format("ToolStatus_NotFound", Name);
 }
