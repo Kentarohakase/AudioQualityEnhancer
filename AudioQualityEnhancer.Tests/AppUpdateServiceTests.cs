@@ -18,6 +18,19 @@ public sealed class AppUpdateServiceTests
     }
 
     [Theory]
+    [InlineData("https://github.com/Kentarohakase/AudioQualityEnhancer/releases/tag/v0.18.0", "https://github.com/Kentarohakase/AudioQualityEnhancer/releases/tag/v0.18.0")]
+    [InlineData("http://github.com/Kentarohakase/AudioQualityEnhancer/releases", AppUpdateService.ReleasesPageUrl)]
+    [InlineData("https://example.com/releases", AppUpdateService.ReleasesPageUrl)]
+    [InlineData("file:///C:/Windows/System32/cmd.exe", AppUpdateService.ReleasesPageUrl)]
+    [InlineData("C:\\Windows\\System32\\cmd.exe", AppUpdateService.ReleasesPageUrl)]
+    [InlineData("", AppUpdateService.ReleasesPageUrl)]
+    [InlineData(null, AppUpdateService.ReleasesPageUrl)]
+    public void ResolveReleaseUrl_AcceptsOnlyHttpsProjectLinks(string? url, string expected)
+    {
+        Assert.Equal(expected, AppUpdateService.ResolveReleaseUrl(url));
+    }
+
+    [Theory]
     [InlineData("0.16.0", "0.17.0", true)]
     [InlineData("0.16.0", "0.16.1", true)]
     [InlineData("0.16.0", "0.16.0", false)]
