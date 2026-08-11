@@ -84,7 +84,7 @@ public sealed partial class MainViewModel
         return !IsBusy && YtDlpDownloadService.IsLikelyValidUrl(YouTubeUrl);
     }
 
-    private async Task PrepareYtDlpAsync()
+    private async Task PrepareYtDlpAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -100,16 +100,22 @@ public sealed partial class MainViewModel
                 _ytDlpAutoUpdate,
                 lastCheck,
                 _logService.Info,
-                CancellationToken.None);
+                cancellationToken);
 
-            if (newCheck.HasValue)
+            if (newCheck.HasValue && !cancellationToken.IsCancellationRequested)
             {
                 _ytDlpLastUpdateCheckUtc = newCheck.Value.ToString("o", CultureInfo.InvariantCulture);
             }
         }
-        catch
+        catch (OperationCanceledException)
         {
-            // Startup preparation of the downloader is best effort and never blocks the app.
+            // The app is closing.
+        }
+        catch (Exception exception)
+        {
+            // Startup preparation of the downloader is best effort and never blocks the
+            // app, but a genuine defect in this path should not stay invisible either.
+            _logService.Warning($"{exception.GetType().Name}: {exception.Message}");
         }
     }
 }

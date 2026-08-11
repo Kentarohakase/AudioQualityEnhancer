@@ -109,6 +109,11 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _syncingSelectedBatchItem;
     private CancellationTokenSource? _processingCancellation;
     private CancellationTokenSource? _diagnosticsCancellation;
+    private CancellationTokenSource? _analysisCancellation;
+    private CancellationTokenSource? _previewRenderCancellation;
+    private readonly CancellationTokenSource _shutdownCancellation = new();
+    private Task _ytDlpPreparation = Task.CompletedTask;
+    private Task _appUpdateCheck = Task.CompletedTask;
     private bool _hasAnalysisWarnings;
 
     private bool _updatingPositionFromTimer;
@@ -304,8 +309,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
             _logService.Warning(_ffprobeStatus.ErrorMessage ?? LocalizationService.Instance["Log_FFprobeUnavailable"]);
         }
 
-        _ = PrepareYtDlpAsync();
-        _ = CheckForAppUpdateAsync();
+        _ytDlpPreparation = PrepareYtDlpAsync(_shutdownCancellation.Token);
+        _appUpdateCheck = CheckForAppUpdateAsync(_shutdownCancellation.Token);
     }
 
     private void OnLogAdded(object? sender, string line)
@@ -520,6 +525,13 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        // The startup tasks resume on the dispatcher, so waiting for them here would
+        // deadlock the very thread that has to run their continuations. Cancelling is
+        // enough: both check the token before they touch view model state again. The
+        // source itself is not disposed because those tasks may still hold its token.
+        _shutdownCancellation.Cancel();
+
+        _logService.LogAdded -= OnLogAdded;
         _audioPreviewController.Tick -= OnPreviewTimerTick;
         _audioPreviewController.PlaybackFailed -= OnPlaybackFailed;
         _audioPreviewController.PlaybackEnded -= OnPlaybackEnded;
@@ -527,6 +539,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IDisposable
         LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
         _processingCancellation?.Dispose();
         _diagnosticsCancellation?.Dispose();
+        _analysisCancellation?.Dispose();
+        _previewRenderCancellation?.Dispose();
         _audioPreviewController.Dispose();
         InvalidateProcessedPreview();
         foreach (var item in BatchItems)
