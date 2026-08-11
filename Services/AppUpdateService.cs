@@ -13,10 +13,14 @@ public sealed class AppUpdateService
     private const string LatestReleaseApi = "https://api.github.com/repos/Kentarohakase/AudioQualityEnhancer/releases/latest";
     internal const string ReleasesPageUrl = "https://github.com/Kentarohakase/AudioQualityEnhancer/releases/latest";
 
+    // One shared client for the whole app: the check runs once per session and a new
+    // client per instance would leak its connection pool.
+    private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
+
     private readonly HttpClient _httpClient;
 
     public AppUpdateService()
-        : this(new HttpClient { Timeout = TimeSpan.FromSeconds(10) })
+        : this(SharedHttpClient)
     {
     }
 
@@ -52,13 +56,31 @@ public sealed class AppUpdateService
             }
 
             var url = root.TryGetProperty("html_url", out var urlElement) ? urlElement.GetString() : null;
-            return new AppUpdateInfo(latest.ToString(), string.IsNullOrWhiteSpace(url) ? ReleasesPageUrl : url!);
+            return new AppUpdateInfo(latest.ToString(), ResolveReleaseUrl(url));
         }
         catch
         {
             // Update checks are best effort and must never disrupt startup (offline, rate limit, ...).
             return null;
         }
+    }
+
+    /// <summary>
+    /// The release link is handed to the shell when the user clicks the update notice,
+    /// so only an https link on the project host is accepted. Anything else (other
+    /// schemes, another host, a missing field) falls back to the known releases page.
+    /// </summary>
+    internal static string ResolveReleaseUrl(string? url)
+    {
+        if (!string.IsNullOrWhiteSpace(url) &&
+            Uri.TryCreate(url.Trim(), UriKind.Absolute, out var parsed) &&
+            parsed.Scheme == Uri.UriSchemeHttps &&
+            string.Equals(parsed.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return parsed.AbsoluteUri;
+        }
+
+        return ReleasesPageUrl;
     }
 
     internal static Version? ParseVersion(string? tag)
