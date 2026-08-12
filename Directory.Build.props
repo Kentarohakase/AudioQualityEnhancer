@@ -1,0 +1,25 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      Warnings are errors in every configuration, not only in Release. The build used to
+      accept them locally and reject them in CI, so a warning was found after the push
+      instead of before it. Both projects are warning free, so this costs nothing today.
+
+      AnalysisMode is deliberately left at its default. Raising it to Recommended surfaces
+      about 300 analyzer warnings and All about 1100, mostly CA1305, CA1822, CA2007 and
+      CA1515. That is a cleanup of its own and must not be smuggled in through a build
+      file, where it would simply block every later change.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
