@@ -85,18 +85,32 @@ public sealed class AudioProcessingService
         _fileNameService.CleanupTemporaryOutputFiles(options.OutputDirectory, TimeSpan.FromDays(2));
 
         var sourceInfo = options.SourceInfo;
-        if (sourceInfo is null)
+        if (sourceInfo is not null)
         {
-            Report(progress, 8, LocalizationService.Instance["Phase_AnalyzingSource"]);
-            var analysis = await _ffprobeService.AnalyzeAsync(options.InputPath, _logService.Info, cancellationToken);
-            if (analysis.IsFailure || analysis.Value is null)
-            {
-                return Result<ProcessResult>.Failure(analysis.ErrorMessage ?? LocalizationService.Instance["Error_SourceAnalysisFailed"], analysis.Exception);
-            }
-
-            sourceInfo = analysis.Value;
+            // Supplied by the caller, so it belongs to the queue item and is disposed with it.
+            return await RenderAsync(options, sourceInfo, progress, cancellationToken);
         }
 
+        Report(progress, 8, LocalizationService.Instance["Phase_AnalyzingSource"]);
+        var analysis = await _ffprobeService.AnalyzeAsync(options.InputPath, _logService.Info, cancellationToken);
+        if (analysis.IsFailure || analysis.Value is null)
+        {
+            return Result<ProcessResult>.Failure(analysis.ErrorMessage ?? LocalizationService.Instance["Error_SourceAnalysisFailed"], analysis.Exception);
+        }
+
+        // Created here, so disposed here. AudioInfo subscribes to the localization
+        // service in its constructor, and that service outlives the run, so an
+        // undisposed instance would stay reachable for the rest of the session.
+        using var ownedSourceInfo = analysis.Value;
+        return await RenderAsync(options, ownedSourceInfo, progress, cancellationToken);
+    }
+
+    private async Task<Result<ProcessResult>> RenderAsync(
+        ProcessingOptions options,
+        AudioInfo sourceInfo,
+        IProgress<ProcessingProgress>? progress,
+        CancellationToken cancellationToken)
+    {
         var diskSpaceCheck = EnsureSufficientDiskSpace(options.OutputDirectory, EstimateOutputSizeBytes(options, sourceInfo));
         if (diskSpaceCheck.IsFailure)
         {
