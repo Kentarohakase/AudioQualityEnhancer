@@ -19,14 +19,14 @@ public sealed class AudioProfileAdvisorService
         }
 
         var suggestions = new Dictionary<string, AudioProfileSuggestion>(StringComparer.Ordinal);
-        var hasLowBitrate = HasLowBitrate(info);
-        var hasLowSampleRate = info.SampleRate is > 0 and < 32000;
+        var hasLowBitrate = AudioQualityThresholds.HasLowBitrate(info);
+        var hasLowSampleRate = AudioQualityThresholds.HasLowSampleRate(info);
         var looksSpeechLike = info.Channels == 1 || hasLowBitrate || hasLowSampleRate;
         var isVideoSource = IsVideoSource(info);
         var hasAdvancedDiagnostics = diagnostics is not null;
-        var hasPotentialClipping = diagnostics?.HasPotentialClipping == true;
-        var hasLowHeadroom = !hasPotentialClipping && (diagnostics?.TruePeakDb ?? diagnostics?.MaxVolumeDb) is >= -1.0;
-        var hasProblematicLoudness = diagnostics?.IntegratedLoudnessLufs is < -28 or > -9;
+        var hasPotentialClipping = AudioQualityThresholds.HasPotentialClipping(diagnostics);
+        var hasLowHeadroom = AudioQualityThresholds.HasLowHeadroom(diagnostics);
+        var hasProblematicLoudness = AudioQualityThresholds.HasProblematicLoudness(diagnostics);
         var hasTechnicalWarnings = info.IsLikelyLossy || hasLowBitrate || hasLowSampleRate || hasPotentialClipping || hasLowHeadroom || hasProblematicLoudness;
 
         if (looksSpeechLike)
@@ -157,17 +157,6 @@ public sealed class AudioProfileAdvisorService
         {
             suggestions[key] = suggestion;
         }
-    }
-
-    private static bool HasLowBitrate(AudioInfo info)
-    {
-        if (!info.IsLikelyLossy || info.BitRate is not > 0)
-        {
-            return false;
-        }
-
-        var threshold = info.Channels == 1 ? 96_000 : 128_000;
-        return info.BitRate.Value < threshold;
     }
 
     private static bool IsVideoSource(AudioInfo info)

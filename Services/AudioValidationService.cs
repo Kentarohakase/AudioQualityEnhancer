@@ -312,12 +312,11 @@ public sealed class AudioValidationService
             return;
         }
 
-        var peak = outputDiagnostics.TruePeakDb ?? outputDiagnostics.MaxVolumeDb;
-        if (outputDiagnostics.HasPotentialClipping)
+        if (AudioQualityThresholds.HasPotentialClipping(outputDiagnostics))
         {
             AddFinding(findings, AudioComparisonFindingKind.PotentialClipping, AudioInsightSeverity.Critical);
         }
-        else if (peak is >= -1.0)
+        else if (AudioQualityThresholds.HasLowHeadroom(outputDiagnostics))
         {
             AddFinding(findings, AudioComparisonFindingKind.LowHeadroom, AudioInsightSeverity.Warning);
         }
