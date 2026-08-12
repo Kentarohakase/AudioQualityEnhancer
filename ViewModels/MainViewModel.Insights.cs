@@ -52,37 +52,33 @@ public sealed partial class MainViewModel
     {
         var warnings = new List<string>();
 
-        if (AudioInfo?.IsLikelyLossy == true && AudioInfo.BitRate is > 0)
+        if (AudioQualityThresholds.HasLowBitrate(AudioInfo))
         {
-            var lowBitrateThreshold = AudioInfo.Channels == 1 ? 96_000 : 128_000;
-            if (AudioInfo.BitRate.Value < lowBitrateThreshold)
-            {
-                warnings.Add(LocalizationService.Instance.Format("Warning_LowBitrateFormat", AudioInfo.BitRateDisplay));
-            }
+            warnings.Add(LocalizationService.Instance.Format("Warning_LowBitrateFormat", AudioInfo!.BitRateDisplay));
         }
 
-        if (AudioInfo?.SampleRate is > 0 and < 32000)
+        if (AudioQualityThresholds.HasLowSampleRate(AudioInfo))
         {
-            warnings.Add(LocalizationService.Instance.Format("Warning_LowSampleRateFormat", AudioInfo.SampleRateDisplay));
+            warnings.Add(LocalizationService.Instance.Format("Warning_LowSampleRateFormat", AudioInfo!.SampleRateDisplay));
         }
 
         var diagnostics = AudioDiagnostics;
         if (diagnostics is not null)
         {
-            if (diagnostics.HasPotentialClipping)
+            if (AudioQualityThresholds.HasPotentialClipping(diagnostics))
             {
                 warnings.Add(LocalizationService.Instance["Warning_PotentialClipping"]);
             }
-            else if ((diagnostics.TruePeakDb ?? diagnostics.MaxVolumeDb) is >= -1.0)
+            else if (AudioQualityThresholds.HasLowHeadroom(diagnostics))
             {
                 warnings.Add(LocalizationService.Instance["Warning_LowHeadroom"]);
             }
 
-            if (diagnostics.IntegratedLoudnessLufs is < -28)
+            if (AudioQualityThresholds.IsVeryQuiet(diagnostics))
             {
                 warnings.Add(LocalizationService.Instance["Warning_VeryQuiet"]);
             }
-            else if (diagnostics.IntegratedLoudnessLufs is > -9)
+            else if (AudioQualityThresholds.IsAlreadyLoud(diagnostics))
             {
                 warnings.Add(LocalizationService.Instance["Warning_AlreadyLoud"]);
             }

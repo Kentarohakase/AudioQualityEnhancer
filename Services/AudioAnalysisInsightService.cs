@@ -19,18 +19,14 @@ public sealed class AudioAnalysisInsightService
             AddRecommendation(recommendations, AudioAnalysisFindingKind.LossyTranscodingRisk);
         }
 
-        if (info.IsLikelyLossy && info.BitRate is > 0)
+        if (AudioQualityThresholds.HasLowBitrate(info))
         {
-            var lowBitrateThreshold = info.Channels == 1 ? 96_000 : 128_000;
-            if (info.BitRate.Value < lowBitrateThreshold)
-            {
-                score -= 15;
-                AddFinding(findings, AudioAnalysisFindingKind.LowBitrate, AudioInsightSeverity.Warning);
-                AddRecommendation(recommendations, AudioAnalysisFindingKind.LowBitrate);
-            }
+            score -= 15;
+            AddFinding(findings, AudioAnalysisFindingKind.LowBitrate, AudioInsightSeverity.Warning);
+            AddRecommendation(recommendations, AudioAnalysisFindingKind.LowBitrate);
         }
 
-        if (info.SampleRate is > 0 and < 32000)
+        if (AudioQualityThresholds.HasLowSampleRate(info))
         {
             score -= 10;
             AddFinding(findings, AudioAnalysisFindingKind.LowSampleRate, AudioInsightSeverity.Warning);
@@ -56,27 +52,26 @@ public sealed class AudioAnalysisInsightService
         }
         else
         {
-            var peak = diagnostics.TruePeakDb ?? diagnostics.MaxVolumeDb;
-            if (diagnostics.HasPotentialClipping)
+            if (AudioQualityThresholds.HasPotentialClipping(diagnostics))
             {
                 score -= 25;
                 AddFinding(findings, AudioAnalysisFindingKind.PotentialClipping, AudioInsightSeverity.Critical);
                 AddRecommendation(recommendations, AudioAnalysisFindingKind.PotentialClipping);
             }
-            else if (peak is >= -1.0)
+            else if (AudioQualityThresholds.HasLowHeadroom(diagnostics))
             {
                 score -= 10;
                 AddFinding(findings, AudioAnalysisFindingKind.LowHeadroom, AudioInsightSeverity.Warning);
                 AddRecommendation(recommendations, AudioAnalysisFindingKind.LowHeadroom);
             }
 
-            if (diagnostics.IntegratedLoudnessLufs is < -28)
+            if (AudioQualityThresholds.IsVeryQuiet(diagnostics))
             {
                 score -= 10;
                 AddFinding(findings, AudioAnalysisFindingKind.VeryQuiet, AudioInsightSeverity.Warning);
                 AddRecommendation(recommendations, AudioAnalysisFindingKind.VeryQuiet);
             }
-            else if (diagnostics.IntegratedLoudnessLufs is > -9)
+            else if (AudioQualityThresholds.IsAlreadyLoud(diagnostics))
             {
                 score -= 10;
                 AddFinding(findings, AudioAnalysisFindingKind.AlreadyLoud, AudioInsightSeverity.Warning);
