@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Loudness filters now use the channels of the actual selected audio stream, even when source metadata was analyzed by the processing service instead of supplied by the caller. Mono streams consistently receive dual-mono compensation.
+
 ## 0.18.0 - 2026-08-12
 
 ### Fixed
