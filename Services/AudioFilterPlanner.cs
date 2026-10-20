@@ -5,9 +5,9 @@ namespace AudioQualityEnhancer.Services;
 
 internal static class AudioFilterPlanner
 {
-    public static AudioFilterPlan BuildPlan(ProcessingOptions options)
+    public static AudioFilterPlan BuildPlan(ProcessingOptions options, AudioInfo? sourceInfo = null)
     {
-        var dualMono = IsMonoSource(options);
+        var dualMono = IsMonoSource(options, sourceInfo);
         var truePeak = ResolveTruePeak(options);
 
         if (options.Preset.Id == AudioPreset.Music.Id)
@@ -100,10 +100,18 @@ internal static class AudioFilterPlanner
         return trackNoise ? filter + ":tn=true" : filter;
     }
 
-    private static bool IsMonoSource(ProcessingOptions options)
+    private static bool IsMonoSource(ProcessingOptions options, AudioInfo? sourceInfo)
     {
-        var channels = options.AudioStream?.Channels ?? options.SourceInfo?.Channels;
-        return channels == 1;
+        var source = sourceInfo ?? options.SourceInfo;
+        if (source is not null)
+        {
+            // Use the stream that FFmpeg will render, not possibly stale file-level
+            // channel metadata or an invalid stream selection from the caller.
+            var selectedStream = AudioProcessingService.ResolveAudioStream(options.AudioStream, source);
+            return (selectedStream?.Channels ?? source.Channels) == 1;
+        }
+
+        return options.AudioStream?.Channels == 1;
     }
 
     public static string BuildLoudnormFilter(
