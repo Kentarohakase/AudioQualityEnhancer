@@ -277,6 +277,92 @@ public sealed class AudioProcessingProfileTests
         Assert.DoesNotContain("dual_mono", preview, StringComparison.Ordinal);
     }
 
+
+    [Fact]
+    public void FilterPlan_UsesAnalyzedMonoSourceWhenOptionsHaveNoSourceInfo()
+    {
+        using var info = new AudioInfo { Codec = "pcm_s16le", Channels = 1 };
+        var options = new ProcessingOptions
+        {
+            Preset = AudioPreset.Music,
+            ExportFormat = ExportFormat.Flac
+        };
+
+        var plan = AudioFilterPlanner.BuildPlan(options, info);
+
+        Assert.Null(options.SourceInfo);
+        Assert.Contains("dual_mono=true", plan.FilterGraph);
+        Assert.True(plan.LoudnessSettings?.DualMono);
+    }
+
+    [Fact]
+    public void FilterPlan_UsesRequestedMonoStreamInsteadOfStereoSummary()
+    {
+        var stereo = new AudioStreamInfo(0, 0, "aac", "AAC", 128_000, 48_000, 2, null, "", "", "");
+        var mono = new AudioStreamInfo(2, 1, "aac", "AAC", 64_000, 48_000, 1, null, "", "", "");
+        using var info = new AudioInfo
+        {
+            Codec = "aac",
+            Channels = 2,
+            AudioStreams = new[] { stereo, mono },
+            SelectedAudioStreamIndex = 0
+        };
+
+        var plan = AudioFilterPlanner.BuildPlan(new ProcessingOptions
+        {
+            Preset = AudioPreset.Speech,
+            AudioStream = mono
+        }, info);
+
+        Assert.Contains("dual_mono=true", plan.FilterGraph);
+    }
+
+    [Fact]
+    public void FilterPlan_DoesNotTreatRequestedStereoStreamAsMono()
+    {
+        var mono = new AudioStreamInfo(0, 0, "aac", "AAC", 64_000, 48_000, 1, null, "", "", "");
+        var stereo = new AudioStreamInfo(2, 1, "aac", "AAC", 128_000, 48_000, 2, null, "", "", "");
+        using var info = new AudioInfo
+        {
+            Codec = "aac",
+            Channels = 1,
+            AudioStreams = new[] { mono, stereo },
+            SelectedAudioStreamIndex = 0
+        };
+
+        var plan = AudioFilterPlanner.BuildPlan(new ProcessingOptions
+        {
+            Preset = AudioPreset.Music,
+            AudioStream = stereo
+        }, info);
+
+        Assert.DoesNotContain("dual_mono", plan.FilterGraph);
+    }
+
+    [Fact]
+    public void FilterPreview_InvalidStreamRequestFallsBackToSelectedSourceStream()
+    {
+        var mono = new AudioStreamInfo(2, 0, "aac", "AAC", 64_000, 48_000, 1, null, "", "", "");
+        var invalidStereo = new AudioStreamInfo(99, 1, "aac", "AAC", 128_000, 48_000, 2, null, "", "", "");
+        using var info = new AudioInfo
+        {
+            Codec = "aac",
+            Channels = 2,
+            AudioStreams = new[] { mono },
+            SelectedAudioStreamIndex = 2
+        };
+
+        var preview = AudioProcessingService.BuildFilterPreview(new ProcessingOptions
+        {
+            Preset = AudioPreset.Music,
+            SourceInfo = info,
+            AudioStream = invalidStereo,
+            UseTwoPassLoudness = false
+        });
+
+        Assert.Contains("dual_mono=true", preview);
+    }
+
     [Fact]
     public void BuildRenderPlan_RestoresSourceSampleRateAfterLoudnorm()
     {
