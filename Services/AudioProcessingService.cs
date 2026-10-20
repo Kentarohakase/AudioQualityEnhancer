@@ -263,7 +263,7 @@ public sealed class AudioProcessingService
                 ? $"{options.Preset.Id}_premiere_pro"
                 : options.Preset.Id;
         var outputPathForTranscode = _fileNameService.CreateUniqueOutputPath(options.InputPath, options.OutputDirectory, suffix, exportFormat.Extension);
-        var filterPlan = AudioFilterPlanner.BuildPlan(options);
+        var filterPlan = AudioFilterPlanner.BuildPlan(options, sourceInfo);
         var includeCoverArt = exportFormat.SupportsCoverArt && _fileNameService.IsAudioOnlyContainer(options.InputPath);
 
         return Result<OutputPlan>.Success(new OutputPlan(
